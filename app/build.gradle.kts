@@ -66,4 +66,8 @@ dependencies {
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
+
+    //Lottie Animations
+    val lottieVersion = "6.0.1" // Update with latest version if needed
+    implementation ("com.airbnb.android:lottie-compose:$lottieVersion")
 }
