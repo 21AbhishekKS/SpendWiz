@@ -70,4 +70,8 @@ dependencies {
     //Lottie Animations
     val lottieVersion = "6.0.1" // Update with latest version if needed
     implementation ("com.airbnb.android:lottie-compose:$lottieVersion")
+
+    //navigation
+    implementation ("androidx.navigation:navigation-compose:2.7.7")
+
 }
