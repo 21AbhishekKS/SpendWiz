@@ -19,6 +19,5 @@ interface MoneyDao {
     @Insert
     fun addMoney(money: Money)
 
-    @Update
-    fun updateMoney()
+
 }

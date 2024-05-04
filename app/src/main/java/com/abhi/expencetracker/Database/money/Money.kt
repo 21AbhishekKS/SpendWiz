@@ -11,7 +11,7 @@ import java.util.Date
 data class Money(
 
     @PrimaryKey(autoGenerate = true)
-    var id: Int,
+    var id: Int = 0,
     var amount: String,
     var discription: String,
     var type: String,

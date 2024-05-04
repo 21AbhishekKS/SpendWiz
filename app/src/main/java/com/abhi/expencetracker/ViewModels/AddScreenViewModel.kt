@@ -5,15 +5,21 @@ import androidx.annotation.RequiresApi
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.abhi.expencetracker.Database.money.MainApplication
 import com.abhi.expencetracker.Database.money.Money
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import java.time.Instant
+import java.util.Date
 
 class AddScreenViewModel : ViewModel() {
 
-    val moneyList : LiveData<List<Money>> = _MoneyList
+    val moneyDao = MainApplication.moneyDatabase.getMoneyDao()
 
-    fun getAllMoney()  {
-        _MoneyList.value = Manager.getAllMoney()
-    }
+    val moneyList : LiveData<List<Money>> = moneyDao.getAllMoney()
+
+
 
     @RequiresApi(Build.VERSION_CODES.O)
     fun addMoney(
@@ -21,19 +27,24 @@ class AddScreenViewModel : ViewModel() {
         description: String,
         type: String)
     {
-        Manager.addMoney(
-             amount , description , type
-        )
+        viewModelScope.launch(Dispatchers.IO) {
+            moneyDao.addMoney(Money(amount = amount ,
+                discription = description ,
+                type = type ,
+                date = Date.from(Instant.now()))
+            )
+        }
+
 
         //this function is called so that it show list in UI
-        getAllMoney()
+
 
     }
 
     @RequiresApi(Build.VERSION_CODES.N)
     fun deleteMoney(id : Int){
-        Manager.deleteMoney(id)
+        viewModelScope.launch(Dispatchers.IO) {
+        moneyDao.deleteMoney(id = id)
 
-        getAllMoney()
     }
-}
+}}
