@@ -31,10 +31,11 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.navigation.NavController
 import com.abhi.expencetracker.R
 
 
-class OnBoardingScreen {
+
 
     @OptIn(ExperimentalFoundationApi::class)
     @Composable
@@ -82,25 +83,30 @@ class OnBoardingScreen {
     modifier = Modifier.fillMaxHeight().padding(top=30.dp)) {
         OnBoardPager(boardingItems , pagerState , Modifier.fillMaxWidth())
 
+// have to  be written outside of this Column
+        Box(contentAlignment = Alignment.BottomCenter) {
+            PageIndicator(boardingItems.size  , pagerState.currentPage)
+        }
 
+
+        Box(contentAlignment = Alignment.BottomCenter) {
+            BottomSection(pagerState.currentPage)
+        }
     }
 
 
 
-    Box(contentAlignment = Alignment.BottomCenter) {
-        PageIndicator(boardingItems.size  , pagerState.currentPage)                    }
 
 
-    Box(contentAlignment = Alignment.BottomCenter) {
-        BottomSection(pagerState.currentPage)
-    }
+
+
 }
 
 
 
 
 
-}
+
 
 
 
@@ -180,7 +186,12 @@ fun BottomSection(currentPager : Int){
     ){
 
         if(currentPager == 2){
-            OutlinedButton(onClick = { /*TODO*/ } , shape = RoundedCornerShape(50)) {
+            OutlinedButton(onClick = {
+
+
+
+                                     }
+                , shape = RoundedCornerShape(50)) {
                 Text(text = "Get Started" , color = Color.DarkGray)
             }
         }

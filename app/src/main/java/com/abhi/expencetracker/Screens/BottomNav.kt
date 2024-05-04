@@ -1,5 +1,7 @@
 package com.abhi.expencetracker.Screens
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddCircle
@@ -16,22 +18,24 @@ import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.navigation.NavController
+import androidx.lifecycle.ViewModel
 import androidx.navigation.NavGraph.Companion.findStartDestination
-import androidx.navigation.NavHost
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.abhi.expencetracker.ViewModels.AddScreenViewModel
 import com.abhi.expencetracker.helper.BottomNavigationItem
 import com.abhi.expencetracker.navigation.Routes
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun BottomNav(navController: NavHostController){
+fun BottomNav(navController: NavHostController , moneyViewModel : AddScreenViewModel){
+
+
     val navController1 = rememberNavController()
     Scaffold(bottomBar = { MyBottomBar(navController1 = navController1) }){ innerPadding ->
         NavHost(navController = navController1,
@@ -43,18 +47,19 @@ fun BottomNav(navController: NavHostController){
             }
 
             composable(Routes.AddScreen.route){
-                AddScreen()
+                AddScreen(moneyViewModel)
             }
 
             composable(Routes.ProfileScreen.route){
-                ProfileScreen()
+                //ProfileScreen()
+                OnBoardingScreen()
             }
 
             composable(Routes.TransferScreen.route){
                 TransferScreen()
             }
 
-            composable(Routes.AddScreen.route){
+            composable(Routes.SpentScreen.route){
                 SpentScreen()
             }
 
