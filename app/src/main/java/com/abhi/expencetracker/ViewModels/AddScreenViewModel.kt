@@ -25,14 +25,16 @@ class AddScreenViewModel : ViewModel() {
     fun addMoney(
         amount: String,
         description: String,
-        type: String)
+        type: String,)
+        //date : Date,)
     {
         viewModelScope.launch(Dispatchers.IO) {
             moneyDao.addMoney(Money(amount = amount ,
                 discription = description ,
                 type = type ,
-                date = Date.from(Instant.now()))
-            )
+                date = Date.from(Instant.now())))
+               // date = date)
+
         }
 
 

@@ -43,7 +43,7 @@ fun BottomNav(navController: NavHostController , moneyViewModel : AddScreenViewM
             modifier = Modifier.padding(innerPadding)){
 
             composable(route = Routes.HomeScreen.route){
-                HomeScreen()
+                HomeScreen(moneyViewModel)
             }
 
             composable(Routes.AddScreen.route){

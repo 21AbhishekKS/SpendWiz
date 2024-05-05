@@ -50,7 +50,8 @@ fun ExpenceTrackerTheme(
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
 
-        darkTheme -> DarkColorScheme
+//Modified Here
+        darkTheme -> LightColorScheme
         else -> LightColorScheme
     }
     val view = LocalView.current

@@ -17,9 +17,9 @@ import com.abhi.expencetracker.Screens.TransferScreen
 fun NavGraph(navController: NavHostController){
     NavHost(navController = navController, startDestination = Routes.HomeScreen.route){
 
-        composable(route = Routes.HomeScreen.route){
-            HomeScreen()
-        }
+       // composable(route = Routes.HomeScreen.route){
+       //     HomeScreen()
+       // }
 
       //  composable(Routes.AddScreen.route){
       //      AddScreen()
