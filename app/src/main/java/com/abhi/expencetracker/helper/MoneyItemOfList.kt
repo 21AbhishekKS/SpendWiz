@@ -1,2 +1,76 @@
 package com.abhi.expencetracker.helper
 
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Card
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
+import com.abhi.expencetracker.Database.money.Money
+import com.abhi.expencetracker.R
+import java.text.SimpleDateFormat
+import java.util.Locale
+
+@Composable
+fun MoneyItem1(item : Money){
+
+    Card(
+        Modifier
+            .fillMaxWidth()
+            .padding(5.dp)
+    ) {
+        Row(
+            Modifier
+                .padding(10.dp)
+                .fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically){
+
+
+            Row(verticalAlignment = Alignment.CenterVertically){
+                Image(painter = painterResource(id =
+                if(item.type  == "Received" ){R.drawable.received_icon}
+                else if (item.type  == "Spent"){R.drawable.spent_icon}
+                else{R.drawable.transaction_icon}
+                ),
+                    contentDescription = "" ,
+                    Modifier
+                        .padding(10.dp)
+                        .size(40.dp)
+                )
+
+                Column {
+                    Text(text = item.discription)
+                    // Text(text = SimpleDateFormat("hh-mm:aa , dd/MM", Locale.ENGLISH).format(item.date))
+                    Text(text = SimpleDateFormat("dd/MM/yyyy", Locale.ENGLISH).format(item.date))
+                }
+            }
+
+
+            Text(text = if(item.type  == "Received" ){"+ "+item.amount}
+            else if (item.type  == "Spent"){"- "+item.amount}
+            else{"  "+item.amount} ,
+
+                color =
+                if(item.type  == "Received" ){
+                    Color(0xFF5ABB5E) }
+                else if (item.type  == "Spent"){
+                    Color(0xFFF03B2E)
+                }
+                else{
+                    Color(0xFF4B62E4)
+                })
+        }
+
+    }
+
+}
