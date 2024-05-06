@@ -1,6 +1,7 @@
 package com.abhi.expencetracker.helper
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -25,12 +26,14 @@ fun MoneyItem1(item : Money){
 
     Card(
         Modifier
+            .background(Color.White)
             .fillMaxWidth()
             .padding(5.dp)
     ) {
         Row(
             Modifier
-                .padding(10.dp)
+                .background(Color.White)
+                .padding(end = 10.dp)
                 .fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically){
@@ -51,7 +54,8 @@ fun MoneyItem1(item : Money){
                 Column {
                     Text(text = item.discription)
                     // Text(text = SimpleDateFormat("hh-mm:aa , dd/MM", Locale.ENGLISH).format(item.date))
-                    Text(text = SimpleDateFormat("dd/MM/yyyy", Locale.ENGLISH).format(item.date))
+                   // Text(text = SimpleDateFormat("dd/MM/yyyy", Locale.ENGLISH).format(item.date))
+                    Text(text = item.date)
                 }
             }
 

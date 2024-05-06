@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import com.abhi.expencetracker.ViewModels.AddScreenViewModel
 import com.abhi.expencetracker.Database.money.Money
 import com.abhi.expencetracker.helper.MoneyItem1
+import com.abhi.expencetracker.helper.TransactionList
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -134,22 +135,8 @@ fun AddScreen(viewModel : AddScreenViewModel){
             }
         }
 
-        TransactionList(moneyList)
+        TransactionList(moneyList?.reversed())
     } }
 
 
-@Composable
-fun TransactionList(moneyList: List<Money>?) {
 
-    moneyList?.let {
-        LazyColumn(
-            content = {
-                itemsIndexed(moneyList!!){ index, item ->
-                    MoneyItem1(item = item)
-
-                }
-            }
-
-        )}?: Text(text = "no Items")
-
-}

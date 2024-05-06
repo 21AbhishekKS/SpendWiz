@@ -2,10 +2,8 @@ package com.abhi.expencetracker.Database.money
 
 import androidx.lifecycle.LiveData
 import androidx.room.Dao
-import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
-import androidx.room.Update
 
 @Dao
 interface MoneyDao {
@@ -19,5 +17,9 @@ interface MoneyDao {
     @Insert
     fun addMoney(money: Money)
 
+    //function to get today's transaction
+
+    @Query("SELECT * from money where date = :date")
+    fun getTodayTransaction(date: String) : LiveData<List<Money>>
 
 }
