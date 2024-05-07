@@ -1,24 +1,30 @@
-package com.abhi.expencetracker.ViewModels
+package com.abhi.expencetracker.Database.money.ViewModels
 
 import android.os.Build
 import androidx.annotation.RequiresApi
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.abhi.expencetracker.Database.money.MainApplication
 import com.abhi.expencetracker.Database.money.Money
+import com.abhi.expencetracker.Database.money.MoneyDao
+import com.abhi.expencetracker.Database.money.TransactionWithDate
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import java.time.Instant
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
-import java.util.Date
 
 class AddScreenViewModel : ViewModel() {
 
     val moneyDao = MainApplication.moneyDatabase.getMoneyDao()
 
     val moneyList : LiveData<List<Money>> = moneyDao.getAllMoney()
+
 
     @RequiresApi(Build.VERSION_CODES.O)
     val today = LocalDate.now()
@@ -31,7 +37,15 @@ class AddScreenViewModel : ViewModel() {
 
 
     @RequiresApi(Build.VERSION_CODES.O)
-    val todayMoneyList : LiveData<List<Money>> = moneyDao.getTodayTransaction(formattedDateCustom)
+    val todayMoneyList : LiveData<List<Money>> = moneyDao.getTodayTransactionByDate(formattedDateCustom)
+
+
+
+
+
+
+
+
 
 
 
@@ -47,14 +61,12 @@ class AddScreenViewModel : ViewModel() {
                 amount = amount ,
                 discription = description ,
                 type = type ,
-                date = "06/05/2024"))
-               // date = Date.from(Instant.now()).toString()))
-               // date = date)
+               // date = "05/05/2024"))
+               date = formattedDateCustom.toString()))
 
         }
 
 
-        //this function is called so that it show list in UI
 
 
     }
@@ -65,4 +77,10 @@ class AddScreenViewModel : ViewModel() {
         moneyDao.deleteMoney(id = id)
 
     }
+
+
+
+
+
+
 }}

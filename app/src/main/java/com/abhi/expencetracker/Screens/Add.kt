@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -26,8 +27,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import com.abhi.expencetracker.ViewModels.AddScreenViewModel
+import com.abhi.expencetracker.Database.money.ViewModels.AddScreenViewModel
 import com.abhi.expencetracker.Database.money.Money
 import com.abhi.expencetracker.helper.MoneyItem1
 import com.abhi.expencetracker.helper.TransactionList
@@ -110,12 +112,22 @@ fun AddScreen(viewModel : AddScreenViewModel){
 
 
 
-            OutlinedTextField(value = ipMoney.toString(), onValueChange ={
-                ipMoney = it
-            }, modifier = Modifier.padding(10.dp) , label = { Text(text = "Amount")})
-            OutlinedTextField(value = ipDescription, onValueChange ={
-                ipDescription = it
-            }, modifier = Modifier.padding(10.dp) ,label = { Text(text = "Description")})
+            OutlinedTextField(value = ipMoney.toString(),
+                onValueChange ={ ipMoney = it },
+                modifier = Modifier.padding(10.dp),
+                label = { Text(text = "Amount") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+
+            )
+
+
+            OutlinedTextField(
+                value = ipDescription,
+                onValueChange ={
+                ipDescription = it },
+                modifier = Modifier.padding(10.dp) ,
+                label = { Text(text = "Description")
+                })
 
 
             Button(onClick = {
@@ -135,7 +147,7 @@ fun AddScreen(viewModel : AddScreenViewModel){
             }
         }
 
-        TransactionList(moneyList?.reversed())
+        //TransactionList(moneyList?.reversed())
     } }
 
 

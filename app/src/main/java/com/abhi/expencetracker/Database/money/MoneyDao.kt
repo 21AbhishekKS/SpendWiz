@@ -20,6 +20,7 @@ interface MoneyDao {
     //function to get today's transaction
 
     @Query("SELECT * from money where date = :date")
-    fun getTodayTransaction(date: String) : LiveData<List<Money>>
+    fun getTodayTransactionByDate(date: String) : LiveData<List<Money>>
+
 
 }

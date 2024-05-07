@@ -22,12 +22,13 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.abhi.expencetracker.ViewModels.AddScreenViewModel
+import com.abhi.expencetracker.Database.money.ViewModels.AddScreenViewModel
 import com.abhi.expencetracker.helper.AnimatedIconCard
 import com.abhi.expencetracker.helper.TransactionList
 
@@ -62,7 +63,8 @@ fun HomeScreen(viewModel : AddScreenViewModel){
     }
 
     Column(
-        Modifier.verticalScroll(rememberScrollState())
+        horizontalAlignment = Alignment.CenterHorizontally
+
     ) {
 
 
@@ -75,6 +77,11 @@ fun HomeScreen(viewModel : AddScreenViewModel){
 
         AnimatedIconCard()
 
+        Text(
+            text = "Today's Transactions",
+            style = MaterialTheme.typography.headlineSmall,
+            color = Color.DarkGray
+        )
        TransactionList(todayMoneyList?.reversed())
 
 

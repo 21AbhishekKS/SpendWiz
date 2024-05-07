@@ -32,7 +32,7 @@ fun TransactionList(moneyList: List<Money>?) {
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(text = "No items !")
+                Text(text = "No Transactions today !")
                // Image(
                 //    painter = painterResource(id = R.drawable.no_transaction),
                 //    contentDescription = "No transactions found",

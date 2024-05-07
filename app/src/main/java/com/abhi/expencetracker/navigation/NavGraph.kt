@@ -6,10 +6,8 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.abhi.expencetracker.Screens.AddScreen
-import com.abhi.expencetracker.Screens.HomeScreen
 import com.abhi.expencetracker.Screens.ProfileScreen
-import com.abhi.expencetracker.Screens.SpentScreen
+import com.abhi.expencetracker.Screens.TransactionScreen
 import com.abhi.expencetracker.Screens.TransferScreen
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -33,8 +31,8 @@ fun NavGraph(navController: NavHostController){
             TransferScreen()
         }
 
-        composable(Routes.SpentScreen.route){
-            SpentScreen()
-        }
+       // composable(Routes.SpentScreen.route){
+        //    TransactionScreen()
+       // }
 
     }}

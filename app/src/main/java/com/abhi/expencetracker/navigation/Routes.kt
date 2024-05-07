@@ -5,7 +5,7 @@ sealed class Routes( val route : String) {
     object TransferScreen : Routes("Trans")
 
     object ProfileScreen : Routes("Profile")
-    object SpentScreen : Routes("Spent")
+    object SpentScreen : Routes("Transaction")
     object AddScreen : Routes("Add")
 
     object OnBoardingScreen : Routes("Board")
