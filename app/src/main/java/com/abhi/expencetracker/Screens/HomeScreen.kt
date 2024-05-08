@@ -28,6 +28,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 import com.abhi.expencetracker.Database.money.ViewModels.AddScreenViewModel
 import com.abhi.expencetracker.helper.AnimatedIconCard
 import com.abhi.expencetracker.helper.TransactionList
@@ -35,7 +36,7 @@ import com.abhi.expencetracker.helper.TransactionList
 @RequiresApi(Build.VERSION_CODES.O)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-fun HomeScreen(viewModel : AddScreenViewModel){
+fun HomeScreen(viewModel : AddScreenViewModel , navController: NavController){
     val todayMoneyList by viewModel.todayMoneyList.observeAsState()
 
     var totalMoneySpent by remember {
@@ -82,7 +83,7 @@ fun HomeScreen(viewModel : AddScreenViewModel){
             style = MaterialTheme.typography.headlineSmall,
             color = Color.DarkGray
         )
-       TransactionList(todayMoneyList?.reversed())
+       TransactionList(todayMoneyList?.reversed() , navController = navController , viewModel)
 
 
 

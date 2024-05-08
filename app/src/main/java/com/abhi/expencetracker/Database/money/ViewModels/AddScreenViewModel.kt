@@ -2,19 +2,12 @@ package com.abhi.expencetracker.Database.money.ViewModels
 
 import android.os.Build
 import androidx.annotation.RequiresApi
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.abhi.expencetracker.Database.money.MainApplication
 import com.abhi.expencetracker.Database.money.Money
-import com.abhi.expencetracker.Database.money.MoneyDao
-import com.abhi.expencetracker.Database.money.TransactionWithDate
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -51,6 +44,7 @@ class AddScreenViewModel : ViewModel() {
 
     @RequiresApi(Build.VERSION_CODES.O)
     fun addMoney(
+        id: Int,
         amount: String,
         description: String,
         type: String,)
@@ -58,29 +52,27 @@ class AddScreenViewModel : ViewModel() {
     {
         viewModelScope.launch(Dispatchers.IO) {
             moneyDao.addMoney(Money(
+                id =  id,
                 amount = amount ,
                 discription = description ,
                 type = type ,
                // date = "05/05/2024"))
                date = formattedDateCustom.toString()))
 
+
+
         }
-
-
-
-
-    }
-
-    @RequiresApi(Build.VERSION_CODES.N)
-    fun deleteMoney(id : Int){
-        viewModelScope.launch(Dispatchers.IO) {
-        moneyDao.deleteMoney(id = id)
-
     }
 
 
 
+     @RequiresApi(Build.VERSION_CODES.N)
+        fun deleteMoney(id : Int) {
+         viewModelScope.launch(Dispatchers.IO) {
+             moneyDao.deleteMoney(id = id)
+
+         }
 
 
-
-}}
+     }
+}

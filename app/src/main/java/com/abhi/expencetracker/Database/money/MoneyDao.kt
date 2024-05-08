@@ -2,8 +2,12 @@ package com.abhi.expencetracker.Database.money
 
 import androidx.lifecycle.LiveData
 import androidx.room.Dao
+import androidx.room.Delete
 import androidx.room.Insert
+import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Update
+import androidx.room.Upsert
 
 @Dao
 interface MoneyDao {
@@ -14,8 +18,12 @@ interface MoneyDao {
     @Query("DELETE FROM money WHERE id =  :id")
     fun deleteMoney(id : Int)
 
-    @Insert
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun addMoney(money: Money)
+
+
+
+
 
     //function to get today's transaction
 

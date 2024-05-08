@@ -7,8 +7,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenuItem
@@ -30,15 +28,18 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.abhi.expencetracker.Database.money.ViewModels.AddScreenViewModel
-import com.abhi.expencetracker.Database.money.Money
-import com.abhi.expencetracker.helper.MoneyItem1
-import com.abhi.expencetracker.helper.TransactionList
 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun AddScreen(viewModel : AddScreenViewModel){
+fun AddScreen(
+    viewModel: AddScreenViewModel,
+    passedDescription: String,
+    passedAmount: String,
+    id: Int,
+    type: String
+){
 
 
     val moneyList by viewModel.moneyList.observeAsState()
@@ -52,14 +53,15 @@ fun AddScreen(viewModel : AddScreenViewModel){
     }
 
     var ipTransactionType by rememberSaveable {
-        mutableStateOf(listOfTransactionType[0])
+        //mutableStateOf(listOfTransactionType[0])
+        mutableStateOf(type)
     }
 
     var ipMoney by rememberSaveable{
-        mutableStateOf("")
+        mutableStateOf(passedAmount)
     }
     var ipDescription by rememberSaveable {
-        mutableStateOf("")
+        mutableStateOf(passedDescription)
     }
     var ipDate by rememberSaveable {
         mutableStateOf("")
@@ -122,7 +124,7 @@ fun AddScreen(viewModel : AddScreenViewModel){
 
 
             OutlinedTextField(
-                value = ipDescription,
+                value = ipDescription?:"",
                 onValueChange ={
                 ipDescription = it },
                 modifier = Modifier.padding(10.dp) ,
@@ -135,10 +137,16 @@ fun AddScreen(viewModel : AddScreenViewModel){
                     Toast.makeText(context , "All fields are required" , Toast.LENGTH_SHORT).show()
                 }
                 else{
-                    viewModel.addMoney(ipMoney,ipDescription,ipTransactionType)
-                    ipMoney=""
-                    ipDescription=""
-                    ipDate=""
+
+
+
+                        viewModel.addMoney(id,ipMoney,ipDescription,ipTransactionType)
+                        ipMoney=""
+                        ipDescription=""
+                        ipDate=""
+
+
+
                 }
 
 

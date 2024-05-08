@@ -41,11 +41,20 @@ fun BottomNav(navController: NavHostController , moneyViewModel : AddScreenViewM
             modifier = Modifier.padding(innerPadding)){
 
             composable(route = Routes.HomeScreen.route){
-                HomeScreen(moneyViewModel)
+                HomeScreen(moneyViewModel , navController1)
             }
 
-            composable(Routes.AddScreen.route){
-                AddScreen(moneyViewModel)
+            //composable(Routes.AddScreen.route+"?description={description}/?amount={amount}/?id={id}"){
+                composable(Routes.AddScreen.route + "?description={description}&amount={amount}&id={id}&type={type}"){
+                var description = it.arguments?.getString("description")
+                var amount = it.arguments?.getString("amount")
+                var type = it.arguments?.getString("type")
+                var id = it.arguments?.getInt("id")
+
+              //  AddScreen(moneyViewModel , description ?: "" , amount ?: "" , updateMode?: false)
+                if (id != null) {
+                    AddScreen(moneyViewModel , description ?: "" , amount ?: "" , id ,type?:"Spent")
+                }
             }
 
             composable(Routes.ProfileScreen.route){
@@ -58,7 +67,7 @@ fun BottomNav(navController: NavHostController , moneyViewModel : AddScreenViewM
             }
 
             composable(Routes.SpentScreen.route){
-                TransactionScreen(moneyViewModel)
+                TransactionScreen(moneyViewModel )
             }
 
         }
