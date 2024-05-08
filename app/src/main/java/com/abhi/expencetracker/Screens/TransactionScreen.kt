@@ -31,7 +31,7 @@ import com.abhi.expencetracker.helper.MoneyItem1
 fun TransactionScreen(viewModel: AddScreenViewModel ){
 
     var context = LocalContext.current
-    val moneyList1 by viewModel.moneyList.observeAsState()
+    val moneyList1 by viewModel.moneyDao.getAllMoney().observeAsState()
     var currentDate = ""
 
     val scrollableState = rememberScrollState()
@@ -52,7 +52,7 @@ fun TransactionScreen(viewModel: AddScreenViewModel ){
             moneyList1?.reversed()?.forEachIndexed() { index, item ->
                 if (currentDate != item.date ){
                     Text(
-                        text = moneyList1!![index].date,
+                        text = item.date,
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(16.dp)

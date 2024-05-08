@@ -12,7 +12,7 @@ import androidx.room.Upsert
 @Dao
 interface MoneyDao {
 
-    @Query("select * from MONEY")
+    @Query("select * from MONEY order by date asc")
     fun getAllMoney() : LiveData<List<Money>>
 
     @Query("DELETE FROM money WHERE id =  :id")
