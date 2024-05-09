@@ -38,6 +38,7 @@ fun TransactionScreen(viewModel: AddScreenViewModel ){
 
     Column(modifier = Modifier
         .fillMaxSize()
+        .background(Color.White)
         .verticalScroll(scrollableState),
         ) {
         if (moneyList1?.reversed().isNullOrEmpty()) {

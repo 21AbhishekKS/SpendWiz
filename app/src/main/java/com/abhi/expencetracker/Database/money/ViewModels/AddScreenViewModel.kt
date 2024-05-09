@@ -5,7 +5,7 @@ import androidx.annotation.RequiresApi
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.abhi.expencetracker.Database.money.MainApplication
+import com.abhi.expencetracker.MainApplication
 import com.abhi.expencetracker.Database.money.Money
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

@@ -6,12 +6,14 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -27,9 +29,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.abhi.expencetracker.Database.money.ViewModels.AddScreenViewModel
+import com.abhi.expencetracker.Notifications.NotificationService
 import com.abhi.expencetracker.helper.AnimatedIconCard
 import com.abhi.expencetracker.helper.TransactionList
 
@@ -38,6 +42,10 @@ import com.abhi.expencetracker.helper.TransactionList
 @Composable
 fun HomeScreen(viewModel : AddScreenViewModel , navController: NavController){
     val todayMoneyList by viewModel.todayMoneyList.observeAsState()
+
+    val scrollableState = rememberScrollState()
+
+    val context = LocalContext.current
 
     var totalMoneySpent by remember {
         mutableIntStateOf(0)
@@ -60,10 +68,19 @@ fun HomeScreen(viewModel : AddScreenViewModel , navController: NavController){
             else{
 
             }
-                            }
+    }
     }
 
+    val notificationService = NotificationService(context,
+        "You spent $totalMoneySpent Rs and earned $totalMoneyEarned Rs today" +
+                " ")
+
+
     Column(
+        Modifier
+            .fillMaxSize()
+            .background(Color.White),
+          //  .verticalScroll(scrollableState),
         horizontalAlignment = Alignment.CenterHorizontally
 
     ) {
@@ -83,6 +100,11 @@ fun HomeScreen(viewModel : AddScreenViewModel , navController: NavController){
             style = MaterialTheme.typography.headlineSmall,
             color = Color.DarkGray
         )
+
+        Button(onClick = { notificationService.showDailyNotification() }) {
+            Text(text = "Notification Test")
+        }
+
        TransactionList(todayMoneyList?.reversed() , navController = navController , viewModel)
 
 

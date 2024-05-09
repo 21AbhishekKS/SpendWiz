@@ -78,8 +78,12 @@ import com.abhi.expencetracker.R
 
 
 
-    Column(horizontalAlignment = Alignment.CenterHorizontally ,
-    modifier = Modifier.fillMaxHeight().padding(top=30.dp)) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally ,
+    modifier = Modifier.fillMaxHeight()
+    //.padding(top=30.dp)
+    .background(Color.White))
+    {
         OnBoardPager(boardingItems , pagerState , Modifier.fillMaxWidth())
 
 // have to  be written outside of this Column
