@@ -37,6 +37,9 @@ class MainApplication : Application() {
 
         notificationManager.createNotificationChannel(notificationChannel)
 
+        //NotificationService(this, "Notification description").setAlaram(this)
+
+
 
 
 

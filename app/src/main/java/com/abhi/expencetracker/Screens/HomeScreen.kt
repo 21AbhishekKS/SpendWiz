@@ -10,10 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -41,9 +38,10 @@ import com.abhi.expencetracker.helper.TransactionList
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun HomeScreen(viewModel : AddScreenViewModel , navController: NavController){
-    val todayMoneyList by viewModel.todayMoneyList.observeAsState()
 
-    val scrollableState = rememberScrollState()
+
+
+    val todayMoneyList by viewModel.todayMoneyList.observeAsState()
 
     val context = LocalContext.current
 
@@ -71,9 +69,11 @@ fun HomeScreen(viewModel : AddScreenViewModel , navController: NavController){
     }
     }
 
+
+
     val notificationService = NotificationService(context,
         "You spent $totalMoneySpent Rs and earned $totalMoneyEarned Rs today" +
-                " ")
+                " ").setAlarm(context)
 
 
     Column(
@@ -101,9 +101,7 @@ fun HomeScreen(viewModel : AddScreenViewModel , navController: NavController){
             color = Color.DarkGray
         )
 
-        Button(onClick = { notificationService.showDailyNotification() }) {
-            Text(text = "Notification Test")
-        }
+
 
        TransactionList(todayMoneyList?.reversed() , navController = navController , viewModel)
 

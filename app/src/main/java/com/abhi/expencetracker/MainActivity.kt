@@ -42,6 +42,7 @@ class MainActivity : ComponentActivity() {
                 ) {
 
 
+
                     val navController  = rememberNavController()
                     BottomNav(navController , moneyViewModel)
 
