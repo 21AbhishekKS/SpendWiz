@@ -15,9 +15,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.compose.rememberNavController
-import com.abhi.expencetracker.Screens.BottomNav
-import com.abhi.expencetracker.Screens.HomeScreen
+import com.abhi.expencetracker.navigation.BottomNav
 import com.abhi.expencetracker.Database.money.ViewModels.AddScreenViewModel
+import com.abhi.expencetracker.navigation.NavGraph
 
 import com.abhi.expencetracker.ui.theme.ExpenceTrackerTheme
 
@@ -46,10 +46,7 @@ class MainActivity : ComponentActivity() {
                     val navController  = rememberNavController()
                     BottomNav(navController , moneyViewModel)
 
-
-
-
-
+                   // NavGraph(navController = navController, viewModel = moneyViewModel )
 
                 }
             }

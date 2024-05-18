@@ -29,15 +29,19 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import androidx.navigation.NavHostController
 import com.abhi.expencetracker.Database.money.ViewModels.AddScreenViewModel
 import com.abhi.expencetracker.Notifications.NotificationService
-import com.abhi.expencetracker.helper.AnimatedIconCard
-import com.abhi.expencetracker.helper.TransactionList
+import com.abhi.expencetracker.utils.AnimatedIconCard
+import com.abhi.expencetracker.utils.TransactionList
 
 @RequiresApi(Build.VERSION_CODES.O)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-fun HomeScreen(viewModel : AddScreenViewModel , navController: NavController){
+fun HomeScreen(
+    viewModel: AddScreenViewModel,
+    navController1: NavHostController
+){
 
 
 
@@ -103,7 +107,7 @@ fun HomeScreen(viewModel : AddScreenViewModel , navController: NavController){
 
 
 
-       TransactionList(todayMoneyList?.reversed() , navController = navController , viewModel)
+       TransactionList(todayMoneyList?.reversed() , navController = navController1 , viewModel)
 
 
 

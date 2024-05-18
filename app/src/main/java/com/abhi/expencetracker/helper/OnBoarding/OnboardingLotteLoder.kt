@@ -1,4 +1,4 @@
-package com.abhi.expencetracker.OnBoarding
+package com.abhi.expencetracker.helper.OnBoarding
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue

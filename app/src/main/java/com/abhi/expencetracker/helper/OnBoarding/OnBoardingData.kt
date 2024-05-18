@@ -1,4 +1,4 @@
-package com.abhi.expencetracker.OnBoarding
+package com.abhi.expencetracker.helper.OnBoarding
 
 data class OnBoardingData(
     val image : Int ,

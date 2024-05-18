@@ -68,13 +68,13 @@ import com.abhi.expencetracker.utils.TransparentTextField
 @OptIn(ExperimentalMaterial3Api::class)
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun AddScreen(
+fun UpdateScreen(
     viewModel: AddScreenViewModel,
     navController: NavController,
-  //  passedDescription: String,
-  //  passedAmount: String,
-  //  id: Int,
-  //  type: String
+    passedDescription: String,
+    passedAmount: String,
+    id: Int,
+    type: String
 ) {
 
     val moneyList by viewModel.moneyList.observeAsState()
@@ -88,14 +88,14 @@ fun AddScreen(
     }
 
     var ipTransactionType by rememberSaveable {
-        mutableStateOf("Transaction")
+        mutableStateOf(type)
     }
 
     var ipMoney by rememberSaveable {
-        mutableStateOf("")
+        mutableStateOf(passedAmount)
     }
     var ipDescription by rememberSaveable {
-        mutableStateOf("")
+        mutableStateOf(passedDescription)
     }
     var ipDate by rememberSaveable {
         mutableStateOf("")
@@ -146,7 +146,7 @@ fun AddScreen(
                     , fontWeight = FontWeight.Bold  ,
                     color = Color.White ,
                     fontSize = 25.sp ,
-                    )
+                )
 
             }
 
@@ -202,7 +202,7 @@ fun AddScreen(
                                 onClick = {
                                     ipTransactionType = listOfTransactionType[index]
                                     isExpanded = false
-                                   },
+                                },
                                 contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
                             )
                         }
@@ -229,8 +229,8 @@ fun AddScreen(
                         imeAction = ImeAction.Next
                     ),
                     singleLine = true,
-                //    visualTransformation = NumberTransformation(),
-                 //   keyboardActions = KeyboardActions(onNext = { keyboardController?.hide() })
+                    //    visualTransformation = NumberTransformation(),
+                    //   keyboardActions = KeyboardActions(onNext = { keyboardController?.hide() })
 
                 )
 
@@ -243,11 +243,11 @@ fun AddScreen(
                         .padding(bottom = 10.dp)
                         .fillMaxWidth() ,
                     label = { Text(text = "Description")},
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Text,
-                            imeAction = ImeAction.Next),
-                        singleLine = true
-                    )
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Text,
+                        imeAction = ImeAction.Next),
+                    singleLine = true
+                )
 
 
 
@@ -256,11 +256,11 @@ fun AddScreen(
                         Toast.makeText(context, "All fields are required", Toast.LENGTH_SHORT)
                             .show()
                     } else {
-                        viewModel.addMoney(0, ipMoney, ipDescription, ipTransactionType)
+                        viewModel.addMoney(id, ipMoney, ipDescription, ipTransactionType)
                         ipMoney = ""
                         ipDescription = ""
                         ipDate = ""
-                     //   Toast.makeText(context, "Saved", Toast.LENGTH_SHORT).show()
+                        //   Toast.makeText(context, "Saved", Toast.LENGTH_SHORT).show()
                         navController.popBackStack()
 
 

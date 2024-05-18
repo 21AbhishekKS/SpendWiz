@@ -1,16 +1,14 @@
-package com.abhi.expencetracker.Screens
+package com.abhi.expencetracker.navigation
 
 import android.os.Build
 import androidx.annotation.RequiresApi
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.ShoppingCart
-import androidx.compose.material.icons.outlined.AddCircle
+import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.ShoppingCart
@@ -22,8 +20,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.unit.dp
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -31,8 +27,13 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.abhi.expencetracker.Database.money.ViewModels.AddScreenViewModel
+import com.abhi.expencetracker.Screens.AddScreen
+import com.abhi.expencetracker.Screens.HomeScreen
+import com.abhi.expencetracker.Screens.ProfileScreen
+import com.abhi.expencetracker.Screens.TransactionScreen
+import com.abhi.expencetracker.Screens.TransferScreen
+import com.abhi.expencetracker.Screens.UpdateScreen
 import com.abhi.expencetracker.helper.BottomNavigationItem
-import com.abhi.expencetracker.navigation.Routes
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -40,17 +41,27 @@ fun BottomNav(navController: NavHostController , moneyViewModel : AddScreenViewM
 
 
     val navController1 = rememberNavController()
-    Scaffold(bottomBar = {MyBottomBar(navController1 = navController1) }){ innerPadding ->
+    Scaffold(bottomBar = { MyBottomBar(navController1 = navController1) }){ innerPadding ->
         NavHost(navController = navController1,
             startDestination = Routes.HomeScreen.route ,
             modifier = Modifier.padding(innerPadding)){
 
             composable(route = Routes.HomeScreen.route){
-                HomeScreen(moneyViewModel , navController1)
+                HomeScreen(moneyViewModel , navController1 )
             }
 
+
+
+
             //composable(Routes.AddScreen.route+"?description={description}/?amount={amount}/?id={id}"){
-                composable(Routes.AddScreen.route + "?description={description}&amount={amount}&id={id}&type={type}"){
+                composable(Routes.AddScreen.route){
+
+              //  AddScreen(moneyViewModel , description ?: "" , amount ?: "" , updateMode?: false)
+                    AddScreen(moneyViewModel , navController1)
+
+            }
+
+            composable(Routes.UpdateScreen.route + "?description={description}&amount={amount}&id={id}&type={type}"){
                 var description = it.arguments?.getString("description")
                 var amount = it.arguments?.getString("amount")
                 var type = it.arguments?.getString("type")
@@ -58,13 +69,13 @@ fun BottomNav(navController: NavHostController , moneyViewModel : AddScreenViewM
 
               //  AddScreen(moneyViewModel , description ?: "" , amount ?: "" , updateMode?: false)
                 if (id != null) {
-                    AddScreen(moneyViewModel , description ?: "" , amount ?: "" , id ,type?:"Spent")
+                    UpdateScreen(moneyViewModel , navController1,description ?: "" , amount ?: "" , id ,type?:"Transaction")
                 }
             }
 
             composable(Routes.ProfileScreen.route){
-                //ProfileScreen()
-                OnBoardingScreen()
+                ProfileScreen()
+              //  OnBoardingScreen()
             }
 
             composable(Routes.TransferScreen.route){
@@ -101,12 +112,12 @@ fun MyBottomBar(navController1: NavHostController) {
         BottomNavigationItem(
             "Add",
             Icons.Filled.AddCircle ,
-            Icons.Outlined.AddCircle ,
+            Icons.Outlined.Add ,
             hasNews = false,
             badgeCount = null
         ),
         BottomNavigationItem(
-            "Transaction",
+            "History",
             Icons.Filled.ShoppingCart ,
             Icons.Outlined.ShoppingCart ,
             hasNews = false,
@@ -121,7 +132,8 @@ fun MyBottomBar(navController1: NavHostController) {
         ),
     )
 
-    BottomAppBar() {
+    BottomAppBar(containerColor = Color.White,
+            content ={
         items.forEachIndexed { index, bottomNavigationItem ->
             val selected = bottomNavigationItem.title == backStackEntry.value?.destination?.route
 
@@ -139,10 +151,10 @@ fun MyBottomBar(navController1: NavHostController) {
                 icon = {
                     Icon(
                         imageVector = if (selected) bottomNavigationItem.selectedIcon else bottomNavigationItem.unSelectedIcon,
-                        contentDescription = bottomNavigationItem.title.toString()
+                        contentDescription = bottomNavigationItem.title
                     )
                 }, label = {
                     Text(text = bottomNavigationItem.title)}
             )
         }
-    }}
+    } ) }

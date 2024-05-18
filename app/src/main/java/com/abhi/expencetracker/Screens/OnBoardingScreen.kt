@@ -4,8 +4,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.abhi.expencetracker.OnBoarding.LoaderIntro
-import com.abhi.expencetracker.OnBoarding.OnBoardingData
+import com.abhi.expencetracker.helper.OnBoarding.LoaderIntro
+import com.abhi.expencetracker.helper.OnBoarding.OnBoardingData
 import androidx.compose.ui.draw.clip
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -44,28 +44,34 @@ import com.abhi.expencetracker.R
 
 
 
-    boardingItems.add(OnBoardingData(R.raw.a5 ,
+    boardingItems.add(
+        OnBoardingData(R.raw.a5 ,
     "Track It ? Own It" ,
     " Reach your financial goals faster.\n" +
     " Our expense tracker empowers you\n" +
     " to make informed spending\n " +
-    "decisions."))
+    "decisions.")
+    )
 
 
-    boardingItems.add(OnBoardingData(
+    boardingItems.add(
+        OnBoardingData(
         R.raw.a4,
     "Own Your Money" ,
     "Track your income easily and \n" +
     " manage expenses effortlessly gain\n" +
     " financial insights and manage \n" +
-    " money with confidence!"))
+    " money with confidence!")
+    )
 
-    boardingItems.add(OnBoardingData(R.raw.a8 ,
+    boardingItems.add(
+        OnBoardingData(R.raw.a8 ,
     "Spend Smarter" ,
     "Securely track your expenses and\n" +
     " build a healthier financial future. Our\n" +
     " app keeps your data safe and\n" +
-    "organized."))
+    "organized.")
+    )
 
 
 

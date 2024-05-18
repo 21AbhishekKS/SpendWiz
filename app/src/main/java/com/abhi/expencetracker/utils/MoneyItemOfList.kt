@@ -1,4 +1,4 @@
-package com.abhi.expencetracker.helper
+package com.abhi.expencetracker.utils
 
 import android.view.View.OnClickListener
 import android.widget.Toast
@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.abhi.expencetracker.Database.money.Money
 import com.abhi.expencetracker.R
@@ -65,7 +66,7 @@ fun MoneyItem1(item : Money ,
                 )
 
                 Column {
-                    Text(text = item.discription)
+                    Text(text = item.discription, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     // Text(text = SimpleDateFormat("hh-mm:aa , dd/MM", Locale.ENGLISH).format(item.date))
                    // Text(text = SimpleDateFormat("dd/MM/yyyy", Locale.ENGLISH).format(item.date))
                     Text(text = item.date)
