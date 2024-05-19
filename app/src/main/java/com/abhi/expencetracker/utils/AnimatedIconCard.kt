@@ -33,7 +33,7 @@ fun AnimatedIconCard(){
         .fillMaxWidth()
         .wrapContentHeight()
         .clip(RoundedCornerShape(16.dp))
-        .border(2.dp ,color = Color.Black , shape = RoundedCornerShape(16.dp))
+        .border(1.dp ,color = Color.Black , shape = RoundedCornerShape(16.dp))
         .padding(start = 15.dp)
         , horizontalArrangement = Arrangement.SpaceBetween
         , verticalAlignment = Alignment.CenterVertically

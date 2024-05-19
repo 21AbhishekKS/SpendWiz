@@ -86,7 +86,6 @@ fun AddScreen(
     var isExpanded by rememberSaveable {
         mutableStateOf(false)
     }
-
     var ipTransactionType by rememberSaveable {
         mutableStateOf("Transaction")
     }

@@ -34,14 +34,6 @@ class AddScreenViewModel : ViewModel() {
 
 
 
-
-
-
-
-
-
-
-
     @RequiresApi(Build.VERSION_CODES.O)
     fun addMoney(
         id: Int,
@@ -63,6 +55,11 @@ class AddScreenViewModel : ViewModel() {
 
         }
     }
+
+
+
+
+
 
 
 

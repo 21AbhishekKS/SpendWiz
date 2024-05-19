@@ -159,15 +159,15 @@ fun CardItemHome(
             ) {
                 Column {
                     Text(
-                                            text = "Income",
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = Color.White
-                                        )
-                                        Text(
-                                            text = income,
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = Color.White
-                                        )
+                          text = "Income",
+                          style = MaterialTheme.typography.bodyMedium,
+                          color = Color.White
+                           )
+                           Text(
+                           text = income,
+                           style = MaterialTheme.typography.bodyMedium,
+                           color = Color.White
+                           )
                 }
                 Column {
                     Text(

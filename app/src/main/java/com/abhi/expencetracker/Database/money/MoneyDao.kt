@@ -21,14 +21,19 @@ interface MoneyDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun addMoney(money: Money)
 
-
-
-
-
     //function to get today's transaction
-
     @Query("SELECT * from money where date = :date")
     fun getTodayTransactionByDate(date: String) : LiveData<List<Money>>
 
 
+    @Query("SELECT * FROM money WHERE substr(date, 4, 2) = :month AND substr(date, 7, 4) = :year")
+    fun getTransactionsByMonthAndYear(month: String, year: String): LiveData<List<Money>>
+
+
 }
+
+
+
+
+
+

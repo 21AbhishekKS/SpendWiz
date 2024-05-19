@@ -29,7 +29,7 @@ import androidx.navigation.compose.rememberNavController
 import com.abhi.expencetracker.Database.money.ViewModels.AddScreenViewModel
 import com.abhi.expencetracker.Screens.AddScreen
 import com.abhi.expencetracker.Screens.HomeScreen
-import com.abhi.expencetracker.Screens.ProfileScreen
+import com.abhi.expencetracker.Screens.InsightsScreen
 import com.abhi.expencetracker.Screens.TransactionScreen
 import com.abhi.expencetracker.Screens.TransferScreen
 import com.abhi.expencetracker.Screens.UpdateScreen
@@ -73,8 +73,8 @@ fun BottomNav(navController: NavHostController , moneyViewModel : AddScreenViewM
                 }
             }
 
-            composable(Routes.ProfileScreen.route){
-                ProfileScreen()
+            composable(Routes.InsightsScreen.route){
+                InsightsScreen(moneyViewModel)
               //  OnBoardingScreen()
             }
 
@@ -124,7 +124,7 @@ fun MyBottomBar(navController1: NavHostController) {
             badgeCount = null
         ),
         BottomNavigationItem(
-            "Profile",
+            "Insights",
             Icons.Filled.Person ,
             Icons.Outlined.Person ,
             hasNews = false,

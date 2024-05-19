@@ -89,6 +89,13 @@ dependencies {
 
     //scrollable column
   //  implementation ("androidx.compose:foundation:1.2.0-beta02")
+
+
+
+
+
+
+
 }
 
 
