@@ -1,6 +1,10 @@
 package com.abhi.expencetracker.navigation
 
 sealed class Routes( val route : String) {
+
+    object SplashScreen : Routes("Splash")
+
+
     object HomeScreen : Routes("Home")
     object TransferScreen : Routes("Trans")
 

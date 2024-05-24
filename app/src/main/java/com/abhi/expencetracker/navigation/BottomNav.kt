@@ -4,12 +4,18 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AddCircle
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.AddCircle
+import androidx.compose.material.icons.outlined.DateRange
 import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.ShoppingCart
 import androidx.compose.material3.BottomAppBar
@@ -30,8 +36,8 @@ import com.abhi.expencetracker.Database.money.ViewModels.AddScreenViewModel
 import com.abhi.expencetracker.Screens.AddScreen
 import com.abhi.expencetracker.Screens.HomeScreen
 import com.abhi.expencetracker.Screens.InsightsScreen
+import com.abhi.expencetracker.Screens.SplashScreen
 import com.abhi.expencetracker.Screens.TransactionScreen
-import com.abhi.expencetracker.Screens.TransferScreen
 import com.abhi.expencetracker.Screens.UpdateScreen
 import com.abhi.expencetracker.helper.BottomNavigationItem
 
@@ -49,6 +55,10 @@ fun BottomNav(navController: NavHostController , moneyViewModel : AddScreenViewM
             composable(route = Routes.HomeScreen.route){
                 HomeScreen(moneyViewModel , navController1 )
             }
+
+        //    composable(route = Routes.SplashScreen.route){
+        //        SplashScreen(navController1 )
+       //     }
 
 
 
@@ -78,9 +88,7 @@ fun BottomNav(navController: NavHostController , moneyViewModel : AddScreenViewM
               //  OnBoardingScreen()
             }
 
-            composable(Routes.TransferScreen.route){
-                TransferScreen()
-            }
+
 
             composable(Routes.SpentScreen.route){
                 TransactionScreen(moneyViewModel )
@@ -118,15 +126,15 @@ fun MyBottomBar(navController1: NavHostController) {
         ),
         BottomNavigationItem(
             "History",
-            Icons.Filled.ShoppingCart ,
-            Icons.Outlined.ShoppingCart ,
+            Icons.Filled.Info ,
+            Icons.Outlined.Info ,
             hasNews = false,
             badgeCount = null
         ),
         BottomNavigationItem(
             "Insights",
-            Icons.Filled.Person ,
-            Icons.Outlined.Person ,
+            Icons.Filled.DateRange ,
+            Icons.Outlined.DateRange ,
             hasNews = false,
             badgeCount = null
         ),

@@ -38,6 +38,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -113,6 +114,22 @@ fun UpdateScreen(
         )
     }
 
+    fun saveTransaction(){
+        if (ipMoney == "" || ipDescription == "") {
+            Toast.makeText(context, "All fields are required", Toast.LENGTH_SHORT)
+                .show()
+        } else {
+            viewModel.addMoney(0, ipMoney, ipDescription, ipTransactionType)
+
+            ipMoney = ""
+            ipDescription = ""
+            ipDate = ""
+            //   Toast.makeText(context, "Saved", Toast.LENGTH_SHORT).show()
+            navController.popBackStack()
+
+        }
+    }
+
 
     LaunchedEffect(key1 = ipTransactionType) {
         backgroundAnimatable.animateTo(
@@ -136,6 +153,26 @@ fun UpdateScreen(
 
         Surface(color = backgroundAnimatable.value,
             modifier = Modifier.fillMaxSize()) {
+
+
+            DisposableEffect(key1 = navController) {
+                onDispose {
+                    if (ipMoney.isNotEmpty() && ipDescription.isNotEmpty()) {
+                        viewModel.addMoney(id, ipMoney, ipDescription, ipTransactionType)
+                        // Clear the input fields
+                        ipMoney = ""
+                        ipDescription = ""
+                        ipDate = ""
+
+                    } else {
+
+                    }
+                    // Navigate back
+                }
+            }
+
+
+
             Column(
                 Modifier.padding(top = 25.dp),
                 horizontalAlignment = Alignment.CenterHorizontally                 ) {
@@ -246,25 +283,16 @@ fun UpdateScreen(
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Text,
                         imeAction = ImeAction.Next),
+                    keyboardActions = KeyboardActions {
+                        saveTransaction()
+                    },
                     singleLine = true
                 )
 
 
 
                 Button(onClick = {
-                    if (ipMoney == "" || ipDescription == "") {
-                        Toast.makeText(context, "All fields are required", Toast.LENGTH_SHORT)
-                            .show()
-                    } else {
-                        viewModel.addMoney(id, ipMoney, ipDescription, ipTransactionType)
-                        ipMoney = ""
-                        ipDescription = ""
-                        ipDate = ""
-                        //   Toast.makeText(context, "Saved", Toast.LENGTH_SHORT).show()
-                        navController.popBackStack()
-
-
-                    }
+                    saveTransaction()
                 },
                     Modifier.fillMaxWidth() , shape = RoundedCornerShape(10.dp)
                 ) {

@@ -90,7 +90,9 @@ dependencies {
     //scrollable column
   //  implementation ("androidx.compose:foundation:1.2.0-beta02")
 
+// Splash screen
 
+    implementation ("androidx.core:core-splashscreen:1.0.1")
 
 
 

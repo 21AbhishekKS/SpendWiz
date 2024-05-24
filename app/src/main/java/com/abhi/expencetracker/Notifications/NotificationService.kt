@@ -63,6 +63,7 @@ class NotificationService(
             PendingIntent.FLAG_IMMUTABLE)
 
 
+
         //passing intent of spent and earned money
 
           //  val alarmIntent = Intent(context, AlarmReceiver::class.java)
@@ -75,8 +76,8 @@ class NotificationService(
         // Set the alarm to start at 10:04 PM
         val calendar = Calendar.getInstance().apply {
             timeInMillis = System.currentTimeMillis()
-            set(Calendar.HOUR_OF_DAY, 9)
-            set(Calendar.MINUTE, 44)
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 18)
         }
 
         // If the alarm time has already passed, set it to the next day
@@ -91,5 +92,6 @@ class NotificationService(
             AlarmManager.INTERVAL_DAY,
             alarmPendingIntent
         )
+
     }
 }

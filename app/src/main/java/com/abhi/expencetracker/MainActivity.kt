@@ -13,6 +13,7 @@ import androidx.compose.material3.Surface
 
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.compose.rememberNavController
 import com.abhi.expencetracker.navigation.BottomNav
@@ -26,12 +27,12 @@ class MainActivity : ComponentActivity() {
 
 
     @RequiresApi(Build.VERSION_CODES.O)
-    @OptIn(ExperimentalFoundationApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         val  moneyViewModel  = ViewModelProvider(this)[AddScreenViewModel::class.java]
 
+        installSplashScreen()
 
         setContent {
             ExpenceTrackerTheme {

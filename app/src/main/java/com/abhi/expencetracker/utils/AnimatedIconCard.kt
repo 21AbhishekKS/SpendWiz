@@ -29,7 +29,8 @@ import org.intellij.lang.annotations.JdkConstants.HorizontalAlignment
 fun AnimatedIconCard(){
 
     Row( Modifier
-        .padding(15.dp)
+        .padding(horizontal = 15.dp )
+        .padding(bottom = 10.dp)
         .fillMaxWidth()
         .wrapContentHeight()
         .clip(RoundedCornerShape(16.dp))

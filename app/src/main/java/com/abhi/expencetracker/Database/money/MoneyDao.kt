@@ -30,6 +30,10 @@ interface MoneyDao {
     fun getTransactionsByMonthAndYear(month: String, year: String): LiveData<List<Money>>
 
 
+    @Query("SELECT * FROM money WHERE substr(date, 4, 7) LIKE :date")
+    fun getTransactionsForMonth(date: String): LiveData<List<Money>>
+
+
 }
 
 

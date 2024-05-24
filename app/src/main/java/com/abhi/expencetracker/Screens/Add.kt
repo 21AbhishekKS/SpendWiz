@@ -50,6 +50,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
@@ -110,6 +111,20 @@ fun AddScreen(
                 Color(android.graphics.Color.rgb(93, 226, 231)).toArgb()
             })
         )
+    }
+
+    fun saveTransaction(){
+        if (ipMoney == "" || ipDescription == "") {
+            Toast.makeText(context, "All fields are required", Toast.LENGTH_SHORT)
+                .show()
+        } else {
+            viewModel.addMoney(0, ipMoney, ipDescription, ipTransactionType)
+            ipMoney = ""
+            ipDescription = ""
+            ipDate = ""
+            //   Toast.makeText(context, "Saved", Toast.LENGTH_SHORT).show()
+            navController.popBackStack()
+        }
     }
 
 
@@ -244,39 +259,28 @@ fun AddScreen(
                     label = { Text(text = "Description")},
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Text,
-                            imeAction = ImeAction.Next),
-                        singleLine = true
+                            imeAction = ImeAction.Done),
+                        keyboardActions = KeyboardActions {
+                            saveTransaction()
+                        },
+                        singleLine = true,
+
                     )
 
 
 
-                Button(onClick = {
-                    if (ipMoney == "" || ipDescription == "") {
-                        Toast.makeText(context, "All fields are required", Toast.LENGTH_SHORT)
-                            .show()
-                    } else {
-                        viewModel.addMoney(0, ipMoney, ipDescription, ipTransactionType)
-                        ipMoney = ""
-                        ipDescription = ""
-                        ipDate = ""
-                     //   Toast.makeText(context, "Saved", Toast.LENGTH_SHORT).show()
-                        navController.popBackStack()
 
 
-                    }
-                },
+
+
+                Button(onClick ={saveTransaction()} ,
                     Modifier.fillMaxWidth() , shape = RoundedCornerShape(10.dp)
                 ) {
                     Text(text = "Save")
                 }
 
 
-
-
-
             }
-
-
 
 
         }

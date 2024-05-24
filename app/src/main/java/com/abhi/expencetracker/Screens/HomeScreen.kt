@@ -10,7 +10,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -27,7 +29,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.core.view.WindowCompat
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import com.abhi.expencetracker.Database.money.ViewModels.AddScreenViewModel
@@ -42,12 +46,12 @@ fun HomeScreen(
     viewModel: AddScreenViewModel,
     navController1: NavHostController
 ){
+    val context = LocalContext.current
 
 
 
     val todayMoneyList by viewModel.todayMoneyList.observeAsState()
 
-    val context = LocalContext.current
 
     var totalMoneySpent by remember {
         mutableIntStateOf(0)
@@ -67,9 +71,7 @@ fun HomeScreen(
              else if(it.type == "Received"){
                 totalMoneyEarned += it.amount.toInt()
             }
-            else{
 
-            }
     }
     }
 
@@ -85,7 +87,8 @@ fun HomeScreen(
             .fillMaxSize()
             .background(Color.White),
           //  .verticalScroll(scrollableState),
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
+
 
     ) {
 
@@ -101,7 +104,13 @@ fun HomeScreen(
 
         Text(
             text = "Today's Transactions",
-            style = MaterialTheme.typography.headlineSmall,
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.Bold,
+            color = Color.DarkGray
+        )
+        Text(
+            text = "Need to update a transaction? Just click on it!",
+            style = MaterialTheme.typography.bodySmall,
             color = Color.DarkGray
         )
 
