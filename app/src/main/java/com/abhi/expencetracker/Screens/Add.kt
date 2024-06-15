@@ -26,6 +26,8 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonColors
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -33,6 +35,7 @@ import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -52,6 +55,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -77,6 +81,9 @@ fun AddScreen(
   //  id: Int,
   //  type: String
 ) {
+
+    var isNumberValid by rememberSaveable { mutableStateOf(true) }
+
 
     val moneyList by viewModel.moneyList.observeAsState()
 
@@ -131,11 +138,11 @@ fun AddScreen(
     LaunchedEffect(key1 = ipTransactionType) {
         backgroundAnimatable.animateTo(
             targetValue = Color(if (ipTransactionType == "Spent") {
-                Color(255, 87, 51).toArgb()
+                Color(235, 0, 0, 255).toArgb()
             } else if (ipTransactionType == "Received") {
-                Color(108, 185, 78, 255).toArgb()
+                Color(16, 138, 0, 255).toArgb()
             } else {
-                Color(57, 110, 245, 255).toArgb()
+                Color(0, 0, 255, 255).toArgb()
             }),
             animationSpec = tween(
                 durationMillis = 500
@@ -180,9 +187,12 @@ fun AddScreen(
 
 
                 ExposedDropdownMenuBox(
-                    modifier = Modifier.border(1.dp , color = Color.Gray,
-                        RoundedCornerShape(4.dp)
-                    )
+                    modifier = Modifier
+                        .padding(horizontal = 20.dp)
+                        .border(
+                            1.dp, color = Color.Black,
+                            RoundedCornerShape(4.dp)
+                        )
                         .fillMaxWidth(),
                     expanded = isExpanded,
                     onExpandedChange = { isExpanded = !isExpanded }
@@ -199,25 +209,33 @@ fun AddScreen(
                             unfocusedContainerColor = Color.Transparent,
                             focusedContainerColor = Color.Transparent ,
                             focusedIndicatorColor = Color.Transparent,
-                            unfocusedIndicatorColor = Color.Transparent
+                            unfocusedIndicatorColor = Color.Transparent,
+                            unfocusedTextColor = Color.Black,
+                            focusedTextColor = Color.Black,
+                            focusedTrailingIconColor = Color.Black,
+                            unfocusedTrailingIconColor = Color.Black
                         )
                     )
+
+
+
 
                     ExposedDropdownMenu(
                         expanded = isExpanded,
                         onDismissRequest = { isExpanded = false },
                         modifier = Modifier
                             .background(Color.White)
-                            .fillMaxWidth()
+                            .fillMaxWidth(),
+
                     ) {
                         listOfTransactionType.forEachIndexed { index, text ->
                             DropdownMenuItem(
-                                text = { Text(text = text) },
+                                text = { Text(text = text , color = Color.Black) },
                                 onClick = {
                                     ipTransactionType = listOfTransactionType[index]
                                     isExpanded = false
                                    },
-                                contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
+                                contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
                             )
                         }
                     }
@@ -231,18 +249,36 @@ fun AddScreen(
 
 
 
+
+                val numberPattern = Regex("^[0-9]*$")
+
+
+
                 OutlinedTextField(
                     value = ipMoney,
-                    onValueChange = { ipMoney = it },
+                    onValueChange = {
+                        if (numberPattern.matches(it)) {
+                            ipMoney = it
+                        }
+                        },
                     modifier = Modifier
-                        .padding(vertical = 10.dp)
-                        .fillMaxWidth(),
-                    label = { Text(text = "Amount") },
+                        .padding(horizontal = 20.dp, vertical = 10.dp)
+                        .fillMaxWidth()
+                    , colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Color.Black,
+                        unfocusedBorderColor = Color.Black,
+                        disabledBorderColor = Color.Black,
+                        focusedTextColor = Color.Black,
+                        unfocusedTextColor = Color.Black// Optional for disabled state
+                    ),
+                    label = { Text(text = "Amount" , color = Color.Black) },
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Number,
-                        imeAction = ImeAction.Next
+                        imeAction = ImeAction.Next,
+
                     ),
                     singleLine = true,
+
                 //    visualTransformation = NumberTransformation(),
                  //   keyboardActions = KeyboardActions(onNext = { keyboardController?.hide() })
 
@@ -254,9 +290,17 @@ fun AddScreen(
                     onValueChange ={
                         ipDescription = it },
                     modifier = Modifier
+                        .padding(horizontal = 20.dp)
                         .padding(bottom = 10.dp)
                         .fillMaxWidth() ,
-                    label = { Text(text = "Description")},
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Color.Black,
+                        unfocusedBorderColor = Color.Black,
+                        disabledBorderColor = Color.Black,
+                        focusedTextColor = Color.Black,
+                        unfocusedTextColor = Color.Black// Optional for disabled state
+                    ),
+                    label = { Text(text = "Description" , color = Color.Black)},
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Text,
                             imeAction = ImeAction.Done),
@@ -273,8 +317,12 @@ fun AddScreen(
 
 
 
-                Button(onClick ={saveTransaction()} ,
-                    Modifier.fillMaxWidth() , shape = RoundedCornerShape(10.dp)
+                Button(
+                    onClick = { saveTransaction() },
+                    Modifier
+                        .padding(horizontal = 20.dp)
+                        .fillMaxWidth(),
+                    shape = RoundedCornerShape(10.dp),
                 ) {
                     Text(text = "Save")
                 }

@@ -33,6 +33,7 @@ import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -134,11 +135,11 @@ fun UpdateScreen(
     LaunchedEffect(key1 = ipTransactionType) {
         backgroundAnimatable.animateTo(
             targetValue = Color(if (ipTransactionType == "Spent") {
-                Color(255, 87, 51).toArgb()
+                Color(235, 0, 0, 255).toArgb()
             } else if (ipTransactionType == "Received") {
-                Color(108, 185, 78, 255).toArgb()
+                Color(16, 138, 0, 255).toArgb()
             } else {
-                Color(57, 110, 245, 255).toArgb()
+                Color(0, 0, 255, 255).toArgb()
             }),
             animationSpec = tween(
                 durationMillis = 500
@@ -203,7 +204,9 @@ fun UpdateScreen(
 
 
                 ExposedDropdownMenuBox(
-                    modifier = Modifier.border(1.dp , color = Color.Gray,
+                    modifier = Modifier
+                    .padding(horizontal = 20.dp).
+                    border(1.dp , color = Color.Gray,
                         RoundedCornerShape(4.dp)
                     )
                         .fillMaxWidth(),
@@ -222,7 +225,11 @@ fun UpdateScreen(
                             unfocusedContainerColor = Color.Transparent,
                             focusedContainerColor = Color.Transparent ,
                             focusedIndicatorColor = Color.Transparent,
-                            unfocusedIndicatorColor = Color.Transparent
+                            unfocusedIndicatorColor = Color.Transparent,
+                            unfocusedTextColor = Color.Black,
+                            focusedTextColor = Color.Black,
+                            focusedTrailingIconColor = Color.Black,
+                            unfocusedTrailingIconColor = Color.Black
                         )
                     )
 
@@ -235,7 +242,7 @@ fun UpdateScreen(
                     ) {
                         listOfTransactionType.forEachIndexed { index, text ->
                             DropdownMenuItem(
-                                text = { Text(text = text) },
+                                text = { Text(text = text , color = Color.Black) },
                                 onClick = {
                                     ipTransactionType = listOfTransactionType[index]
                                     isExpanded = false
@@ -253,14 +260,25 @@ fun UpdateScreen(
 
 
 
-
+                val numberPattern = Regex("^[0-9]*$")
                 OutlinedTextField(
                     value = ipMoney,
-                    onValueChange = { ipMoney = it },
+                    onValueChange = {
+                        if (numberPattern.matches(it)) {
+                            ipMoney = it
+                        }
+                    },
                     modifier = Modifier
-                        .padding(vertical = 10.dp)
+                        .padding(horizontal = 20.dp, vertical = 10.dp)
                         .fillMaxWidth(),
-                    label = { Text(text = "Amount") },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Color.Black,
+                        unfocusedBorderColor = Color.Black,
+                        disabledBorderColor = Color.Black,
+                        focusedTextColor = Color.Black,
+                        unfocusedTextColor = Color.Black// Optional for disabled state
+                    ),
+                    label = { Text(text = "Amount" , color = Color.Black) },
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Number,
                         imeAction = ImeAction.Next
@@ -277,9 +295,17 @@ fun UpdateScreen(
                     onValueChange ={
                         ipDescription = it },
                     modifier = Modifier
+                        .padding(horizontal = 20.dp)
                         .padding(bottom = 10.dp)
                         .fillMaxWidth() ,
-                    label = { Text(text = "Description")},
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Color.Black,
+                        unfocusedBorderColor = Color.Black,
+                        disabledBorderColor = Color.Black,
+                        focusedTextColor = Color.Black,
+                        unfocusedTextColor = Color.Black// Optional for disabled state
+                    ) ,
+                    label = { Text(text = "Description" , color = Color.Black)},
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Text,
                         imeAction = ImeAction.Next),
@@ -294,7 +320,9 @@ fun UpdateScreen(
                 Button(onClick = {
                     saveTransaction()
                 },
-                    Modifier.fillMaxWidth() , shape = RoundedCornerShape(10.dp)
+                    Modifier.padding(horizontal = 20.dp)
+                        .fillMaxWidth() ,
+                    shape = RoundedCornerShape(10.dp)
                 ) {
                     Text(text = "Save")
                 }

@@ -54,13 +54,13 @@ fun TransactionScreen(viewModel: AddScreenViewModel ){
                     .padding(horizontal = 20.dp) ,
                 color = Color.White ,)
 
-            Text(text = "No History in "+today.month.toString())
+            Text(text = "No History in "+today.month.toString() , color = Color.Black)
 
         } else {
             Row(Modifier.fillMaxWidth().wrapContentHeight() ,
                 horizontalArrangement = Arrangement.Center){
                 Text(text = "History of ${today.month} ${today.year}" , fontWeight = FontWeight.Bold,
-                    fontSize = 20.sp)
+                    fontSize = 20.sp , color = Color.Black)
 
             }
             moneyList1?.reversed()?.forEachIndexed() { index, item ->
@@ -69,7 +69,8 @@ fun TransactionScreen(viewModel: AddScreenViewModel ){
                         text = item.date,
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(16.dp)
+                        modifier = Modifier.padding(16.dp),
+                        color = Color.Black
                     )
                     currentDate = item.date
                     MoneyItem1(item = item , { Toast.makeText(context , item.type , Toast.LENGTH_SHORT).show()})

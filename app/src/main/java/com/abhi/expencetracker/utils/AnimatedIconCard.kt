@@ -39,13 +39,13 @@ fun AnimatedIconCard(){
         , horizontalArrangement = Arrangement.SpaceBetween
         , verticalAlignment = Alignment.CenterVertically
 ){
-        
-        Text(text = "Ready to Manage \n Your Money!")
-        
+
+        Text(text = "Ready to Manage \n Your Money!" , color = Color.DarkGray)
+
         LoaderIntro(modifier = Modifier
             .fillMaxWidth()
             .size(120.dp)
-            , image = R.raw.money_blue)
+            , image = R.raw.a4)
     }
    
 

@@ -5,7 +5,6 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.annotation.RequiresApi
-import androidx.compose.foundation.ExperimentalFoundationApi
 
 import androidx.compose.foundation.layout.fillMaxSize
 
@@ -18,7 +17,6 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.compose.rememberNavController
 import com.abhi.expencetracker.navigation.BottomNav
 import com.abhi.expencetracker.Database.money.ViewModels.AddScreenViewModel
-import com.abhi.expencetracker.navigation.NavGraph
 
 import com.abhi.expencetracker.ui.theme.ExpenceTrackerTheme
 
@@ -41,11 +39,13 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = Color.White
                 ) {
-
-
-
                     val navController  = rememberNavController()
-                    BottomNav(navController , moneyViewModel)
+
+
+                        BottomNav(navController , moneyViewModel)
+
+
+
 
                    // NavGraph(navController = navController, viewModel = moneyViewModel )
 

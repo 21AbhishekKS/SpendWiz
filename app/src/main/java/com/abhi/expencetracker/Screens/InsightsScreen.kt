@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -45,6 +46,8 @@ import com.abhi.expencetracker.utils.MoneyItem1
 
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import com.abhi.expencetracker.R
+import com.abhi.expencetracker.helper.OnBoarding.LoaderIntro
 
 @OptIn(ExperimentalMaterial3Api::class)
 @RequiresApi(Build.VERSION_CODES.O)
@@ -121,6 +124,7 @@ fun InsightsScreen(viewModel: AddScreenViewModel){
     @Composable
     fun Bar(height: Float, color: Color , message : String,type :String) {
         Column(
+            Modifier.background(Color.White),
             horizontalAlignment = Alignment.CenterHorizontally) {
             Box(
                 modifier = Modifier
@@ -135,7 +139,7 @@ fun InsightsScreen(viewModel: AddScreenViewModel){
                     }
             )
             
-            Text(text = type)
+            Text(text = type , color = Color.Black)
         }
 
     }
@@ -151,7 +155,8 @@ fun InsightsScreen(viewModel: AddScreenViewModel){
             Row(
                 modifier = Modifier
                     .fillMaxWidth(.69f)
-                    .height(250.dp),
+                    .height(250.dp)
+                    .background(Color.White),
                 verticalAlignment = Alignment.Bottom,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
@@ -167,15 +172,18 @@ fun InsightsScreen(viewModel: AddScreenViewModel){
             }
             
             
-            Column(modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.End) {
+            Column(modifier = Modifier.fillMaxWidth()
+                .background(Color.White),
+                horizontalAlignment = Alignment.End
+            ) {
 
 
                 Column(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().background(Color.White),
                     horizontalAlignment = Alignment.Start
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically){
+                    Row(Modifier.background(Color.White)
+                        ,verticalAlignment = Alignment.CenterVertically){
                         Box(
                             modifier = Modifier
                                 .padding(end = 5.dp)
@@ -183,9 +191,10 @@ fun InsightsScreen(viewModel: AddScreenViewModel){
                                 .clip(CircleShape)
                                 .background(Color.Red)
                         )
-                        Text(text = "₹$MonthlySpent")
+                        Text(text = "₹$MonthlySpent" , color = Color.Black)
                     }
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+                    Row(Modifier.background(Color.White) ,
+                        verticalAlignment = Alignment.CenterVertically) {
                         Box(
                             modifier = Modifier
                                 .padding(end = 5.dp)
@@ -194,9 +203,9 @@ fun InsightsScreen(viewModel: AddScreenViewModel){
                                 .background(Color(76, 175, 80, 255))
 
                         )
-                        Text(text = "₹$MonthlyReceived")
+                        Text(text = "₹$MonthlyReceived", color = Color.Black)
                     }
-                    Row(
+                    Row(Modifier.background(Color.White),
                         verticalAlignment = Alignment.CenterVertically) {
                         Box(
                             modifier = Modifier
@@ -206,7 +215,7 @@ fun InsightsScreen(viewModel: AddScreenViewModel){
                                 .background(Color.Blue)
 
                         )
-                        Text(text = "₹$MonthlyTransaction")
+                        Text(text = "₹$MonthlyTransaction", color = Color.Black)
                     }
 
                 }
@@ -226,6 +235,7 @@ fun InsightsScreen(viewModel: AddScreenViewModel){
             ) {
                 Column(
                     modifier = Modifier
+                        .background(Color.White)
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp),
                     verticalArrangement = Arrangement.Bottom
@@ -288,24 +298,26 @@ fun InsightsScreen(viewModel: AddScreenViewModel){
 
 
 
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+    Column(Modifier.background(Color.White),
+        horizontalAlignment = Alignment.CenterHorizontally) {
 
 
-    Column(Modifier.padding(horizontal = 10.dp) ,
+    Column(Modifier.padding(horizontal = 10.dp).background(Color.White) ,
         horizontalAlignment = Alignment.CenterHorizontally)
     {
 
         Row(
             Modifier
-                .padding(vertical = 20.dp)
+                .padding(top = 20.dp, bottom = 5.dp)
                 .fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             ExposedDropdownMenuBox(
                 modifier = Modifier
+                    .background(Color.White)
                     .fillMaxWidth(.5f)
                     .border(
-                        1.dp, color = Color.Gray,
+                        1.dp, color = Color.Black,
                         RoundedCornerShape(4.dp)
                     )
                 ,
@@ -321,9 +333,13 @@ fun InsightsScreen(viewModel: AddScreenViewModel){
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = isMonthExpanded) },
                     colors = ExposedDropdownMenuDefaults.textFieldColors(
                         unfocusedContainerColor = Color.Transparent,
-                        focusedContainerColor = Color.Transparent,
+                        focusedContainerColor = Color.Transparent ,
                         focusedIndicatorColor = Color.Transparent,
-                        unfocusedIndicatorColor = Color.Transparent
+                        unfocusedIndicatorColor = Color.Transparent,
+                        unfocusedTextColor = Color.Black,
+                        focusedTextColor = Color.Black,
+                        focusedTrailingIconColor = Color.Black,
+                        unfocusedTrailingIconColor = Color.Black
                     )
                 )
 
@@ -336,7 +352,7 @@ fun InsightsScreen(viewModel: AddScreenViewModel){
                 ) {
                     listOfMonth.forEachIndexed { index, text ->
                         DropdownMenuItem(
-                            text = { Text(text = text.first) },
+                            text = { Text(text = text.first , color = Color.Black) },
                             onClick = {
                                 selectedMonth = text.first
                                 selectedMonthInNum = text.second
@@ -354,7 +370,7 @@ fun InsightsScreen(viewModel: AddScreenViewModel){
                 modifier = Modifier
                     .fillMaxWidth()
                     .border(
-                        1.dp, color = Color.Gray,
+                        1.dp, color = Color.Black,
                         RoundedCornerShape(4.dp)
                     )
                 ,
@@ -370,9 +386,13 @@ fun InsightsScreen(viewModel: AddScreenViewModel){
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = isYearExpanded) },
                     colors = ExposedDropdownMenuDefaults.textFieldColors(
                         unfocusedContainerColor = Color.Transparent,
-                        focusedContainerColor = Color.Transparent,
+                        focusedContainerColor = Color.Transparent ,
                         focusedIndicatorColor = Color.Transparent,
-                        unfocusedIndicatorColor = Color.Transparent
+                        unfocusedIndicatorColor = Color.Transparent,
+                        unfocusedTextColor = Color.Black,
+                        focusedTextColor = Color.Black,
+                        focusedTrailingIconColor = Color.Black,
+                        unfocusedTrailingIconColor = Color.Black
                     )
                 )
 
@@ -384,7 +404,7 @@ fun InsightsScreen(viewModel: AddScreenViewModel){
                 ) {
                     listOfYear.forEachIndexed { index, text ->
                         DropdownMenuItem(
-                            text = { Text(text = text) },
+                            text = { Text(text = text  , color = Color.Black) },
                             onClick = {
                                 selectedYear = listOfYear[index]
                                 isYearExpanded = false
@@ -401,9 +421,7 @@ fun InsightsScreen(viewModel: AddScreenViewModel){
 
 
 if(moneyList1?.isEmpty() == false) {
-   // Text(text = MonthlyTransaction.toString())
-   // Text(text = MonthlyReceived.toString())
-   // Text(text = MonthlySpent.toString())
+
 
     MonthlyBarChart(MonthlySpent , MonthlyReceived , MonthlyTransaction)
 
@@ -413,14 +431,29 @@ if(moneyList1?.isEmpty() == false) {
         .fillMaxSize()
         .background(Color.White)
         .verticalScroll(scrollableState),
+
     ) {
         if (moneyList1?.reversed().isNullOrEmpty()) {
-            Text("No transactions found" ,
-                Modifier
-                    .background(Color.DarkGray)
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp) ,
-                color = Color.White ,)
+
+            Column(Modifier.fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center) {
+
+                Text("No transactions found" ,
+                    Modifier
+                        .background(Color.DarkGray)
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp) ,
+                    color = Color.White ,)
+
+                LoaderIntro(modifier = Modifier
+                    .fillMaxSize(.8f)
+                    , image = R.raw.a8)
+
+            }
+
+
+
 
         } else {
             moneyList1?.reversed()?.forEachIndexed() { index, item ->
@@ -429,12 +462,13 @@ if(moneyList1?.isEmpty() == false) {
                         text = item.date,
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(16.dp)
+                        modifier = Modifier.padding(16.dp) ,
+                        color = Color.Black
                     )
                     currentDate = item.date
-                    MoneyItem1(item = item , { Toast.makeText(context , item.type , Toast.LENGTH_SHORT).show()})
+                    MoneyItem1(item = item , { Toast.makeText(context , item.amount , Toast.LENGTH_SHORT).show()})
                 }else{
-                    MoneyItem1(item = item , {Toast.makeText(context , item.type , Toast.LENGTH_SHORT).show()})
+                    MoneyItem1(item = item , {Toast.makeText(context , item.amount , Toast.LENGTH_SHORT).show()})
                 }
 
                 //TransactionList(moneyList1!!.reversed())

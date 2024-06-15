@@ -22,11 +22,7 @@ fun NavGraph(navController: NavHostController , viewModel: AddScreenViewModel){
             HomeScreen(viewModel, navController, )
         }
 
-      //  composable(route = Routes.SplashScreen.route){
-     //       SplashScreen(navController)
-     //   }
 
-        //composable(Routes.AddScreen.route+"?description={description}/?amount={amount}/?id={id}"){
 
      //
         composable(Routes.AddScreen.route + "?description={description}&amount={amount}&id={id}&type={type}"){
@@ -35,23 +31,11 @@ fun NavGraph(navController: NavHostController , viewModel: AddScreenViewModel){
             var type = it.arguments?.getString("type")
             var id = it.arguments?.getInt("id")
 
-            //  AddScreen(moneyViewModel , description ?: "" , amount ?: "" , updateMode?: false)
-           // if (id != null) {
-            //    AddScreen(viewModel , navController,description ?: "" , amount ?: "" , id ,type?:"Transaction")
-           // }
+
         }
 
 
 
-      //  composable(Routes.ProfileScreen.route){
-     //       ProfileScreen()
-     //  }
-
-
-
-       // composable(Routes.SpentScreen.route){
-        //    TransactionScreen()
-       // }
 
     }}
 

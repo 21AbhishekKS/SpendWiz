@@ -12,6 +12,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavController
 import com.abhi.expencetracker.Database.money.Money
@@ -36,7 +37,7 @@ fun TransactionList(moneyList: List<Money>? , navController : NavController , vi
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(text = "No Transactions today !")
+                Text(text = "No Transactions today !" , color = Color.Black)
                // Image(
                 //    painter = painterResource(id = R.drawable.no_transaction),
                 //    contentDescription = "No transactions found",

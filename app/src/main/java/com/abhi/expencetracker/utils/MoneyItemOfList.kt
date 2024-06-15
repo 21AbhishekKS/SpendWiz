@@ -66,10 +66,11 @@ fun MoneyItem1(item : Money ,
                 )
 
                 Column {
-                    Text(text = item.discription, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(text = item.discription, maxLines = 1, overflow = TextOverflow.Ellipsis
+                        , color = Color.Black)
                     // Text(text = SimpleDateFormat("hh-mm:aa , dd/MM", Locale.ENGLISH).format(item.date))
                    // Text(text = SimpleDateFormat("dd/MM/yyyy", Locale.ENGLISH).format(item.date))
-                    Text(text = item.date)
+                    Text(text = item.date , color = Color.Black)
                 }
             }
 

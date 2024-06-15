@@ -4,26 +4,24 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.outlined.Add
-import androidx.compose.material.icons.outlined.AddCircle
 import androidx.compose.material.icons.outlined.DateRange
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Info
-import androidx.compose.material.icons.outlined.Person
-import androidx.compose.material.icons.outlined.ShoppingCart
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -36,7 +34,6 @@ import com.abhi.expencetracker.Database.money.ViewModels.AddScreenViewModel
 import com.abhi.expencetracker.Screens.AddScreen
 import com.abhi.expencetracker.Screens.HomeScreen
 import com.abhi.expencetracker.Screens.InsightsScreen
-import com.abhi.expencetracker.Screens.SplashScreen
 import com.abhi.expencetracker.Screens.TransactionScreen
 import com.abhi.expencetracker.Screens.UpdateScreen
 import com.abhi.expencetracker.helper.BottomNavigationItem
@@ -45,20 +42,22 @@ import com.abhi.expencetracker.helper.BottomNavigationItem
 @Composable
 fun BottomNav(navController: NavHostController , moneyViewModel : AddScreenViewModel){
 
+    var isBottomBarVisible by rememberSaveable {
+        mutableStateOf(false)
+    }
 
     val navController1 = rememberNavController()
-    Scaffold(bottomBar = { MyBottomBar(navController1 = navController1) }){ innerPadding ->
+    Scaffold(bottomBar = {MyBottomBar(navController1 = navController1)
+
+         }){ innerPadding ->
         NavHost(navController = navController1,
             startDestination = Routes.HomeScreen.route ,
             modifier = Modifier.padding(innerPadding)){
 
             composable(route = Routes.HomeScreen.route){
-                HomeScreen(moneyViewModel , navController1 )
+                HomeScreen(  moneyViewModel ,navController1 )
             }
 
-        //    composable(route = Routes.SplashScreen.route){
-        //        SplashScreen(navController1 )
-       //     }
 
 
 
@@ -90,6 +89,7 @@ fun BottomNav(navController: NavHostController , moneyViewModel : AddScreenViewM
 
 
 
+
             composable(Routes.SpentScreen.route){
                 TransactionScreen(moneyViewModel )
             }
@@ -109,13 +109,7 @@ fun MyBottomBar(navController1: NavHostController) {
             hasNews = false,
             badgeCount = null
         ),
-        //BottomNavigationItem(
-        //            "Trans",
-        //            Icons.Filled.ExitToApp ,
-        //            Icons.Outlined.ExitToApp ,
-        //            hasNews = false,
-        //            badgeCount = null
-        //        ),
+
 
         BottomNavigationItem(
             "Add",
@@ -147,6 +141,7 @@ fun MyBottomBar(navController1: NavHostController) {
 
             NavigationBarItem(
 
+
                 selected = selected,
                 onClick = {
                     navController1.navigate(bottomNavigationItem.title) {
@@ -156,13 +151,15 @@ fun MyBottomBar(navController1: NavHostController) {
                         launchSingleTop = true
                     }
                 },
-                icon = {
-                    Icon(
-                        imageVector = if (selected) bottomNavigationItem.selectedIcon else bottomNavigationItem.unSelectedIcon,
-                        contentDescription = bottomNavigationItem.title
-                    )
-                }, label = {
-                    Text(text = bottomNavigationItem.title)}
+                icon = { Icon(
+                    imageVector = bottomNavigationItem.selectedIcon,
+                    contentDescription = bottomNavigationItem.title,
+                    tint = if (selected) Color.White else Color.Black // Set icon color based on selection
+                )}, label = {
+                    Text(text = bottomNavigationItem.title , color = Color.Black)
+                           },
+
+
             )
         }
     } ) }

@@ -10,9 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -31,11 +29,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.core.view.WindowCompat
-import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import com.abhi.expencetracker.Database.money.ViewModels.AddScreenViewModel
-import com.abhi.expencetracker.Notifications.NotificationService
 import com.abhi.expencetracker.utils.AnimatedIconCard
 import com.abhi.expencetracker.utils.TransactionList
 
@@ -77,9 +72,7 @@ fun HomeScreen(
 
 
 
-    val notificationService = NotificationService(context,
-        "You spent $totalMoneySpent Rs and earned $totalMoneyEarned Rs today" +
-                " ").setAlarm(context)
+
 
 
     Column(
@@ -142,7 +135,7 @@ fun CardItemHome(
                 Brush.horizontalGradient(
 
 
-                    0.0f to Color(0xFFFC5C7D),
+                    0.0f to Color(0xFFF35979),
                     1.0f to Color(0xFF6A82FB),
 
 
