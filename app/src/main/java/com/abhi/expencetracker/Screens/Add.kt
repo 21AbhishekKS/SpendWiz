@@ -138,11 +138,11 @@ fun AddScreen(
     LaunchedEffect(key1 = ipTransactionType) {
         backgroundAnimatable.animateTo(
             targetValue = Color(if (ipTransactionType == "Spent") {
-                Color(235, 0, 0, 255).toArgb()
+                Color(240, 59, 46, 255).toArgb()
             } else if (ipTransactionType == "Received") {
-                Color(16, 138, 0, 255).toArgb()
+                Color(90, 187, 94, 255).toArgb()
             } else {
-                Color(0, 0, 255, 255).toArgb()
+                Color(75, 98, 228, 255).toArgb()
             }),
             animationSpec = tween(
                 durationMillis = 500
