@@ -26,6 +26,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -315,19 +316,18 @@ fun UpdateScreen(
                     singleLine = true
                 )
 
-
-
-                Button(onClick = {
-                    saveTransaction()
-                },
-                    Modifier.padding(horizontal = 20.dp)
-                        .fillMaxWidth() ,
-                    shape = RoundedCornerShape(10.dp)
-                ) {
-                    Text(text = "Save")
+                Button(
+                    onClick = { saveTransaction() },
+                    modifier = Modifier
+                        .padding(horizontal = 20.dp)
+                        .fillMaxWidth(),
+                    shape = RoundedCornerShape(10.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(71, 63, 85, 255),
+                        contentColor = Color.White
+                    )) {
+                    Text(text = "Save", color = Color.White)
                 }
-
-
 
 
 

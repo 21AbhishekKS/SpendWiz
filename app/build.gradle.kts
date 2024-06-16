@@ -12,8 +12,8 @@ android {
         applicationId = "com.abhi.expencetracker"
         minSdk = 23
         targetSdk = 34
-        versionCode = 4
-        versionName = "1.4"
+        versionCode = 5
+        versionName = "1.5"
 
 
 

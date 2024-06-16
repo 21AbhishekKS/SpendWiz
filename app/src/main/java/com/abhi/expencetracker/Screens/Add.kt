@@ -319,12 +319,15 @@ fun AddScreen(
 
                 Button(
                     onClick = { saveTransaction() },
-                    Modifier
+                    modifier = Modifier
                         .padding(horizontal = 20.dp)
                         .fillMaxWidth(),
                     shape = RoundedCornerShape(10.dp),
-                ) {
-                    Text(text = "Save")
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(71, 63, 85, 255),
+                        contentColor = Color.White
+                    )) {
+                    Text(text = "Save", color = Color.White)
                 }
 
 

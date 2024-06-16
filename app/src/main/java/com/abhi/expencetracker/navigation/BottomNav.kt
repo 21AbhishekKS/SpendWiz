@@ -15,6 +15,7 @@ import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -24,6 +25,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -141,7 +143,9 @@ fun MyBottomBar(navController1: NavHostController) {
 
             NavigationBarItem(
 
-
+                colors = NavigationBarItemDefaults.colors(
+                    indicatorColor =  Color(84, 75, 100, 255),
+                ),
                 selected = selected,
                 onClick = {
                     navController1.navigate(bottomNavigationItem.title) {
@@ -154,7 +158,7 @@ fun MyBottomBar(navController1: NavHostController) {
                 icon = { Icon(
                     imageVector = bottomNavigationItem.selectedIcon,
                     contentDescription = bottomNavigationItem.title,
-                    tint = if (selected) Color.White else Color.Black // Set icon color based on selection
+                    tint = if (selected) Color.White else  Color(84, 75, 100, 255)
                 )}, label = {
                     Text(text = bottomNavigationItem.title , color = Color.Black)
                            },
