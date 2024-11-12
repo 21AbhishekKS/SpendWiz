@@ -2,6 +2,7 @@
 
 Take control of your finances and become a spending wizard with **SpendWiz**! Say goodbye to cluttered receipts and tedious calculations. SpendWiz empowers you to effortlessly manage your daily spending and gain valuable financial insights, all in one place.
 
+
 ## ✨ Key Features
 
 - **Effortless Expense Tracking** 📝: 
