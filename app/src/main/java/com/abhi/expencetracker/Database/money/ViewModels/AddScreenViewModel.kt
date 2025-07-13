@@ -11,6 +11,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import android.content.Context
+import android.net.Uri
+import android.provider.Telephony
+import kotlinx.coroutines.withContext
+import java.text.SimpleDateFormat
+import java.util.*
+
 
 class AddScreenViewModel : ViewModel() {
 
@@ -57,13 +64,63 @@ class AddScreenViewModel : ViewModel() {
     }
 
 
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun insertTransactionsFromSms(context: Context) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val uri = Uri.parse("content://sms/inbox")
+            val cursor = context.contentResolver.query(
+                uri,
+                null,
+                null,
+                null,
+                "date DESC"
+            )
+
+            cursor?.use {
+                val bodyIndex = cursor.getColumnIndex(Telephony.Sms.BODY)
+                val dateIndex = cursor.getColumnIndex(Telephony.Sms.DATE)
+
+                while (cursor.moveToNext()) {
+                    val body = cursor.getString(bodyIndex)
+                    val timestamp = cursor.getLong(dateIndex)
+
+                    if (body.contains("debited", true) || body.contains("credited", true) || body.contains("UPI", true)) {
+                        val amountRegex = Regex("""(?:INR|Rs\.?)\s?([\d,]+\.?\d{0,2})""")
+                        val match = amountRegex.find(body)
+                        val amountStr = match?.groups?.get(1)?.value?.replace(",", "") ?: continue
+
+                        val amount = amountStr.toDoubleOrNull() ?: continue
+                        val type = if (body.contains("debited", true)) "Spent" else "Received"
+
+                        // Format date to match your DB
+                        val date = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+                            .format(Date(timestamp))
+
+                        val money = Money(
+                            id = 0,
+                            amount = amount.toString(),
+                            discription = body.take(50),
+                            type = type,
+                            date = date
+                        )
+
+                        // Save to DB
+                        moneyDao.addMoney(money)
+                    }
+                }
+            }
+        }
+    }
 
 
 
 
 
 
-     @RequiresApi(Build.VERSION_CODES.N)
+
+
+
+    @RequiresApi(Build.VERSION_CODES.N)
         fun deleteMoney(id : Int) {
          viewModelScope.launch(Dispatchers.IO) {
              moneyDao.deleteMoney(id = id)

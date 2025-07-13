@@ -33,6 +33,12 @@ import androidx.navigation.NavHostController
 import com.abhi.expencetracker.Database.money.ViewModels.AddScreenViewModel
 import com.abhi.expencetracker.utils.AnimatedIconCard
 import com.abhi.expencetracker.utils.TransactionList
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
+
 
 @RequiresApi(Build.VERSION_CODES.O)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
@@ -41,8 +47,6 @@ fun HomeScreen(
     viewModel: AddScreenViewModel,
     navController1: NavHostController
 ){
-    val context = LocalContext.current
-
 
 
     val todayMoneyList by viewModel.todayMoneyList.observeAsState()
@@ -54,6 +58,27 @@ fun HomeScreen(
     var totalMoneyEarned by remember {
         mutableStateOf(0)
     }
+
+    val context = LocalContext.current
+    val smsPermission = Manifest.permission.READ_SMS
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            viewModel.insertTransactionsFromSms(context)
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        if (ContextCompat.checkSelfPermission(context, smsPermission) != PackageManager.PERMISSION_GRANTED) {
+            permissionLauncher.launch(smsPermission)
+        } else {
+            viewModel.insertTransactionsFromSms(context)
+        }
+    }
+
+
+
 
     LaunchedEffect(todayMoneyList)
     {

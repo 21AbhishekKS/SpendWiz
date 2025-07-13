@@ -25,44 +25,6 @@ class MainApplication : Application() {
             MoneyDatabase.NAME
         ).build()
 
-        val notificationChannel = NotificationChannel(
-            "Daily_Remainder",
-            "Daily Remainder",
-            NotificationManager.IMPORTANCE_HIGH
-        )
-
-        notificationChannel.description = "Channel to implement Daily Remainder Notifications"
-
-        val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-
-        notificationManager.createNotificationChannel(notificationChannel)
-
-        //NotificationService(this, "Notification description").setAlaram(this)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     }
 }
