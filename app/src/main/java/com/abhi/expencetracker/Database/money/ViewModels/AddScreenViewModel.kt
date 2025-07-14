@@ -85,21 +85,47 @@ class AddScreenViewModel : ViewModel() {
                     val timestamp = cursor.getLong(dateIndex)
 
                     if (body.contains("debited", true) || body.contains("credited", true) || body.contains("UPI", true)) {
-                        val amountRegex = Regex("""(?:INR|Rs\.?)\s?([\d,]+\.?\d{0,2})""")
+                        // Extract amount
+                        val amountRegex = Regex("""(?:INR|Rs\.?)\s?([\d,]+\.?\d{0,2})""", RegexOption.IGNORE_CASE)
                         val match = amountRegex.find(body)
                         val amountStr = match?.groups?.get(1)?.value?.replace(",", "") ?: continue
-
                         val amount = amountStr.toDoubleOrNull() ?: continue
-                        val type = if (body.contains("debited", true)) "Spent" else "Received"
 
-                        // Format date to match your DB
+                        // Determine type
+                        val type = when {
+                            body.contains("debited", true) -> "Spent"
+                            body.contains("credited", true) -> "Received"
+                            else -> continue
+                        }
+
+                        // Extract name
+                        val name = when {
+                            type == "Spent" -> {
+                                val regex = Regex("""trf to ([A-Z\s]+)""", RegexOption.IGNORE_CASE)
+                                regex.find(body)?.groups?.get(1)?.value?.trim()
+                            }
+                            type == "Received" -> {
+                                val regex = Regex("""from ([A-Z\s]+)""", RegexOption.IGNORE_CASE)
+                                regex.find(body)?.groups?.get(1)?.value?.trim()
+                            }
+                            else -> null
+                        } ?: "Unknown"
+
+                        // Build user-friendly description
+                        val description = if (type == "Spent") {
+                            "Paid to $name"
+                        } else {
+                            "Received from $name"
+                        }
+
+                        // Format date
                         val date = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
                             .format(Date(timestamp))
 
                         val money = Money(
                             id = 0,
                             amount = amount.toString(),
-                            discription = body.take(50),
+                            discription = description,
                             type = type,
                             date = date
                         )
@@ -111,6 +137,7 @@ class AddScreenViewModel : ViewModel() {
             }
         }
     }
+
 
 
 

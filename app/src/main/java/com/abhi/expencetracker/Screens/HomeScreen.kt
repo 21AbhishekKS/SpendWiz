@@ -1,4 +1,5 @@
 package com.abhi.expencetracker.Screens
+
 import android.annotation.SuppressLint
 import android.os.Build
 import androidx.annotation.RequiresApi
@@ -17,7 +18,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -38,7 +38,7 @@ import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
-
+import kotlin.math.roundToInt
 
 @RequiresApi(Build.VERSION_CODES.O)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
@@ -46,18 +46,10 @@ import androidx.core.content.ContextCompat
 fun HomeScreen(
     viewModel: AddScreenViewModel,
     navController1: NavHostController
-){
-
-
+) {
     val todayMoneyList by viewModel.todayMoneyList.observeAsState()
-
-
-    var totalMoneySpent by remember {
-        mutableIntStateOf(0)
-    }
-    var totalMoneyEarned by remember {
-        mutableStateOf(0)
-    }
+    var totalMoneySpent by remember { mutableStateOf(0.0) }
+    var totalMoneyEarned by remember { mutableStateOf(0.0) }
 
     val context = LocalContext.current
     val smsPermission = Manifest.permission.READ_SMS
@@ -77,45 +69,33 @@ fun HomeScreen(
         }
     }
 
-
-
-
-    LaunchedEffect(todayMoneyList)
-    {
-        totalMoneySpent =0
-        totalMoneyEarned =0
-    todayMoneyList?.forEach(){
-            if(it.type == "Spent"){
-                totalMoneySpent +=  it.amount.toInt()
+    LaunchedEffect(todayMoneyList) {
+        totalMoneySpent = 0.0
+        totalMoneyEarned = 0.0
+        todayMoneyList?.forEach { transaction ->
+            try {
+                val amount = transaction.amount.toDouble()
+                if (transaction.type == "Spent") {
+                    totalMoneySpent += amount
+                } else if (transaction.type == "Received") {
+                    totalMoneyEarned += amount
+                }
+            } catch (e: NumberFormatException) {
+                // Handle invalid amount format
+                e.printStackTrace()
             }
-             else if(it.type == "Received"){
-                totalMoneyEarned += it.amount.toInt()
-            }
-
+        }
     }
-    }
-
-
-
-
-
 
     Column(
-        Modifier
+        modifier = Modifier
             .fillMaxSize()
             .background(Color.White),
-          //  .verticalScroll(scrollableState),
-        horizontalAlignment = Alignment.CenterHorizontally,
-
-
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-
-
-
         CardItemHome(
-           // totalBalance = "$3,257.00",
-            income = totalMoneyEarned.toString(),
-            expenses = totalMoneySpent.toString()
+            income = formatCurrency(totalMoneyEarned),
+            expenses = formatCurrency(totalMoneySpent)
         )
 
         AnimatedIconCard()
@@ -132,49 +112,38 @@ fun HomeScreen(
             color = Color.DarkGray
         )
 
-
-
-       TransactionList(todayMoneyList?.reversed() , navController = navController1 , viewModel)
-
-
-
+        TransactionList(
+            todayMoneyList?.reversed(),
+            navController = navController1,
+            viewModel
+        )
     }
-
-
-
-
 }
 
 @Composable
 fun CardItemHome(
-                 income: String,
-                 expenses: String,
-                 modifier: Modifier = Modifier){
+    income: String,
+    expenses: String,
+    modifier: Modifier = Modifier
+) {
     Column(
-        Modifier
+        modifier = Modifier
             .padding(15.dp)
             .fillMaxWidth()
             .wrapContentHeight()
             .clip(RoundedCornerShape(16.dp))
             .background(
                 Brush.horizontalGradient(
-
-
                     0.0f to Color(0xFFF35979),
-                    1.0f to Color(0xFF6A82FB),
-
-
-                    )
+                    1.0f to Color(0xFF6A82FB)
+                )
             )
             .padding(15.dp),
-
-                verticalArrangement = Arrangement.SpaceEvenly
-
+        verticalArrangement = Arrangement.SpaceEvenly
     ) {
-        Column(modifier = Modifier,
-            ) {
+        Column(modifier = Modifier) {
             Text(
-                text = "Today's Financial Snapshot ",
+                text = "Today's Financial Snapshot",
                 style = MaterialTheme.typography.headlineMedium,
                 color = Color.White
             )
@@ -186,15 +155,15 @@ fun CardItemHome(
             ) {
                 Column {
                     Text(
-                          text = "Income",
-                          style = MaterialTheme.typography.bodyMedium,
-                          color = Color.White
-                           )
-                           Text(
-                           text = income,
-                           style = MaterialTheme.typography.bodyMedium,
-                           color = Color.White
-                           )
+                        text = "Income",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.White
+                    )
+                    Text(
+                        text = income,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.White
+                    )
                 }
                 Column {
                     Text(
@@ -213,4 +182,11 @@ fun CardItemHome(
     }
 }
 
-
+// Helper function to format currency values
+private fun formatCurrency(amount: Double): String {
+    return if (amount == amount.roundToInt().toDouble()) {
+        "₹${amount.roundToInt()}" // Show as integer if no decimal places
+    } else {
+        "₹${"%.2f".format(amount)}" // Show with 2 decimal places
+    }
+}
