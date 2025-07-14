@@ -38,6 +38,7 @@ import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
+import com.abhi.expencetracker.Database.money.TransactionType
 import kotlin.math.roundToInt
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -73,19 +74,13 @@ fun HomeScreen(
         totalMoneySpent = 0.0
         totalMoneyEarned = 0.0
         todayMoneyList?.forEach { transaction ->
-            try {
-                val amount = transaction.amount.toDouble()
-                if (transaction.type == "Spent") {
-                    totalMoneySpent += amount
-                } else if (transaction.type == "Received") {
-                    totalMoneyEarned += amount
-                }
-            } catch (e: NumberFormatException) {
-                // Handle invalid amount format
-                e.printStackTrace()
+            when (transaction.type) {
+                TransactionType.EXPENSE -> totalMoneySpent += transaction.amount
+                TransactionType.INCOME -> totalMoneyEarned += transaction.amount
             }
         }
     }
+
 
     Column(
         modifier = Modifier

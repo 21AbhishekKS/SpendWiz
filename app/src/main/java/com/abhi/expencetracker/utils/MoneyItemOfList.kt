@@ -22,6 +22,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.abhi.expencetracker.Database.money.Money
+import com.abhi.expencetracker.Database.money.TransactionType
 import com.abhi.expencetracker.R
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -55,8 +56,8 @@ fun MoneyItem1(item : Money ,
 
             Row(verticalAlignment = Alignment.CenterVertically){
                 Image(painter = painterResource(id =
-                if(item.type  == "Received" ){R.drawable.received_icon}
-                else if (item.type  == "Spent"){R.drawable.spent_icon}
+                if(item.type  == TransactionType.INCOME ){R.drawable.received_icon}
+                else if (item.type  == TransactionType.EXPENSE){R.drawable.spent_icon}
                 else{R.drawable.transaction_icon}
                 ),
                     contentDescription = "" ,
@@ -66,7 +67,7 @@ fun MoneyItem1(item : Money ,
                 )
 
                 Column {
-                    Text(text = item.discription, maxLines = 1, overflow = TextOverflow.Ellipsis
+                    Text(text = item.description, maxLines = 1, overflow = TextOverflow.Ellipsis
                         , color = Color.Black)
                     // Text(text = SimpleDateFormat("hh-mm:aa , dd/MM", Locale.ENGLISH).format(item.date))
                    // Text(text = SimpleDateFormat("dd/MM/yyyy", Locale.ENGLISH).format(item.date))
@@ -75,14 +76,14 @@ fun MoneyItem1(item : Money ,
             }
 
 
-            Text(text = if(item.type  == "Received" ){"+ "+item.amount}
-            else if (item.type  == "Spent"){"- "+item.amount}
+            Text(text = if(item.type  == TransactionType.INCOME ){"+ "+item.amount}
+            else if (item.type  == TransactionType.EXPENSE){"- "+item.amount}
             else{"  "+item.amount} ,
 
                 color =
-                if(item.type  == "Received" ){
+                if(item.type  == TransactionType.INCOME ){
                     Color(0xFF5ABB5E) }
-                else if (item.type  == "Spent"){
+                else if (item.type  == TransactionType.EXPENSE){
                     Color(0xFFF03B2E)
                 }
                 else{

@@ -50,7 +50,7 @@ fun TransactionList(moneyList: List<Money>? , navController : NavController , vi
             LazyColumn(
                 content = {
                     itemsIndexed(moneyList!!) { index, item ->
-                        var passingDescription = item.discription
+                        var passingDescription = item.description
                         var passingamount = item.amount
                         var id = item.id
                         var passingtype = item.type

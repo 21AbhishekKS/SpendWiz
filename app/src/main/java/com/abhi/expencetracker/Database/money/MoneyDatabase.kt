@@ -8,10 +8,9 @@ import androidx.room.TypeConverters
 @TypeConverters(Converters::class)
 abstract class MoneyDatabase : RoomDatabase() {
 
-    companion object{
+    companion object {
         const val NAME = "Money_DB"
     }
 
-    abstract fun getMoneyDao() : MoneyDao
-
+    abstract fun getMoneyDao(): MoneyDao
 }

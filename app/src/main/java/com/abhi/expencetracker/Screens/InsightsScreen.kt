@@ -46,6 +46,7 @@ import com.abhi.expencetracker.utils.MoneyItem1
 
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import com.abhi.expencetracker.Database.money.TransactionType
 import com.abhi.expencetracker.R
 import com.abhi.expencetracker.helper.OnBoarding.LoaderIntro
 
@@ -97,25 +98,19 @@ fun InsightsScreen(viewModel: AddScreenViewModel){
 
 
 
-    LaunchedEffect(moneyList1)
-    {
-        MonthlySpent =0
-        MonthlyReceived =0
-        MonthlyTransaction =0
-        moneyList1?.forEach(){
-            if(it.type == "Spent"){
-                MonthlySpent +=  it.amount.toInt()
-            }
-            else if(it.type == "Received"){
-                MonthlyReceived += it.amount.toInt()
-            }
-            else{
-                MonthlyTransaction += it.amount.toInt()
+    LaunchedEffect(moneyList1) {
+        MonthlySpent = 0
+        MonthlyReceived = 0
+        MonthlyTransaction = 0
 
+        moneyList1?.forEach {
+            when (it.type) {
+                TransactionType.EXPENSE -> MonthlySpent += it.amount.toInt()
+                TransactionType.INCOME -> MonthlyReceived += it.amount.toInt()
             }
         }
-
     }
+
 
 
 //-------------------------------------Bar Chart-----------------------------------------------------------//
@@ -466,9 +461,11 @@ if(moneyList1?.isEmpty() == false) {
                         color = Color.Black
                     )
                     currentDate = item.date
-                    MoneyItem1(item = item , { Toast.makeText(context , item.amount , Toast.LENGTH_SHORT).show()})
+                    MoneyItem1(item = item , { Toast.makeText(context , "₹${item.amount}", Toast.LENGTH_SHORT).show()}
+                        )
                 }else{
-                    MoneyItem1(item = item , {Toast.makeText(context , item.amount , Toast.LENGTH_SHORT).show()})
+                    MoneyItem1(item = item , {Toast.makeText(context , "₹${item.amount}", Toast.LENGTH_SHORT).show()}
+                        )
                 }
 
                 //TransactionList(moneyList1!!.reversed())

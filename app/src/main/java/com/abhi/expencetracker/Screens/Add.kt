@@ -64,6 +64,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.abhi.expencetracker.Database.money.TransactionType
 import com.abhi.expencetracker.Database.money.ViewModels.AddScreenViewModel
 import com.abhi.expencetracker.R
 import com.abhi.expencetracker.navigation.Routes
@@ -89,7 +90,7 @@ fun AddScreen(
 
     val context = LocalContext.current
 
-    val listOfTransactionType = listOf("Spent", "Received", "Transaction")
+    val listOfTransactionType = listOf("Spent", "Received",)
 
     var isExpanded by rememberSaveable {
         mutableStateOf(false)
@@ -120,16 +121,29 @@ fun AddScreen(
         )
     }
 
-    fun saveTransaction(){
+    fun saveTransaction() {
         if (ipMoney == "" || ipDescription == "") {
-            Toast.makeText(context, "All fields are required", Toast.LENGTH_SHORT)
-                .show()
+            Toast.makeText(context, "All fields are required", Toast.LENGTH_SHORT).show()
         } else {
-            viewModel.addMoney(0, ipMoney, ipDescription, ipTransactionType)
+            val amountDouble = ipMoney.toDoubleOrNull()
+            if (amountDouble == null) {
+                Toast.makeText(context, "Invalid amount", Toast.LENGTH_SHORT).show()
+                return
+            }
+
+            val transactionType = when (ipTransactionType) {
+                "Spent" -> TransactionType.EXPENSE
+                "Received" -> TransactionType.INCOME
+                else -> {
+                    Toast.makeText(context, "Select valid transaction type", Toast.LENGTH_SHORT).show()
+                    return
+                }
+            }
+
+            viewModel.addMoney(0, amountDouble, ipDescription, transactionType)
             ipMoney = ""
             ipDescription = ""
             ipDate = ""
-            //   Toast.makeText(context, "Saved", Toast.LENGTH_SHORT).show()
             navController.popBackStack()
         }
     }
