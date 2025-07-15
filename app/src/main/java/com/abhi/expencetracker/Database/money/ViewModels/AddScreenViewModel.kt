@@ -81,6 +81,14 @@ class AddScreenViewModel : ViewModel() {
                         val amountStr = match?.groups?.get(1)?.value?.replace(",", "") ?: continue
                         val amount = amountStr.toDoubleOrNull() ?: continue
 
+                        val upiRefRegex = Regex("""(?:UPI:?|UPI Ref no)\s*[:#]?\s*(\d{6,})""", RegexOption.IGNORE_CASE)
+                        val upiMatch = upiRefRegex.find(body)
+                        val upiRefNo = upiMatch?.groups?.get(1)?.value ?: continue
+
+                        // Check if UPI Ref No already exists
+                        val exists = moneyDao.existsByUpiRefNo(upiRefNo)
+                        if (exists > 0) continue  // Duplicate, skip
+
                         val type = when {
                             body.contains("debited", true) -> TransactionType.EXPENSE
                             body.contains("credited", true) -> TransactionType.INCOME
@@ -92,7 +100,6 @@ class AddScreenViewModel : ViewModel() {
                                 val regex = Regex("""trf to ([A-Z\s]+)""", RegexOption.IGNORE_CASE)
                                 regex.find(body)?.groups?.get(1)?.value?.trim()
                             }
-
                             TransactionType.INCOME -> {
                                 val regex = Regex("""from ([A-Z\s]+)""", RegexOption.IGNORE_CASE)
                                 regex.find(body)?.groups?.get(1)?.value?.trim()
@@ -102,7 +109,6 @@ class AddScreenViewModel : ViewModel() {
                         val description = when (type) {
                             TransactionType.EXPENSE -> "Paid to $name"
                             TransactionType.INCOME -> "Received from $name"
-
                         }
 
                         val date = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
@@ -113,7 +119,8 @@ class AddScreenViewModel : ViewModel() {
                             amount = amount,
                             description = description,
                             type = type,
-                            date = date
+                            date = date,
+                            upiRefNo = upiRefNo
                         )
 
                         moneyDao.addMoney(money)
@@ -122,6 +129,7 @@ class AddScreenViewModel : ViewModel() {
             }
         }
     }
+
 
     fun deleteMoney(id: Int) {
         viewModelScope.launch(Dispatchers.IO) {

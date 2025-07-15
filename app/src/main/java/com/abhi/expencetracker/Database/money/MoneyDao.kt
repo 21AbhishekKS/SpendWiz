@@ -33,6 +33,10 @@ interface MoneyDao {
     @Query("SELECT * FROM money WHERE substr(date, 4, 7) LIKE :date")
     fun getTransactionsForMonth(date: String): LiveData<List<Money>>
 
+    @Query("SELECT COUNT(*) FROM money WHERE upiRefNo = :upiRefNo")
+    suspend fun existsByUpiRefNo(upiRefNo: String): Int
+
+
 
 }
 

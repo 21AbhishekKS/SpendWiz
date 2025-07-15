@@ -72,6 +72,7 @@ fun MoneyItem1(item : Money ,
                     // Text(text = SimpleDateFormat("hh-mm:aa , dd/MM", Locale.ENGLISH).format(item.date))
                    // Text(text = SimpleDateFormat("dd/MM/yyyy", Locale.ENGLISH).format(item.date))
                     Text(text = item.date , color = Color.Black)
+                    item.upiRefNo?.let { Text(text = it, color = Color.Black) }
                 }
             }
 

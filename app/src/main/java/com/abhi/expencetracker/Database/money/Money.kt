@@ -12,5 +12,6 @@ data class Money(
     val amount: Double,
     val description: String,
     val type: TransactionType,
-    val date: String
+    val date: String,
+    val upiRefNo: String? = null
 )
