@@ -36,12 +36,33 @@ class AddScreenViewModel : ViewModel() {
     @RequiresApi(Build.VERSION_CODES.O)
     val todayMoneyList: LiveData<List<Money>> = moneyDao.getTodayTransactionByDate(formattedDateCustom)
 
+//    @RequiresApi(Build.VERSION_CODES.O)
+//    fun addMoney(
+//        id: Int = 0,
+//        amount: Double,
+//        description: String,
+//        type: TransactionType
+//    ) {
+//        viewModelScope.launch(Dispatchers.IO) {
+//            val money = Money(
+//                id = id,
+//                amount = amount,
+//                description = description,
+//                type = type,
+//                date = formattedDateCustom
+//            )
+//            moneyDao.addMoney(money)
+//        }
+//    }
+
     @RequiresApi(Build.VERSION_CODES.O)
-    fun addMoney(
+    fun addMoney1(
         id: Int = 0,
         amount: Double,
         description: String,
-        type: TransactionType
+        type: TransactionType,
+        category: String = "Others",
+        subCategory: String? = null
     ) {
         viewModelScope.launch(Dispatchers.IO) {
             val money = Money(
@@ -49,11 +70,15 @@ class AddScreenViewModel : ViewModel() {
                 amount = amount,
                 description = description,
                 type = type,
-                date = formattedDateCustom
+                date = formattedDateCustom,
+                category = category,
+                subCategory = subCategory
             )
             moneyDao.addMoney(money)
         }
     }
+
+
 
     @RequiresApi(Build.VERSION_CODES.O)
     fun insertTransactionsFromSms(context: Context) {

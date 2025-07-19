@@ -4,7 +4,7 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 
-@Database(entities = [Money::class], version = 1)
+@Database(entities = [Money::class], version = 2)
 @TypeConverters(Converters::class)
 abstract class MoneyDatabase : RoomDatabase() {
 
@@ -14,3 +14,4 @@ abstract class MoneyDatabase : RoomDatabase() {
 
     abstract fun getMoneyDao(): MoneyDao
 }
+

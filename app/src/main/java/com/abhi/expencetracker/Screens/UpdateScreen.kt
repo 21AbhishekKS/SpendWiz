@@ -42,17 +42,29 @@ fun UpdateScreen(
 ) {
     val context = LocalContext.current
 
-    // Mapping between user-readable labels and enum values
+    // Categories and subcategories
+    val categories = listOf("Food", "Transport", "Shopping", "Bills", "Others")
+    var selectedCategory by rememberSaveable { mutableStateOf("Others") }
+    var categoryDropdownExpanded by rememberSaveable { mutableStateOf(false) }
+
+    val subCategorySuggestions = mapOf(
+        "Food" to listOf("Breakfast", "Lunch", "Dinner", "Snacks", "Groceries"),
+        "Transport" to listOf("Bus", "Train", "Taxi", "Fuel", "Flight"),
+        "Shopping" to listOf("Clothes", "Electronics", "Accessories", "Gifts"),
+        "Bills" to listOf("Electricity", "Internet", "Water", "Mobile"),
+        "Others" to listOf("Misc", "Donation", "Others")
+    )
+    var selectedSubCategory by rememberSaveable { mutableStateOf("") }
+
+    // Transaction type mapping
     val transactionTypeMap = mapOf(
         "Spent" to TransactionType.EXPENSE,
         "Received" to TransactionType.INCOME,
     )
     val displayTypeMap = transactionTypeMap.entries.associate { (k, v) -> v to k }
-
     val listOfTransactionType = transactionTypeMap.keys.toList()
 
     var isExpanded by rememberSaveable { mutableStateOf(false) }
-
     var ipTransactionType by rememberSaveable {
         mutableStateOf(transactionTypeMap[type] ?: TransactionType.EXPENSE)
     }
@@ -90,9 +102,17 @@ fun UpdateScreen(
         } else {
             val amount = ipMoney.toDoubleOrNull()
             if (amount != null) {
-                viewModel.addMoney(id, amount, ipDescription, ipTransactionType)
+                viewModel.addMoney1(
+                    id = id,
+                    amount = amount,
+                    description = ipDescription,
+                    type = ipTransactionType,
+                    category = selectedCategory,
+                    subCategory = selectedSubCategory
+                )
                 ipMoney = ""
                 ipDescription = ""
+                selectedSubCategory = ""
                 navController.popBackStack()
             } else {
                 Toast.makeText(context, "Amount must be a number", Toast.LENGTH_SHORT).show()
@@ -118,7 +138,7 @@ fun UpdateScreen(
         Surface(
             color = Color.White,
             modifier = Modifier
-                .fillMaxHeight(0.5f)
+                .fillMaxHeight(0.8f)
                 .fillMaxWidth(),
             shape = RoundedCornerShape(60.dp).copy(
                 bottomEnd = ZeroCornerSize,
@@ -134,7 +154,7 @@ fun UpdateScreen(
                 ExposedDropdownMenuBox(
                     modifier = Modifier
                         .padding(horizontal = 20.dp)
-                        .border(1.dp, color = Color.Gray, RoundedCornerShape(4.dp))
+                        .border(1.dp, color = Color.Black, RoundedCornerShape(4.dp))
                         .fillMaxWidth(),
                     expanded = isExpanded,
                     onExpandedChange = { isExpanded = !isExpanded }
@@ -178,6 +198,91 @@ fun UpdateScreen(
                         }
                     }
                 }
+
+                // Category Dropdown
+                ExposedDropdownMenuBox(
+                    modifier = Modifier
+                        .padding(horizontal = 20.dp, vertical = 8.dp)
+                        .border(1.dp, Color.Black, RoundedCornerShape(4.dp))
+                        .fillMaxWidth(),
+                    expanded = categoryDropdownExpanded,
+                    onExpandedChange = { categoryDropdownExpanded = !categoryDropdownExpanded }
+                ) {
+                    TextField(
+                        value = selectedCategory,
+                        onValueChange = {},
+                        readOnly = true,
+                        modifier = Modifier
+                            .menuAnchor()
+                            .fillMaxWidth(),
+                        label = { Text("Category", color = Color.Black) },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryDropdownExpanded) },
+                        colors = ExposedDropdownMenuDefaults.textFieldColors(
+                            unfocusedContainerColor = Color.Transparent,
+                            focusedContainerColor = Color.Transparent,
+                            unfocusedTextColor = Color.Black,
+                            focusedTextColor = Color.Black,
+                            focusedIndicatorColor = Color.Transparent,
+                            unfocusedIndicatorColor = Color.Transparent
+                        )
+                    )
+                    ExposedDropdownMenu(
+                        expanded = categoryDropdownExpanded,
+                        onDismissRequest = { categoryDropdownExpanded = false }
+                    ) {
+                        categories.forEach { category ->
+                            DropdownMenuItem(
+                                text = { Text(text = category, color = Color.Black) },
+                                onClick = {
+                                    selectedCategory = category
+                                    selectedSubCategory = ""
+                                    categoryDropdownExpanded = false
+                                }
+                            )
+                        }
+                    }
+                }
+
+                // SubCategory Suggestions
+                val currentSubSuggestions = subCategorySuggestions[selectedCategory] ?: listOf()
+                if (currentSubSuggestions.isNotEmpty()) {
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(start = 20.dp, top = 4.dp, bottom = 4.dp)
+                    ) {
+                        currentSubSuggestions.forEach { suggestion ->
+                            Button(
+                                onClick = { selectedSubCategory = suggestion },
+                                modifier = Modifier.padding(end = 8.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color(220, 220, 220),
+                                    contentColor = Color.Black
+                                )
+                            ) {
+                                Text(text = suggestion, fontSize = 12.sp)
+                            }
+                        }
+                    }
+                }
+
+                // SubCategory Input
+                OutlinedTextField(
+                    value = selectedSubCategory,
+                    onValueChange = { selectedSubCategory = it },
+                    modifier = Modifier
+                        .padding(horizontal = 20.dp)
+                        .fillMaxWidth(),
+                    label = { Text("Subcategory", color = Color.Black) },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Color.Black,
+                        unfocusedBorderColor = Color.Black,
+                        disabledBorderColor = Color.Black,
+                        focusedTextColor = Color.Black,
+                        unfocusedTextColor = Color.Black
+                    ),
+                    singleLine = true
+                )
 
                 // Amount Input
                 val numberPattern = Regex("^[0-9]*\\.?[0-9]*$")

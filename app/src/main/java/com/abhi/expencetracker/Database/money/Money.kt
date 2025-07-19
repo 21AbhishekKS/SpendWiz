@@ -5,7 +5,6 @@ import androidx.room.PrimaryKey
 
 @Entity(tableName = "money")
 data class Money(
-
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
 
@@ -13,5 +12,8 @@ data class Money(
     val description: String,
     val type: TransactionType,
     val date: String,
-    val upiRefNo: String? = null
+    val upiRefNo: String? = null,
+
+    val category: String = "Others",
+    val subCategory: String? = null
 )
