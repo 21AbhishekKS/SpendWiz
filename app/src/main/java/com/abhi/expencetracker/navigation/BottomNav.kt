@@ -13,6 +13,7 @@ import androidx.compose.material.icons.outlined.DateRange
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.BottomAppBar
+import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
@@ -26,6 +27,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -100,70 +102,57 @@ fun BottomNav(navController: NavHostController , moneyViewModel : AddScreenViewM
 
     }
 }
+
+
 @Composable
 fun MyBottomBar(navController1: NavHostController) {
     val backStackEntry = navController1.currentBackStackEntryAsState()
     val items = listOf(
-        BottomNavigationItem(
-            "Home",
-            Icons.Filled.Home ,
-            Icons.Outlined.Home ,
-            hasNews = false,
-            badgeCount = null
-        ),
-
-
-        BottomNavigationItem(
-            "Add",
-            Icons.Filled.AddCircle ,
-            Icons.Outlined.Add ,
-            hasNews = false,
-            badgeCount = null
-        ),
-        BottomNavigationItem(
-            "History",
-            Icons.Filled.Info ,
-            Icons.Outlined.Info ,
-            hasNews = false,
-            badgeCount = null
-        ),
-        BottomNavigationItem(
-            "Insights",
-            Icons.Filled.DateRange ,
-            Icons.Outlined.DateRange ,
-            hasNews = false,
-            badgeCount = null
-        ),
+        BottomNavigationItem("Home", Icons.Filled.Home, Icons.Outlined.Home, false, null),
+        BottomNavigationItem("Add", Icons.Filled.AddCircle, Icons.Outlined.Add, false, null),
+        BottomNavigationItem("History", Icons.Filled.Info, Icons.Outlined.Info, false, null),
+        BottomNavigationItem("Insights", Icons.Filled.DateRange, Icons.Outlined.DateRange, false, null),
     )
 
-    BottomAppBar(containerColor = Color.White,
-            content ={
-        items.forEachIndexed { index, bottomNavigationItem ->
-            val selected = bottomNavigationItem.title == backStackEntry.value?.destination?.route
+    androidx.compose.foundation.layout.Column {
+        Divider(
+            color = Color(0xFFDDDDDD),
+            thickness = 1.dp
+        )
 
-            NavigationBarItem(
+        BottomAppBar(
+            containerColor = Color.White
+        ) {
+            items.forEachIndexed { index, bottomNavigationItem ->
+                val selected = bottomNavigationItem.title == backStackEntry.value?.destination?.route
 
-                colors = NavigationBarItemDefaults.colors(
-                    indicatorColor =  Color(84, 75, 100, 255),
-                ),
-                selected = selected,
-                onClick = {
-                    navController1.navigate(bottomNavigationItem.title) {
-                        popUpTo(navController1.graph.findStartDestination().id) {
-                            saveState = true
+                NavigationBarItem(
+                    colors = NavigationBarItemDefaults.colors(indicatorColor = Color(0xFF3B6AD3)),
+                    selected = selected,
+                    onClick = {
+                        navController1.navigate(bottomNavigationItem.title) {
+                            popUpTo(navController1.graph.findStartDestination().id) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
                         }
-                        launchSingleTop = true
+                    },
+                    icon = {
+                        Icon(
+                            imageVector = bottomNavigationItem.selectedIcon,
+                            contentDescription = bottomNavigationItem.title,
+                            tint = if (selected) Color.White else Color.Black
+                        )
+                    },
+                    label = {
+                        Text(
+                            text = bottomNavigationItem.title,
+                            color = if (selected) Color(0xFF3B6AD3) else Color.Black
+                        )
                     }
-                },
-                icon = { Icon(
-                    imageVector = bottomNavigationItem.selectedIcon,
-                    contentDescription = bottomNavigationItem.title,
-                    tint = if (selected) Color.White else  Color(84, 75, 100, 255)
-                )}, label = {
-                    Text(text = bottomNavigationItem.title , color = Color.Black)
-                           },
-
-
-            )
+                )
+            }
         }
-    } ) }
+    }
+}
+
