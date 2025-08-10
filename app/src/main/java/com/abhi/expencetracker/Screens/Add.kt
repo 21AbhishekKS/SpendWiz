@@ -1,396 +1,337 @@
 package com.abhi.expencetracker.Screens
 
-import android.graphics.Color.rgb
 import android.os.Build
 import android.widget.Toast
 import androidx.annotation.RequiresApi
-import androidx.compose.animation.Animatable
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.shape.ZeroCornerSize
-import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Add
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonColors
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.colorResource
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.abhi.expencetracker.Database.money.TransactionType
 import com.abhi.expencetracker.Database.money.ViewModels.AddScreenViewModel
-import com.abhi.expencetracker.R
-import com.abhi.expencetracker.navigation.Routes
-import com.abhi.expencetracker.utils.TransparentTextField
-@OptIn(ExperimentalMaterial3Api::class)
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun AddScreen(
     viewModel: AddScreenViewModel,
-    navController: NavController,
+    navController: NavController
 ) {
-    // State variables
     val context = LocalContext.current
-    val categories = listOf("Food", "Transport", "Shopping", "Bills", "Others")
-    var selectedCategory by rememberSaveable { mutableStateOf("Others") }
-    var categoryDropdownExpanded by rememberSaveable { mutableStateOf(false) }
 
-    val subCategorySuggestions = mapOf(
+    val transactionTypes = listOf("Income", "Expense", "Transfer")
+    var selectedType by rememberSaveable { mutableStateOf(transactionTypes[0]) }
+
+    val incomeCategories = listOf("Salary", "Business", "Investments", "Others")
+    val expenseCategories = listOf("Food", "Transport", "Shopping", "Bills", "Misc", "Others")
+    val transferCategories = listOf("Bank Transfer", "UPI", "Others")
+
+    val incomeSubCategoryMap = mapOf(
+        "Salary" to listOf("Monthly", "Bonus", "Overtime"),
+        "Business" to listOf("Sales", "Services"),
+        "Investments" to listOf("Stocks", "Crypto", "Bonds")
+    )
+
+    val expenseSubCategoryMap = mapOf(
         "Food" to listOf("Breakfast", "Lunch", "Dinner", "Snacks", "Groceries"),
         "Transport" to listOf("Bus", "Train", "Taxi", "Fuel", "Flight"),
         "Shopping" to listOf("Clothes", "Electronics", "Accessories", "Gifts"),
         "Bills" to listOf("Electricity", "Internet", "Water", "Mobile"),
-        "Others" to listOf("Misc", "Donation", "Others")
+        "Misc" to listOf("Donation", "Entertainment")
     )
+
+    val transferSubCategoryMap = mapOf(
+        "Bank Transfer" to listOf("Same Bank", "Other Bank"),
+        "UPI" to listOf("Google Pay", "PhonePe", "Paytm")
+    )
+
+    var selectedCategory by rememberSaveable { mutableStateOf("") }
+    var customCategory by rememberSaveable { mutableStateOf("") }
     var selectedSubCategory by rememberSaveable { mutableStateOf("") }
+    var amount by rememberSaveable { mutableStateOf("") }
+    var description by rememberSaveable { mutableStateOf("") }
 
-    val listOfTransactionType = listOf("Spent", "Received")
-    var isExpanded by rememberSaveable { mutableStateOf(false) }
-    var ipTransactionType by rememberSaveable { mutableStateOf("Transaction") }
+    val dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yy (EEE)   hh:mm a")
+    val currentDateTime = LocalDateTime.now().format(dateFormatter)
 
-    var ipMoney by rememberSaveable { mutableStateOf("") }
-    var ipDescription by rememberSaveable { mutableStateOf("") }
-    var ipDate by rememberSaveable { mutableStateOf("") }
+    val categories = when (selectedType) {
+        "Income" -> incomeCategories
+        "Expense" -> expenseCategories
+        else -> transferCategories
+    }
 
-    // Background animation
-    val backgroundAnimatable = remember {
-        Animatable(
-            Color(if (ipTransactionType == "Spent") {
-                Color(255, 87, 51).toArgb()
-            } else if (ipTransactionType == "Received") {
-                Color(android.graphics.Color.rgb(125, 218, 88)).toArgb()
-            } else {
-                Color(android.graphics.Color.rgb(93, 226, 231)).toArgb()
-            })
+    val subCategoryMap = when (selectedType) {
+        "Income" -> incomeSubCategoryMap
+        "Expense" -> expenseSubCategoryMap
+        else -> transferSubCategoryMap
+    }
+
+    val typeColor = when (selectedType) {
+        "Income" -> Color(0xFF4CAF50)
+        "Expense" -> Color(0xFFF44336)
+        else -> Color(0xFF2196F3)
+    }
+
+    fun Color.darken(factor: Float): Color {
+        return Color(
+            red = (red * (1 - factor)).coerceIn(0f, 1f),
+            green = (green * (1 - factor)).coerceIn(0f, 1f),
+            blue = (blue * (1 - factor)).coerceIn(0f, 1f),
+            alpha = alpha
         )
     }
 
-    // Save transaction function
+
     fun saveTransaction() {
-        if (ipMoney == "" || ipDescription == "") {
-            Toast.makeText(context, "All fields are required", Toast.LENGTH_SHORT).show()
-        } else {
-            val amountDouble = ipMoney.toDoubleOrNull()
-            if (amountDouble == null) {
-                Toast.makeText(context, "Invalid amount", Toast.LENGTH_SHORT).show()
-                return
-            }
-
-            val transactionType = when (ipTransactionType) {
-                "Spent" -> TransactionType.EXPENSE
-                "Received" -> TransactionType.INCOME
-                else -> {
-                    Toast.makeText(context, "Select valid transaction type", Toast.LENGTH_SHORT).show()
-                    return
-                }
-            }
-
-            viewModel.addMoney1(
-                id = 0,
-                amount = amountDouble,
-                description = ipDescription,
-                type = transactionType,
-                category = selectedCategory,
-                subCategory = selectedSubCategory
-            )
-
-            ipMoney = ""
-            ipDescription = ""
-            selectedSubCategory = ""
-            ipDate = ""
-            navController.popBackStack()
+        if (amount.isBlank()) {
+            Toast.makeText(context, "Enter amount", Toast.LENGTH_SHORT).show()
+            return
         }
-    }
-
-    LaunchedEffect(key1 = ipTransactionType) {
-        backgroundAnimatable.animateTo(
-            targetValue = Color(if (ipTransactionType == "Spent") {
-                Color(240, 59, 46, 255).toArgb()
-            } else if (ipTransactionType == "Received") {
-                Color(90, 187, 94, 255).toArgb()
-            } else {
-                Color(75, 98, 228, 255).toArgb()
-            }),
-            animationSpec = tween(durationMillis = 500)
+        val amountDouble = amount.toDoubleOrNull()
+        if (amountDouble == null) {
+            Toast.makeText(context, "Invalid amount", Toast.LENGTH_SHORT).show()
+            return
+        }
+        val typeEnum = when (selectedType) {
+            "Income" -> TransactionType.INCOME
+            "Expense" -> TransactionType.EXPENSE
+            else -> TransactionType.INCOME
+        }
+        val finalCategory = if (selectedCategory == "Others") customCategory else selectedCategory
+        viewModel.addMoney1(
+            id = 0,
+            amount = amountDouble,
+            description = description,
+            type = typeEnum,
+            category = finalCategory,
+            subCategory = selectedSubCategory
         )
+        navController.popBackStack()
     }
 
-    Box(contentAlignment = Alignment.BottomStart) {
-        Surface(color = backgroundAnimatable.value, modifier = Modifier.fillMaxSize()) {
-            Column(
-                Modifier.padding(top = 25.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(12.dp)
+            .verticalScroll(rememberScrollState())
+    ) {Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 6.dp),
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        transactionTypes.forEach { type ->
+            val selectedColor = when (type) {
+                "Income" -> Color(0xFF4CAF50)
+                "Expense" -> Color(0xFFF44336)
+                else -> Color(0xFF2196F3)
+            }
+
+            Surface(
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(8.dp),
+                color = Color.White,
+                border = BorderStroke(1.dp , if (selectedType == type) selectedColor else Color.Gray),
+                onClick = {
+                    selectedType = type
+                    selectedCategory = ""
+                    selectedSubCategory = ""
+                    customCategory = ""
+                }
             ) {
                 Text(
-                    text = if (ipTransactionType == "Received") "Received"
-                    else if (ipTransactionType == "Spent") "Spent"
-                    else "Transaction",
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White,
-                    fontSize = 25.sp,
+                    text = type,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 6.dp),
+                    textAlign = TextAlign.Center,
+                    color = if (selectedType == type) selectedColor else Color.DarkGray
                 )
             }
         }
+    }
 
-        Surface(
-            color = Color.White,
+
+
+
+        FieldRow(label = "Date", readOnlyText = currentDateTime)
+        FieldRow(
+            label = "Amount",
+            value = amount,
+            onValueChange = { if (it.matches(Regex("^[0-9]*$"))) amount = it },
+            keyboardType = KeyboardType.Number,
+            borderColor = typeColor
+        )
+        FieldRow(
+            label = "Note",
+            value = description,
+            onValueChange = { description = it },
+            borderColor = typeColor
+        )
+
+        var expanded by remember { mutableStateOf(false) }
+        Row(
             modifier = Modifier
-                .fillMaxHeight(.8f)
-                .fillMaxWidth(),
-            shape = RoundedCornerShape(60.dp).copy(bottomEnd = ZeroCornerSize, bottomStart = ZeroCornerSize)
+                .fillMaxWidth()
+                .padding(vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(
-                Modifier
-                    .padding(top = 60.dp)
-                    .padding(horizontal = 10.dp)
+            Text(
+                text = "Category:",
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Medium,
+                modifier = Modifier.width(90.dp)
+            )
+
+            ExposedDropdownMenuBox(
+                expanded = expanded,
+                onExpandedChange = { expanded = !expanded },
+                modifier = Modifier.weight(1f)
             ) {
-                // Transaction Type Dropdown
-                ExposedDropdownMenuBox(
-                    modifier = Modifier
-                        .padding(horizontal = 20.dp)
-                        .border(1.dp, color = Color.Black, RoundedCornerShape(4.dp))
-                        .fillMaxWidth(),
-                    expanded = isExpanded,
-                    onExpandedChange = { isExpanded = !isExpanded }
-                ) {
-                    TextField(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .menuAnchor(),
-                        value = ipTransactionType,
-                        onValueChange = {},
-                        readOnly = true,
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = isExpanded) },
-                        colors = ExposedDropdownMenuDefaults.textFieldColors(
-                            unfocusedContainerColor = Color.Transparent,
-                            focusedContainerColor = Color.Transparent,
-                            focusedIndicatorColor = Color.Transparent,
-                            unfocusedIndicatorColor = Color.Transparent,
-                            unfocusedTextColor = Color.Black,
-                            focusedTextColor = Color.Black,
-                            focusedTrailingIconColor = Color.Black,
-                            unfocusedTrailingIconColor = Color.Black
-                        )
+                TextField(
+                    value = selectedCategory,
+                    onValueChange = {},
+                    readOnly = true,
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
+                    modifier = Modifier.menuAnchor(),
+                    colors = TextFieldDefaults.textFieldColors(
+                        containerColor = Color.Transparent,
+                        focusedIndicatorColor = typeColor,
+                        unfocusedIndicatorColor = Color.Gray,
+                        focusedTrailingIconColor = typeColor
                     )
-
-                    ExposedDropdownMenu(
-                        expanded = isExpanded,
-                        onDismissRequest = { isExpanded = false },
-                        modifier = Modifier.background(Color.White)
-                    ) {
-                        listOfTransactionType.forEachIndexed { index, text ->
-                            DropdownMenuItem(
-                                text = { Text(text = text, color = Color.Black) },
-                                onClick = {
-                                    ipTransactionType = listOfTransactionType[index]
-                                    isExpanded = false
-                                },
-                                contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
-                            )
-                        }
-                    }
-                }
-
-                // Category Dropdown
-                ExposedDropdownMenuBox(
-                    modifier = Modifier
-                        .padding(horizontal = 20.dp, vertical = 8.dp)
-                        .border(1.dp, Color.Black, RoundedCornerShape(4.dp))
-                        .fillMaxWidth(),
-                    expanded = categoryDropdownExpanded,
-                    onExpandedChange = { categoryDropdownExpanded = !categoryDropdownExpanded }
+                )
+                ExposedDropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false }
                 ) {
-                    TextField(
-                        value = selectedCategory,
-                        onValueChange = {},
-                        readOnly = true,
-                        modifier = Modifier
-                            .menuAnchor()
-                            .fillMaxWidth(),
-                        label = { Text("Category", color = Color.Black) },
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryDropdownExpanded) },
-                        colors = ExposedDropdownMenuDefaults.textFieldColors(
-                            unfocusedContainerColor = Color.Transparent,
-                            focusedContainerColor = Color.Transparent,
-                            unfocusedTextColor = Color.Black,
-                            focusedTextColor = Color.Black,
-                            focusedIndicatorColor = Color.Transparent,
-                            unfocusedIndicatorColor = Color.Transparent
-                        )
-                    )
-                    ExposedDropdownMenu(
-                        expanded = categoryDropdownExpanded,
-                        onDismissRequest = { categoryDropdownExpanded = false }
-                    ) {
-                        categories.forEach { category ->
-                            DropdownMenuItem(
-                                text = { Text(text = category, color = Color.Black) },
-                                onClick = {
-                                    selectedCategory = category
-                                    selectedSubCategory = ""
-                                    categoryDropdownExpanded = false
-                                }
-                            )
-                        }
-                    }
-                }
-
-                // SubCategory Suggestions
-                val currentSubSuggestions = subCategorySuggestions[selectedCategory] ?: listOf()
-                if (currentSubSuggestions.isNotEmpty()) {
-                    Row(
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(start = 20.dp, top = 4.dp, bottom = 4.dp)
-                    ) {
-                        currentSubSuggestions.forEach { suggestion ->
-                            Button(
-                                onClick = { selectedSubCategory = suggestion },
-                                modifier = Modifier.padding(end = 8.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = Color(220, 220, 220),
-                                    contentColor = Color.Black
-                                )
-                            ) {
-                                Text(text = suggestion, fontSize = 12.sp)
+                    categories.forEach { category ->
+                        DropdownMenuItem(
+                            text = { Text(category) },
+                            onClick = {
+                                selectedCategory = category
+                                selectedSubCategory = ""
+                                customCategory = ""
+                                expanded = false
                             }
-                        }
+                        )
                     }
-                }
-
-                // SubCategory Input
-                OutlinedTextField(
-                    value = selectedSubCategory,
-                    onValueChange = { selectedSubCategory = it },
-                    modifier = Modifier
-                        .padding(horizontal = 20.dp)
-                        .fillMaxWidth(),
-                    label = { Text("Subcategory", color = Color.Black) },
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Color.Black,
-                        unfocusedBorderColor = Color.Black,
-                        disabledBorderColor = Color.Black,
-                        focusedTextColor = Color.Black,
-                        unfocusedTextColor = Color.Black
-                    ),
-                    singleLine = true
-                )
-
-                // Amount Input
-                OutlinedTextField(
-                    value = ipMoney,
-                    onValueChange = {
-                        if (it.matches(Regex("^[0-9]*$"))) {
-                            ipMoney = it
-                        }
-                    },
-                    modifier = Modifier
-                        .padding(horizontal = 20.dp, vertical = 10.dp)
-                        .fillMaxWidth(),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Color.Black,
-                        unfocusedBorderColor = Color.Black,
-                        disabledBorderColor = Color.Black,
-                        focusedTextColor = Color.Black,
-                        unfocusedTextColor = Color.Black
-                    ),
-                    label = { Text(text = "Amount", color = Color.Black) },
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Number,
-                        imeAction = ImeAction.Next,
-                    ),
-                    singleLine = true,
-                )
-
-                // Description Input
-                OutlinedTextField(
-                    value = ipDescription,
-                    onValueChange = { ipDescription = it },
-                    modifier = Modifier
-                        .padding(horizontal = 20.dp)
-                        .padding(bottom = 10.dp)
-                        .fillMaxWidth(),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Color.Black,
-                        unfocusedBorderColor = Color.Black,
-                        disabledBorderColor = Color.Black,
-                        focusedTextColor = Color.Black,
-                        unfocusedTextColor = Color.Black
-                    ),
-                    label = { Text(text = "Description", color = Color.Black) },
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Text,
-                        imeAction = ImeAction.Done
-                    ),
-                    keyboardActions = KeyboardActions {
-                        saveTransaction()
-                    },
-                    singleLine = true,
-                )
-
-                // Save Button
-                Button(
-                    onClick = { saveTransaction() },
-                    modifier = Modifier
-                        .padding(horizontal = 20.dp)
-                        .fillMaxWidth(),
-                    shape = RoundedCornerShape(10.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(71, 63, 85, 255),
-                        contentColor = Color.White
-                    )
-                ) {
-                    Text(text = "Save", color = Color.White)
                 }
             }
+        }
+
+        if (selectedCategory == "Others") {
+            FieldRow(
+                label = "Custom",
+                value = customCategory,
+                onValueChange = { customCategory = it }
+            )
+        } else if (selectedCategory.isNotEmpty()) {
+            FlowRow(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                subCategoryMap[selectedCategory]?.forEach { sub ->
+                    FilterChip(
+                        selected = selectedSubCategory == sub,
+                        onClick = { selectedSubCategory = sub },
+                        label = { Text(sub, fontSize = 12.sp) },
+                        colors = FilterChipDefaults.filterChipColors(
+                            containerColor = Color(0xFFE0E0E0),
+                            selectedContainerColor = typeColor,
+                            labelColor = Color.Black,
+                            selectedLabelColor = Color.White
+                        )
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Button(
+            onClick = { saveTransaction() },
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(containerColor = Color.White),
+            border = BorderStroke(1.dp , typeColor),
+            shape = RoundedCornerShape(8.dp)
+        ) {
+            Text("Save", color = typeColor , fontWeight = FontWeight.ExtraBold)
         }
     }
 }
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun FieldRow(
+    label: String,
+    value: String = "",
+    onValueChange: (String) -> Unit = {},
+    readOnlyText: String? = null,
+    keyboardType: KeyboardType = KeyboardType.Text,
+    fieldBackgroundColor: Color = Color.Transparent, // new param
+    borderColor: Color = Color.Gray,                 // new param
+    cursorColor: Color = Color.Blue                  // new param
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = "$label:",
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier.width(90.dp)
+        )
+        if (readOnlyText != null) {
+            Text(
+                text = readOnlyText,
+                fontSize = 16.sp,
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(start = 6.dp)
+            )
+        } else {
+            TextField(
+                value = value,
+                onValueChange = onValueChange,
+                singleLine = true,
+                modifier = Modifier.weight(1f),
+                colors = TextFieldDefaults.textFieldColors(
+                    containerColor = fieldBackgroundColor,  // background
+                    cursorColor = borderColor,              // cursor
+                    focusedIndicatorColor = borderColor,    // underline when focused
+                ),
+                keyboardOptions = KeyboardOptions(
+                    imeAction = ImeAction.Next,
+                    keyboardType = keyboardType
+                )
+            )
+        }
+    }
+}
+

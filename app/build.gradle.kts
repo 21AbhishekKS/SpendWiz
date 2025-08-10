@@ -92,8 +92,9 @@ dependencies {
     kapt("androidx.room:room-compiler:2.6.1")
     implementation ("androidx.room:room-ktx:2.6.1") // For Kotlin projects
 
-    //scrollable column
-  //  implementation ("androidx.compose:foundation:1.2.0-beta02")
+    //Flow row
+    implementation ("com.google.accompanist:accompanist-flowlayout:0.30.1")
+
 
 // Splash screen
 
