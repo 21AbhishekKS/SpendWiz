@@ -36,6 +36,8 @@ interface MoneyDao {
     @Query("SELECT COUNT(*) FROM money WHERE upiRefNo = :upiRefNo")
     suspend fun existsByUpiRefNo(upiRefNo: String): Int
 
+    @Update
+    suspend fun updateMoney(money: Money)
 
 
 }

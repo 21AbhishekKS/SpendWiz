@@ -84,12 +84,20 @@ fun BottomNav(navController: NavHostController, moneyViewModel: AddScreenViewMod
                     var id = it.arguments?.getInt("id")
 
                     if (id != null) {
-                        UpdateScreen(moneyViewModel, navController1, description ?: "", amount ?: "", id, type ?: "Transaction")
+                        UpdateScreen(
+                            moneyViewModel,
+                            navController1,
+                            description ?: "",
+                            amount ?: "",
+                            id,
+                            type ?: "Transaction",
+
+                        )
                     }
                 }
 
                 composable(Routes.InsightsScreen.route) {
-                    InsightsScreen(moneyViewModel)
+                    InsightsScreen(moneyViewModel , navController1)
                 }
 
                 composable(Routes.SpentScreen.route) {

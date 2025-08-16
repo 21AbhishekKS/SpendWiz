@@ -18,7 +18,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -26,6 +25,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.abhi.expencetracker.Database.money.Money
 import com.abhi.expencetracker.Database.money.TransactionType
 import com.abhi.expencetracker.ViewModels.AddScreenViewModel
 
@@ -38,7 +38,8 @@ fun UpdateScreen(
     passedDescription: String,
     passedAmount: String,
     id: Int,
-    type: String
+    type: String,
+
 ) {
     val context = LocalContext.current
 
@@ -102,23 +103,24 @@ fun UpdateScreen(
         } else {
             val amount = ipMoney.toDoubleOrNull()
             if (amount != null) {
-                viewModel.addMoney1(
+                val updatedMoney = Money(
                     id = id,
                     amount = amount,
                     description = ipDescription,
                     type = ipTransactionType,
+                    date = "",
                     category = selectedCategory,
                     subCategory = selectedSubCategory
                 )
-                ipMoney = ""
-                ipDescription = ""
-                selectedSubCategory = ""
+                viewModel.updateMoney(updatedMoney)
+
                 navController.popBackStack()
             } else {
                 Toast.makeText(context, "Amount must be a number", Toast.LENGTH_SHORT).show()
             }
         }
     }
+
 
     Box(contentAlignment = Alignment.BottomStart) {
         Surface(color = backgroundAnimatable.value, modifier = Modifier.fillMaxSize()) {

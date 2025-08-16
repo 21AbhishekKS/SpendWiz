@@ -14,7 +14,16 @@ sealed class Routes( val route : String) {
     object InsightsScreen : Routes("Insights")
     object SpentScreen : Routes("History")
     object AddScreen : Routes("Add")
-    object UpdateScreen : Routes("Update")
+    object UpdateScreen : Routes("Update") {
+        fun createRoute(id: Int, description: String, amount: Double, type: String): String {
+            val encodedDesc = java.net.URLEncoder.encode(
+                description,
+                java.nio.charset.StandardCharsets.UTF_8.toString()
+            )
+            return "$route/$id/$encodedDesc/$amount/$type"
+        }
+    }
+
 
     object OnBoardingScreen : Routes("Board")
 

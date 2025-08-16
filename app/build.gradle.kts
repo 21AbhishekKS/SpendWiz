@@ -101,7 +101,8 @@ dependencies {
     implementation ("androidx.core:core-splashscreen:1.0.1")
 
 
-
+//charts
+    implementation("io.github.thechance101:chart:1.1.0")
 
 
 

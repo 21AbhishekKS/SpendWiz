@@ -1,5 +1,6 @@
 package com.abhi.expencetracker.Screens
 
+import android.net.Uri
 import android.os.Build
 import android.widget.Toast
 import androidx.annotation.RequiresApi
@@ -9,6 +10,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -37,17 +39,18 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.abhi.expencetracker.ViewModels.AddScreenViewModel
 import com.abhi.expencetracker.utils.MoneyItem1
-
 import androidx.compose.ui.graphics.Color
+import androidx.navigation.NavHostController
 import com.abhi.expencetracker.Database.money.TransactionType
 import com.abhi.expencetracker.R
 import com.abhi.expencetracker.helper.OnBoarding.LoaderIntro
-import com.abhi.expencetracker.utils.MonthlyBarChart
+import com.abhi.expencetracker.navigation.Routes
+import com.abhi.expencetracker.utils.PieChart
 
 @OptIn(ExperimentalMaterial3Api::class)
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun InsightsScreen(viewModel: AddScreenViewModel){
+fun InsightsScreen(viewModel: AddScreenViewModel, navController1: NavHostController){
 
     var context = LocalContext.current
 
@@ -247,14 +250,18 @@ fun InsightsScreen(viewModel: AddScreenViewModel){
     }
 
 
-if(moneyList1?.isEmpty() == false) {
+        if (MonthlyReceived != 0 || MonthlySpent != 0) {
+            PieChart(
+                spent = MonthlySpent.toDouble(),
+                earned = MonthlyReceived.toDouble(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .fillMaxHeight(0.4f)
+            )
+        }
 
 
-    MonthlyBarChart(MonthlySpent , MonthlyReceived , MonthlyTransaction , context )
-
-}
-
-    Column(modifier = Modifier
+        Column(modifier = Modifier
         .fillMaxSize()
         .background(Color.White)
         .verticalScroll(scrollableState),
@@ -293,10 +300,17 @@ if(moneyList1?.isEmpty() == false) {
                         color = Color.Black
                     )
                     currentDate = item.date
-                    MoneyItem1(item = item , { Toast.makeText(context , "₹${item.amount}", Toast.LENGTH_SHORT).show()}
+                    MoneyItem1(item = item , { navController1.navigate(
+                        Routes.UpdateScreen.route +
+                                "?description=${Uri.encode(item.description)}" +
+                                "&amount=${item.amount}" +
+                                "&id=${item.id}" +
+                                "&type=${Uri.encode(item.type.toString())}"
+                    )
+                    }
                         )
                 }else{
-                    MoneyItem1(item = item , {Toast.makeText(context , "₹${item.amount}", Toast.LENGTH_SHORT).show()}
+                    MoneyItem1(item = item , {navController1.navigate(route = Routes.UpdateScreen.route)}
                         )
                 }
 
