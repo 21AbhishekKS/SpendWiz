@@ -4,7 +4,7 @@ import android.os.Build
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -16,6 +16,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -38,6 +40,11 @@ fun AddScreen(
     navController: NavController
 ) {
     val context = LocalContext.current
+    val focusRequester = remember { FocusRequester() }
+
+    LaunchedEffect(Unit) {
+        focusRequester.requestFocus()
+    }
 
     val transactionTypes = listOf("Income", "Expense", "Transfer")
     var selectedType by rememberSaveable { mutableStateOf(transactionTypes[0]) }
@@ -101,7 +108,6 @@ fun AddScreen(
         )
     }
 
-
     fun saveTransaction() {
         if (amount.isBlank()) {
             Toast.makeText(context, "Enter amount", Toast.LENGTH_SHORT).show()
@@ -132,47 +138,46 @@ fun AddScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .background(Color.White)
             .padding(12.dp)
-            .verticalScroll(rememberScrollState())
-    ) {Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(bottom = 6.dp),
-        horizontalArrangement = Arrangement.spacedBy(10.dp)
+            .verticalScroll(rememberScrollState()),
     ) {
-        transactionTypes.forEach { type ->
-            val selectedColor = when (type) {
-                "Income" -> Color(0xFF4CAF50)
-                "Expense" -> Color(0xFFF44336)
-                else -> Color(0xFF2196F3)
-            }
-
-            Surface(
-                modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(8.dp),
-                color = Color.White,
-                border = BorderStroke(1.dp , if (selectedType == type) selectedColor else Color.Gray),
-                onClick = {
-                    selectedType = type
-                    selectedCategory = ""
-                    selectedSubCategory = ""
-                    customCategory = ""
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 6.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            transactionTypes.forEach { type ->
+                val selectedColor = when (type) {
+                    "Income" -> Color(0xFF4CAF50)
+                    "Expense" -> Color(0xFFF44336)
+                    else -> Color(0xFF2196F3)
                 }
-            ) {
-                Text(
-                    text = type,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 6.dp),
-                    textAlign = TextAlign.Center,
-                    color = if (selectedType == type) selectedColor else Color.DarkGray
-                )
+
+                Surface(
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(8.dp),
+                    color = Color.White,
+                    border = BorderStroke(1.dp, if (selectedType == type) selectedColor else Color.Gray),
+                    onClick = {
+                        selectedType = type
+                        selectedCategory = ""
+                        selectedSubCategory = ""
+                        customCategory = ""
+                    }
+                ) {
+                    Text(
+                        text = type,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 6.dp),
+                        textAlign = TextAlign.Center,
+                        color = if (selectedType == type) selectedColor else Color.DarkGray
+                    )
+                }
             }
         }
-    }
-
-
-
 
         FieldRow(label = "Date", readOnlyText = currentDateTime)
         FieldRow(
@@ -180,7 +185,8 @@ fun AddScreen(
             value = amount,
             onValueChange = { if (it.matches(Regex("^[0-9]*$"))) amount = it },
             keyboardType = KeyboardType.Number,
-            borderColor = typeColor
+            borderColor = typeColor,
+            modifier = Modifier.focusRequester(focusRequester)
         )
         FieldRow(
             label = "Note",
@@ -194,7 +200,7 @@ fun AddScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 4.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.Bottom
         ) {
             Text(
                 text = "Category:",
@@ -274,11 +280,10 @@ fun AddScreen(
         Button(
             onClick = { saveTransaction() },
             modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.buttonColors(containerColor = Color.White),
-            border = BorderStroke(1.dp , typeColor),
+            colors = ButtonDefaults.buttonColors(containerColor = typeColor),
             shape = RoundedCornerShape(8.dp)
         ) {
-            Text("Save", color = typeColor , fontWeight = FontWeight.ExtraBold)
+            Text("Save", color = Color.White, fontWeight = FontWeight.ExtraBold)
         }
     }
 }
@@ -291,15 +296,15 @@ fun FieldRow(
     onValueChange: (String) -> Unit = {},
     readOnlyText: String? = null,
     keyboardType: KeyboardType = KeyboardType.Text,
-    fieldBackgroundColor: Color = Color.Transparent, // new param
-    borderColor: Color = Color.Gray,                 // new param
-    cursorColor: Color = Color.Blue                  // new param
+    fieldBackgroundColor: Color = Color.Transparent,
+    borderColor: Color = Color.Gray,
+    cursorColor: Color = Color.Blue,
+    modifier: Modifier = Modifier
 ) {
     Row(
         modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp),
-        verticalAlignment = Alignment.CenterVertically
+            .fillMaxWidth(),
+        verticalAlignment = Alignment.Bottom
     ) {
         Text(
             text = "$label:",
@@ -320,11 +325,11 @@ fun FieldRow(
                 value = value,
                 onValueChange = onValueChange,
                 singleLine = true,
-                modifier = Modifier.weight(1f),
+                modifier = modifier.weight(1f),
                 colors = TextFieldDefaults.textFieldColors(
-                    containerColor = fieldBackgroundColor,  // background
-                    cursorColor = borderColor,              // cursor
-                    focusedIndicatorColor = borderColor,    // underline when focused
+                    containerColor = fieldBackgroundColor,
+                    cursorColor = borderColor,
+                    focusedIndicatorColor = borderColor,
                 ),
                 keyboardOptions = KeyboardOptions(
                     imeAction = ImeAction.Next,
@@ -334,4 +339,3 @@ fun FieldRow(
         }
     }
 }
-
