@@ -45,7 +45,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.abhi.expencetracker.Database.money.ViewModels.AddScreenViewModel
+import com.abhi.expencetracker.ViewModels.AddScreenViewModel
 import com.abhi.expencetracker.Screens.AddScreen
 import com.abhi.expencetracker.Screens.HomeScreen
 import com.abhi.expencetracker.Screens.InsightsScreen

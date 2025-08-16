@@ -1,4 +1,4 @@
-package com.abhi.expencetracker.Database.money.ViewModels
+package com.abhi.expencetracker.ViewModels
 
 import android.content.Context
 import android.net.Uri
@@ -78,8 +78,6 @@ class AddScreenViewModel : ViewModel() {
         }
     }
 
-
-
     @RequiresApi(Build.VERSION_CODES.O)
     fun insertTransactionsFromSms(context: Context) {
         viewModelScope.launch(Dispatchers.IO) {
@@ -139,13 +137,40 @@ class AddScreenViewModel : ViewModel() {
                         val date = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
                             .format(Date(timestamp))
 
+                        // ---------------- BANK NAME EXTRACTION ----------------
+                        var bankName: String? = null
+                        val words = body.split(" ", "\n", "\t")
+
+                        for (i in words.indices) {
+                            val word = words[i]
+
+                            // Case 1: word is exactly "bank" → take previous word + " Bank"
+                            if (word.equals("bank", ignoreCase = true) && i > 0) {
+                                bankName = words[i - 1].replace("[^A-Za-z]".toRegex(), "") + " Bank"
+                                break
+                            }
+
+                            // Case 2: word ends with "bank"
+                            if (word.lowercase().endsWith("bank")) {
+                                bankName = word.replace("[^A-Za-z]".toRegex(), "")
+                                    .replaceFirstChar { it.uppercase() }
+                                break
+                            }
+                        }
+
+                        // Fallback if not found
+                        if (bankName.isNullOrBlank()) bankName = "Unknown Bank"
+
+                        // ------------------------------------------------------
+
                         val money = Money(
                             id = 0,
                             amount = amount,
                             description = description,
                             type = type,
                             date = date,
-                            upiRefNo = upiRefNo
+                            upiRefNo = upiRefNo,
+                            bankName = bankName   // <-- added field
                         )
 
                         moneyDao.addMoney(money)
@@ -154,6 +179,8 @@ class AddScreenViewModel : ViewModel() {
             }
         }
     }
+
+
 
 
     fun deleteMoney(id: Int) {

@@ -27,14 +27,14 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.abhi.expencetracker.Database.money.ViewModels.AddScreenViewModel
+import com.abhi.expencetracker.ViewModels.AddScreenViewModel
 import com.abhi.expencetracker.utils.MoneyItem1
 import java.time.LocalDate
 
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun TransactionScreen(viewModel: AddScreenViewModel ){
+fun TransactionScreen(viewModel: AddScreenViewModel){
 
     val today = LocalDate.now()
     val formattedMonth = "%02d".format(today.monthValue)

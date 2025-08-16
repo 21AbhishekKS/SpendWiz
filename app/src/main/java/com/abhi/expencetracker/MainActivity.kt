@@ -16,7 +16,7 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.compose.rememberNavController
 import com.abhi.expencetracker.navigation.BottomNav
-import com.abhi.expencetracker.Database.money.ViewModels.AddScreenViewModel
+import com.abhi.expencetracker.ViewModels.AddScreenViewModel
 
 import com.abhi.expencetracker.ui.theme.ExpenceTrackerTheme
 

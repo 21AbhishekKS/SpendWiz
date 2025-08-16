@@ -16,7 +16,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavController
 import com.abhi.expencetracker.Database.money.Money
-import com.abhi.expencetracker.Database.money.ViewModels.AddScreenViewModel
+import com.abhi.expencetracker.ViewModels.AddScreenViewModel
 import com.abhi.expencetracker.navigation.Routes
 import com.abhi.expencetracker.utils.MoneyItem1
 

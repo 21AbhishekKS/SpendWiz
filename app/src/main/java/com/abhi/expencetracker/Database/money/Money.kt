@@ -13,7 +13,7 @@ data class Money(
     val type: TransactionType,
     val date: String,
     val upiRefNo: String? = null,
-
+    val bankName: String? = null,
     val category: String = "Others",
     val subCategory: String? = null
 )
