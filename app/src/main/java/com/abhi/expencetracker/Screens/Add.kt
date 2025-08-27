@@ -121,7 +121,7 @@ fun AddScreen(
         val typeEnum = when (selectedType) {
             "Income" -> TransactionType.INCOME
             "Expense" -> TransactionType.EXPENSE
-            else -> TransactionType.INCOME
+            else -> TransactionType.TRANSFER
         }
         val finalCategory = if (selectedCategory == "Others") customCategory else selectedCategory
         viewModel.addMoney1(

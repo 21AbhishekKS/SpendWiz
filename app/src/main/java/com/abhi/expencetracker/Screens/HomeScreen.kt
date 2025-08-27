@@ -77,6 +77,7 @@ fun HomeScreen(
             when (transaction.type) {
                 TransactionType.EXPENSE -> totalMoneySpent += transaction.amount
                 TransactionType.INCOME -> totalMoneyEarned += transaction.amount
+                else -> {}
             }
         }
     }

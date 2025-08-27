@@ -104,6 +104,7 @@ fun InsightsScreen(viewModel: AddScreenViewModel, navController1: NavHostControl
             when (it.type) {
                 TransactionType.EXPENSE -> MonthlySpent += it.amount.toInt()
                 TransactionType.INCOME -> MonthlyReceived += it.amount.toInt()
+                else -> {}
             }
         }
     }

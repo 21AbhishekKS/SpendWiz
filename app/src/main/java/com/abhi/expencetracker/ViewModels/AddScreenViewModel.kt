@@ -131,12 +131,18 @@ class AddScreenViewModel : ViewModel() {
                                 val regex = Regex("""from ([A-Z\s]+)""", RegexOption.IGNORE_CASE)
                                 regex.find(body)?.groups?.get(1)?.value?.trim()
                             }
+                            TransactionType.TRANSFER -> {
+                                val regex = Regex("""transfer (?:to|from) ([A-Z\s]+)""", RegexOption.IGNORE_CASE)
+                                regex.find(body)?.groups?.get(1)?.value?.trim()
+                            }
                         } ?: "Unknown"
 
                         val description = when (type) {
                             TransactionType.EXPENSE -> "Paid to $name"
                             TransactionType.INCOME -> "Received from $name"
+                            TransactionType.TRANSFER -> "Transferred with $name"
                         }
+
 
                         val date = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
                             .format(Date(timestamp))

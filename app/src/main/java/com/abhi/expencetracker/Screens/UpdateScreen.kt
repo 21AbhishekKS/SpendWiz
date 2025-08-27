@@ -139,7 +139,7 @@ fun UpdateScreen(
         val typeEnum = when (selectedType) {
             "Income" -> TransactionType.INCOME
             "Expense" -> TransactionType.EXPENSE
-            else -> TransactionType.EXPENSE
+            else -> TransactionType.TRANSFER
         }
 
 
