@@ -1,5 +1,6 @@
 package com.abhi.expencetracker.utils
 
+import android.net.Uri
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Arrangement
@@ -22,55 +23,47 @@ import com.abhi.expencetracker.utils.MoneyItem1
 
 @RequiresApi(Build.VERSION_CODES.N)
 @Composable
-fun TransactionList(moneyList: List<Money>? , navController : NavController , viewModel : AddScreenViewModel) {
-
+fun TransactionList(
+    moneyList: List<Money>?,
+    navController: NavController,
+    viewModel: AddScreenViewModel
+) {
     val isListEmpty = moneyList?.isEmpty() ?: true
 
-    var  context = LocalContext.current
-
-    Box( // Use Box for full-screen coverage
-        modifier = Modifier.fillMaxSize()
-    ) {
+    Box(modifier = Modifier.fillMaxSize()) {
         if (isListEmpty) {
             Column(
-                modifier = Modifier.fillMaxSize(), // Ensure full-screen coverage when empty
+                modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(text = "No Transactions today !" , color = Color.Black)
-               // Image(
-                //    painter = painterResource(id = R.drawable.no_transaction),
-                //    contentDescription = "No transactions found",
-                //    Modifier
-                //        .height(10.dp)
-                 //       .width(10.dp)
-              //  )
+                Text(text = "No Transactions today !", color = Color.Black)
             }
         } else {
-            LazyColumn(
-                content = {
-                    itemsIndexed(moneyList!!) { index, item ->
-                        var passingDescription = item.description
-                        var passingamount = item.amount
-                        var id = item.id
-                        var passingtype = item.type
-                        MoneyItem1(item = moneyList[index] , onClick = {
+            LazyColumn {
+                itemsIndexed(moneyList!!) { index, item ->
+                    MoneyItem1(item = item, onClick = {
+                        val description = Uri.encode(item.description ?: "")
+                        val amount = item.amount
+                        val id = item.id
+                        val type = Uri.encode(item.type.toString())
+                        val category = Uri.encode(item.category ?: "")
+                        val subCategory = Uri.encode(item.subCategory ?: "")
+                        val date = Uri.encode(item.date ?: "")
 
-
-
-                          //  navController.navigate(route = Routes.AddScreen.route+"/$passingDescription/$passingamount/$id")
-                            navController.navigate(route = "${Routes.UpdateScreen.route}?description=$passingDescription&amount=$passingamount&id=$id&type=$passingtype")
-
-
-                             viewModel.deleteMoney(id)
-                        }
+                        navController.navigate(
+                            Routes.UpdateScreen.route +
+                                    "?description=$description" +
+                                    "&amount=$amount" +
+                                    "&id=$id" +
+                                    "&type=$type" +
+                                    "&category=$category" +
+                                    "&subCategory=$subCategory" +
+                                    "&date=$date"
                         )
-                    }
+                    })
                 }
-            )
+            }
         }
     }
-
-
-
 }

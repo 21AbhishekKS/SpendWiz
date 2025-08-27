@@ -300,21 +300,35 @@ fun InsightsScreen(viewModel: AddScreenViewModel, navController1: NavHostControl
                         color = Color.Black
                     )
                     currentDate = item.date
-                    MoneyItem1(item = item , { navController1.navigate(
-                        Routes.UpdateScreen.route +
-                                "?description=${Uri.encode(item.description)}" +
-                                "&amount=${item.amount}" +
-                                "&id=${item.id}" +
-                                "&type=${Uri.encode(item.type.toString())}"
-                    )
+                    MoneyItem1(item = item) {
+                        navController1.navigate(
+                            Routes.UpdateScreen.route +
+                                    "?description=${Uri.encode(item.description)}" +
+                                    "&amount=${item.amount}" +
+                                    "&id=${item.id}" +
+                                    "&type=${Uri.encode(item.type.toString())}" +
+                                    "&category=${Uri.encode(item.category ?: "")}" +
+                                    "&subCategory=${Uri.encode(item.subCategory ?: "")}" +
+                                    "&date=${Uri.encode(item.date ?: "")}"
+                        )
                     }
-                        )
-                }else{
-                    MoneyItem1(item = item , {navController1.navigate(route = Routes.UpdateScreen.route)}
-                        )
-                }
 
-                //TransactionList(moneyList1!!.reversed())
+                }else{
+                    MoneyItem1(item = item) {
+                        navController1.navigate(
+                            Routes.UpdateScreen.route +
+                                    "?description=${Uri.encode(item.description)}" +
+                                    "&amount=${item.amount}" +
+                                    "&id=${item.id}" +
+                                    "&type=${Uri.encode(item.type.toString())}" +
+                                    "&category=${Uri.encode(item.category ?: "")}" +
+                                    "&subCategory=${Uri.encode(item.subCategory ?: "")}" +
+                                    "&date=${Uri.encode(item.date ?: "")}"
+                        )
+
+                    }
+
+                }
             }
         }
     }

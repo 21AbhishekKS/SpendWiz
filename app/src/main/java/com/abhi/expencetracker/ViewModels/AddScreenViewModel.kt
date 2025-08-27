@@ -36,10 +36,26 @@ class AddScreenViewModel : ViewModel() {
     @RequiresApi(Build.VERSION_CODES.O)
     val todayMoneyList: LiveData<List<Money>> = moneyDao.getTodayTransactionByDate(formattedDateCustom)
 
-    fun updateMoney(money: Money) {
-        viewModelScope.launch(Dispatchers.IO) {
-            moneyDao.updateMoney(money)
-        }
+    fun updateMoney(
+        id: Int,
+        amount: Double,
+        description: String,
+        type: TransactionType,
+        category: String,
+        subCategory: String,
+        date: String
+    ) = viewModelScope.launch(Dispatchers.IO) {
+        val existing = moneyDao.getMoneyById(id) ?: return@launch
+
+        val updated = existing.copy(
+            amount = amount,
+            description = description,
+            type = type,
+            category = category,
+            subCategory = subCategory,
+            date = date
+        )
+        moneyDao.updateMoney(updated)
     }
 
 

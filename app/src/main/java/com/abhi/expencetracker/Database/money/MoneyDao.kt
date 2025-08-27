@@ -18,8 +18,8 @@ interface MoneyDao {
     @Query("DELETE FROM money WHERE id =  :id")
     fun deleteMoney(id : Int)
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun addMoney(money: Money)
+    @Insert
+    suspend fun addMoney(money: Money)
 
     //function to get today's transaction
     @Query("SELECT * from money where date = :date")
@@ -39,6 +39,8 @@ interface MoneyDao {
     @Update
     suspend fun updateMoney(money: Money)
 
+    @Query("SELECT * FROM money WHERE id = :id LIMIT 1")
+    suspend fun getMoneyById(id: Int): Money?
 
 }
 
