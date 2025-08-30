@@ -105,7 +105,7 @@ fun BottomNav(navController: NavHostController, moneyViewModel: AddScreenViewMod
 
                     UpdateScreen(
                         viewModel = moneyViewModel,
-                        navController = navController,
+                        navController = navController1,
                         description = description,
                         amount = amount.toDouble(),
                         id = id,
