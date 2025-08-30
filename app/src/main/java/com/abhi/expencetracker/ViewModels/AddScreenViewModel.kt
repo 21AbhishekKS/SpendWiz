@@ -5,9 +5,13 @@ import android.net.Uri
 import android.os.Build
 import android.provider.Telephony
 import androidx.annotation.RequiresApi
+import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.map
 import androidx.lifecycle.viewModelScope
+import com.aay.compose.donutChart.model.PieChartData
+import com.abhi.expencetracker.Database.money.CategoryExpense
 import com.abhi.expencetracker.MainApplication
 import com.abhi.expencetracker.Database.money.Money
 import com.abhi.expencetracker.Database.money.TransactionType
@@ -190,7 +194,38 @@ class AddScreenViewModel : ViewModel() {
         }
     }
 
+    fun getCategoryExpensesForMonth(month: String, year: String): LiveData<List<PieChartData>> {
+        return moneyDao.getCategoryExpensesByMonthAndYear(month, year).map { categoryList ->
+            mapCategoryExpensesToPieChartData(categoryList)
+        }
+    }
 
+    private fun mapCategoryExpensesToPieChartData(expenses: List<CategoryExpense>): List<PieChartData> {
+        val colors = listOf(
+            Color(0xFF8B0000), // Very Dark Red (Maroon)
+            Color(0xFFC62828), // Dark Red
+            Color(0xFF6A1B1A), // Red-Brown
+            Color(0xFFFFCDD2), // Light Red
+            Color(0xFF4E342E), // Coffee Brown
+            Color(0xFFEF9A9A), // Soft Red
+            Color(0xFF3E2723), // Dark Coffee
+            Color(0xFFE57373), // Medium Red
+            Color(0xFF5D4037),  // Rich Brown
+            Color(0xFFB71C1C)  // Deep Red
+        )
+
+
+
+
+
+        return expenses.mapIndexed { index, item ->
+            PieChartData(
+                partName = item.category+": "+item.total,
+                data = item.total,
+                color = colors[index % colors.size]
+            )
+        }
+    }
 
 
     fun deleteMoney(id: Int) {

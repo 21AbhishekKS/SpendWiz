@@ -42,6 +42,20 @@ interface MoneyDao {
     @Query("SELECT * FROM money WHERE id = :id LIMIT 1")
     suspend fun getMoneyById(id: Int): Money?
 
+    @Query("""
+    SELECT category, SUM(amount) as total 
+    FROM money 
+    WHERE type = :transactionType 
+      AND substr(date, 4, 2) = :month 
+      AND substr(date, 7, 4) = :year
+    GROUP BY category
+""")
+    fun getCategoryExpensesByMonthAndYear(
+        month: String,
+        year: String,
+        transactionType: TransactionType = TransactionType.EXPENSE
+    ): LiveData<List<CategoryExpense>>
+
 }
 
 

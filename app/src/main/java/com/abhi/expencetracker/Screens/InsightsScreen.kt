@@ -4,9 +4,12 @@ import android.net.Uri
 import android.os.Build
 import android.widget.Toast
 import androidx.annotation.RequiresApi
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -14,14 +17,26 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material.icons.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
@@ -29,6 +44,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -40,22 +56,24 @@ import androidx.compose.ui.unit.sp
 import com.abhi.expencetracker.ViewModels.AddScreenViewModel
 import com.abhi.expencetracker.utils.MoneyItem1
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.res.painterResource
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.abhi.expencetracker.Database.money.TransactionType
 import com.abhi.expencetracker.R
 import com.abhi.expencetracker.helper.OnBoarding.LoaderIntro
 import com.abhi.expencetracker.navigation.Routes
+import com.abhi.expencetracker.utils.ExpenseDonutChartByMonth
 import com.abhi.expencetracker.utils.PieChart
+import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun InsightsScreen(viewModel: AddScreenViewModel, navController1: NavHostController){
 
     var context = LocalContext.current
-
-   // val moneyList1 by viewModel.moneyDao.getAllMoney().observeAsState()
-
 
     var currentDate = ""
 
@@ -128,9 +146,8 @@ fun InsightsScreen(viewModel: AddScreenViewModel, navController1: NavHostControl
 
 
 
-
     Column(Modifier.background(Color.White),
-        horizontalAlignment = Alignment.CenterHorizontally) {
+        horizontalAlignment = Alignment.CenterHorizontally,) {
 
 
     Column(Modifier.padding(horizontal = 10.dp).background(Color.White) ,
@@ -252,14 +269,100 @@ fun InsightsScreen(viewModel: AddScreenViewModel, navController1: NavHostControl
 
 
         if (MonthlyReceived != 0 || MonthlySpent != 0) {
-            PieChart(
-                spent = MonthlySpent.toDouble(),
-                earned = MonthlyReceived.toDouble(),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .fillMaxHeight(0.4f)
-            )
-        }
+                val pagerState = rememberPagerState(initialPage = 0, pageCount = { 2 })
+                val coroutineScope = rememberCoroutineScope()
+
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Box(modifier = Modifier
+                        .fillMaxWidth()
+                        .fillMaxHeight(0.45f)) {
+
+                        // Pager
+                        HorizontalPager(
+                            state = pagerState,
+                            modifier = Modifier.fillMaxSize()
+                        ) { page ->
+                            when (page) {
+                                0 ->
+                                    PieChart(
+                                    spent = MonthlySpent.toDouble(),
+                                    earned = MonthlyReceived.toDouble(),
+                                    modifier = Modifier.fillMaxSize())
+
+                                1 ->
+                                    ExpenseDonutChartByMonth(
+                                        viewModel = viewModel,
+                                        month = selectedMonthInNum,
+                                        year = selectedYear,
+                                        modifier = Modifier.fillMaxSize()
+                                    )
+                            }
+                        }
+
+                        if (pagerState.currentPage > 0) {
+                            IconButton(
+                                onClick = {
+                                    coroutineScope.launch {
+                                        pagerState.animateScrollToPage(pagerState.currentPage - 1)
+                                    }
+                                },
+                                modifier = Modifier
+                                    .align(Alignment.BottomStart)
+                                    .padding(8.dp)
+                            ) {
+                                Image(
+                                    painter = painterResource(id = R.drawable.right_arrow),
+                                    contentDescription = "Previous",
+                                    modifier = Modifier
+                                        .size(28.dp)
+                                        .graphicsLayer {
+                                            rotationY = 180f
+                                        }
+                                )
+                            }
+                        }
+                        if (pagerState.currentPage < pagerState.pageCount - 1) {
+                            IconButton(
+                                onClick = {
+                                    coroutineScope.launch {
+                                        pagerState.animateScrollToPage(pagerState.currentPage + 1)
+                                    }
+                                },
+                                modifier = Modifier
+                                    .align(Alignment.BottomEnd)
+                                    .padding(8.dp)
+                            ) {
+                                Image(
+                                    painter = painterResource(id = R.drawable.right_arrow),
+                                    contentDescription = "Next",
+                                    modifier = Modifier.size(28.dp)
+                                )
+                            }
+                        }
+                    }
+                    Row(
+                        modifier = Modifier
+                            .padding(top = 8.dp),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        repeat(pagerState.pageCount) { index ->
+                            val isSelected = pagerState.currentPage == index
+                            Surface(
+                                modifier = Modifier
+                                    .padding(4.dp)
+                                    .size(if (isSelected) 10.dp else 8.dp),
+                                shape = CircleShape,
+                                color = if (isSelected) Color.Blue else Color.Gray
+                            ) {}
+                        }
+                    }
+                }
+            }
+
 
 
         Column(modifier = Modifier
