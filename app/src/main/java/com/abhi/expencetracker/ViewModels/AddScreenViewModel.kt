@@ -141,12 +141,6 @@ class AddScreenViewModel : ViewModel() {
                             }
                         } ?: "Unknown"
 
-                        val description = when (type) {
-                            TransactionType.EXPENSE -> "Paid to $name"
-                            TransactionType.INCOME -> "Received from $name"
-                            TransactionType.TRANSFER -> "Transferred with $name"
-                        }
-
 
                         val date = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
                             .format(Date(timestamp))
@@ -180,7 +174,7 @@ class AddScreenViewModel : ViewModel() {
                         val money = Money(
                             id = 0,
                             amount = amount,
-                            description = description,
+                            description = name,
                             type = type,
                             date = date,
                             upiRefNo = upiRefNo,

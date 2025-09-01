@@ -26,82 +26,94 @@ fun MoneyItem1(
 ) {
     Card(
         Modifier
-            .background(Color.White)
             .fillMaxWidth()
-            .padding(5.dp)
+            .padding(horizontal = 6.dp, vertical = 4.dp)
             .clickable { onClick() }
     ) {
         Row(
             Modifier
                 .background(Color.White)
-                .padding(10.dp)
+                .padding(8.dp)
                 .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Left side (icon + text details)
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
+            Image(
+                painter = painterResource(
+                    id = when (item.type) {
+                        TransactionType.INCOME -> R.drawable.received_icon
+                        TransactionType.EXPENSE -> R.drawable.spent_icon
+                        else -> R.drawable.transaction_icon
+                    }
+                ),
+                contentDescription = "",
+                modifier = Modifier
+                    .padding(end = 8.dp)
+                    .size(32.dp) // smaller icon
+            )
+
+            Column(
                 modifier = Modifier.weight(1f)
             ) {
-                Image(
-                    painter = painterResource(
-                        id = when (item.type) {
-                            TransactionType.INCOME -> R.drawable.received_icon
-                            TransactionType.EXPENSE -> R.drawable.spent_icon
-                            else -> R.drawable.transaction_icon
-                        }
-                    ),
-                    contentDescription = "",
-                    modifier = Modifier
-                        .padding(end = 10.dp)
-                        .size(40.dp)
+                // Description - single line
+                Text(
+                    text = item.description,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    fontSize = 14.sp,
+                    color = Color.Black
                 )
 
-                Column {
+                // Bank name + Date in same row
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
                     Text(
-                        text = item.description,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                        color = Color.Black
+                        text = item.date,
+                        fontSize = 12.sp,
+                        color = Color.DarkGray,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
-                    Text(text = "Date: ${item.date}", color = Color.Black, fontSize = 12.sp)
+                    Spacer(Modifier.width(6.dp))
+                    Text(
+                        text =  if(item.bankName != null ) "("+item.bankName+")" else "(Cash Payment)",
+                        fontSize = 12.sp,
+                        color = Color.DarkGray,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
 
-                    // UPI Ref in one line only
-                    item.upiRefNo?.let {
-                        Text(
-                            text = "UPI Ref: $it",
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            color = Color.Black,
-                            fontSize = 12.sp
-                        )
-                    }
-
-                    Text(text = item.bankName ?: "Cash Payment", color = Color.Black, fontSize = 12.sp)
+                // UPI Ref (if exists)
+                item.upiRefNo?.let {
+                    Text(
+                        text = "UPI Ref: $it",
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        fontSize = 12.sp,
+                        color = Color.DarkGray
+                    )
                 }
             }
 
-            // Right side (aligned fixed box for amount)
-            Box(
-                modifier = Modifier.width(100.dp), // fixed width ensures alignment
-                contentAlignment = Alignment.CenterEnd
-            ) {
-                Text(
-                    text = when (item.type) {
-                        TransactionType.INCOME -> "+ ${item.amount}"
-                        TransactionType.EXPENSE -> "- ${item.amount}"
-                        else -> "${item.amount}"
-                    },
-                    color = when (item.type) {
-                        TransactionType.INCOME -> Color(0xFF5ABB5E)
-                        TransactionType.EXPENSE -> Color(0xFFF03B2E)
-                        else -> Color(0xFF4B62E4)
-                    },
-                    textAlign = TextAlign.End,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
+            // Right side (amount)
+            Text(
+                text = when (item.type) {
+                    TransactionType.INCOME -> "+ ${item.amount}"
+                    TransactionType.EXPENSE -> "- ${item.amount}"
+                    else -> "${item.amount}"
+                },
+                color = when (item.type) {
+                    TransactionType.INCOME -> Color(0xFF4CAF50)
+                    TransactionType.EXPENSE -> Color(0xFFF44336)
+                    else -> Color(0xFF3F51B5)
+                },
+                fontSize = 14.sp,
+                textAlign = TextAlign.End,
+                modifier = Modifier.widthIn(min = 70.dp) // keeps alignment
+            )
         }
     }
 }
