@@ -18,8 +18,9 @@ interface MoneyDao {
     @Delete
     suspend fun deleteMoney(money: Money)
 
-    @Insert
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun addMoney(money: Money)
+
 
     //function to get today's transaction
     @Query("SELECT * from money where date = :date")
@@ -56,6 +57,18 @@ interface MoneyDao {
         transactionType: TransactionType = TransactionType.EXPENSE
     ): LiveData<List<CategoryExpense>>
 
+// for list of money items from insight screen
+    @Query("UPDATE money SET type = :newType WHERE id IN (:ids)")
+    suspend fun updateTransactionType(ids: List<Int>, newType: TransactionType)
+
+    @Query("UPDATE money SET category = :newCategory WHERE id IN (:ids)")
+    suspend fun updateCategory(ids: List<Int>, newCategory: String)
+
+    @Query("UPDATE money SET subCategory = :newSubCategory WHERE id IN (:ids)")
+    suspend fun updateSubCategory(ids: List<Int>, newSubCategory: String)
+
+    @Query("DELETE FROM money WHERE id IN (:ids)")
+    suspend fun deleteTransactions(ids: List<Int>)
 }
 
 

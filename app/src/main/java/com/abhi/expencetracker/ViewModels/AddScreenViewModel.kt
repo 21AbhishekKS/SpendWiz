@@ -4,8 +4,11 @@ import android.content.Context
 import android.net.Uri
 import android.os.Build
 import android.provider.Telephony
+import android.util.Log
+import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.map
@@ -221,8 +224,9 @@ class AddScreenViewModel : ViewModel() {
         }
     }
 
-
     fun deleteMoney(id: Int) {
+        Log.v( "delete", "delete method called")
+
         viewModelScope.launch(Dispatchers.IO) {
             val money = moneyDao.getMoneyById(id)
             if (money != null) {
@@ -230,5 +234,18 @@ class AddScreenViewModel : ViewModel() {
             }
         }
     }
+
+    // for list of money items from insight screen
+    fun updateTransactionType(ids: List<Int>, newType: TransactionType) =
+        viewModelScope.launch { moneyDao.updateTransactionType(ids, newType) }
+
+    fun updateCategory(ids: List<Int>, newCategory: String) =
+        viewModelScope.launch { moneyDao.updateCategory(ids, newCategory) }
+
+    fun updateSubCategory(ids: List<Int>, newSubCategory: String) =
+        viewModelScope.launch { moneyDao.updateSubCategory(ids, newSubCategory) }
+
+    fun deleteTransactions(ids: List<Int>) =
+        viewModelScope.launch { moneyDao.deleteTransactions(ids) }
 
 }

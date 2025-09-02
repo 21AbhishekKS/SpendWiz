@@ -1,6 +1,7 @@
 package com.abhi.expencetracker.Screens
 
 import android.os.Build
+import android.util.Log
 import android.view.View
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -82,13 +83,10 @@ fun InsightsScreen(
             selectedMonthIndex,
             1
         ).apply {
-            // Hide the day spinner
-            val daySpinnerId =
-                context.resources.getIdentifier("android:id/day", null, null)
-            val datePicker =
-                this.datePicker.findViewById<View>(
-                    context.resources.getIdentifier("android:id/datePicker", null, null)
-                )
+            val daySpinnerId = context.resources.getIdentifier("android:id/day", null, null)
+            val datePicker = this.datePicker.findViewById<View>(
+                context.resources.getIdentifier("android:id/datePicker", null, null)
+            )
             datePicker?.findViewById<View>(daySpinnerId)?.visibility = View.GONE
         }
     }
@@ -160,7 +158,6 @@ fun InsightsScreen(
                                 }
                         )
 
-                        // 📅 Month / Year
                         Text(
                             text = "${selectedMonth.take(3)} ${selectedYear % 100}",
                             fontSize = 16.sp,
@@ -170,7 +167,6 @@ fun InsightsScreen(
                                 .padding(horizontal = 4.dp)
                         )
 
-                        // ➡️ Next
                         Icon(
                             Icons.Rounded.KeyboardArrowRight,
                             contentDescription = "Next",
@@ -213,9 +209,21 @@ fun InsightsScreen(
                 var showSubCategoryDialog by remember { mutableStateOf(false) }
                 var showDeleteDialog by remember { mutableStateOf(false) }
 
+                // NEW: tracked selections for dialogs
+                var selectedType by remember { mutableStateOf<TransactionType?>(null) }
+                var selectedCategory by remember { mutableStateOf("") }
+                var selectedSubCategory by remember { mutableStateOf("") }
+
                 val selectedTransactions = remember(selectedItems, moneyList) {
                     moneyList.filter { selectedItems.contains(it.id.toString()) }
                 }
+
+                val isSameType = selectedTransactions.map { it.type }.distinct().size == 1
+
+                val isSameCategory = selectedTransactions.map { it.category.ifBlank { "Others" } }.distinct().size == 1
+
+                val isSameSubCategory = selectedTransactions.map { it.subCategory ?: "" }.distinct().size == 1
+
 
                 var expanded by remember { mutableStateOf(false) }
 
@@ -232,11 +240,11 @@ fun InsightsScreen(
                     onDismissRequest = { expanded = false }
                 ) {
                     val enabled = selectedItems.isNotEmpty()
-
                     DropdownMenuItem(
                         text = { Text("Change Type") },
                         onClick = {
                             expanded = false
+                            selectedType = null
                             showChangeTypeDialog = true
                         },
                         enabled = enabled
@@ -245,19 +253,22 @@ fun InsightsScreen(
                         text = { Text("Add Category") },
                         onClick = {
                             expanded = false
+                            selectedCategory = ""
                             showCategoryDialog = true
                         },
-                        enabled = enabled
+                        enabled = enabled && isSameType
                     )
+
                     DropdownMenuItem(
                         text = { Text("Add Sub Category") },
                         onClick = {
                             expanded = false
+                            selectedSubCategory = ""
                             showSubCategoryDialog = true
                         },
-                        // enabled only if all selected items share the same category
-                        enabled = enabled && selectedTransactions.map { it.category }.distinct().size == 1
+                        enabled = enabled && isSameType && isSameCategory
                     )
+
                     DropdownMenuItem(
                         text = { Text("Delete") },
                         onClick = {
@@ -268,7 +279,7 @@ fun InsightsScreen(
                     )
                 }
 
-// --- Change Type Dialog ---
+                // --- Change Type Dialog ---
                 if (showChangeTypeDialog) {
                     AlertDialog(
                         onDismissRequest = { showChangeTypeDialog = false },
@@ -280,45 +291,53 @@ fun InsightsScreen(
                                     "Expense" to TransactionType.EXPENSE,
                                     "Transfer" to TransactionType.TRANSFER
                                 ).forEach { (label, typeEnum) ->
-                                    Text(
-                                        text = label,
+                                    Row(
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .clickable {
-                                                selectedTransactions.forEach { tx ->
-                                                    viewModel.updateMoney(
-                                                        id = tx.id,
-                                                        amount = parseAmount(tx.amount),
-                                                        description = tx.description ?: "",
-                                                        type = typeEnum,
-                                                        category = tx.category ?: "Others",
-                                                        subCategory = tx.subCategory ?: "General",
-                                                        date = tx.date ?: ""
-                                                    )
-                                                }
-                                                showChangeTypeDialog = false
-                                                selectedItems.clear()
-                                            }
-                                            .padding(12.dp)
-                                    )
+                                            .clickable { selectedType = typeEnum }
+                                            .padding(12.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        RadioButton(
+                                            selected = selectedType == typeEnum,
+                                            onClick = { selectedType = typeEnum }
+                                        )
+                                        Text(label, modifier = Modifier.padding(start = 8.dp))
+                                    }
                                 }
                             }
                         },
-                        confirmButton = {}
+                        confirmButton = {
+                            TextButton(
+                                onClick = {
+                                    if (selectedType != null) {
+                                        val ids = selectedItems.map { it.toInt() }
+                                        viewModel.updateTransactionType(ids, selectedType!!)
+                                    }
+                                    showChangeTypeDialog = false
+                                    selectedItems.clear()
+                                }
+                            ) { Text("Confirm") }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = { showChangeTypeDialog = false }) {
+                                Text("Cancel")
+                            }
+                        }
                     )
                 }
-// --- Add Category Dialog ---
+
+                // --- Add Category Dialog ---
                 if (showCategoryDialog) {
                     val incomeCategories = listOf("Salary", "Business", "Investments", "Others")
                     val expenseCategories = listOf("Food", "Transport", "Shopping", "Bills", "Misc", "Others")
                     val transferCategories = listOf("Bank Transfer", "UPI", "Others")
 
-                    // detect type of first selected transaction
-                    val type = selectedTransactions.firstOrNull()?.type ?: TransactionType.EXPENSE
-                    val categories = when (type) {
+                    val typeForCats = selectedTransactions.firstOrNull()?.type ?: TransactionType.EXPENSE
+                    val categories = when (typeForCats) {
                         TransactionType.INCOME -> incomeCategories
                         TransactionType.EXPENSE -> expenseCategories
-                        else -> transferCategories
+                        TransactionType.TRANSFER -> transferCategories
                     }
 
                     AlertDialog(
@@ -327,36 +346,43 @@ fun InsightsScreen(
                         text = {
                             Column {
                                 categories.forEach { cat ->
-                                    Text(
-                                        text = cat,
+                                    Row(
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .clickable {
-                                                selectedTransactions.forEach { tx ->
-                                                    viewModel.updateMoney(
-                                                        id = tx.id,
-                                                        amount = parseAmount(tx.amount),
-                                                        description = tx.description ?: "",
-                                                        type = tx.type,
-                                                        category = cat,
-                                                        subCategory = tx.subCategory ?: "General",
-                                                        date = tx.date ?: ""
-                                                    )
-                                                }
-                                                showCategoryDialog = false
-                                                selectedItems.clear()
-                                            }
-                                            .padding(12.dp)
-                                    )
+                                            .clickable { selectedCategory = cat }
+                                            .padding(12.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        RadioButton(
+                                            selected = selectedCategory == cat,
+                                            onClick = { selectedCategory = cat }
+                                        )
+                                        Text(cat, modifier = Modifier.padding(start = 8.dp))
+                                    }
                                 }
                             }
                         },
-                        confirmButton = {}
+                        confirmButton = {
+                            TextButton(
+                                onClick = {
+                                    if (selectedCategory.isNotEmpty()) {
+                                        val ids = selectedItems.map { it.toInt() }
+                                        viewModel.updateCategory(ids, selectedCategory)
+                                    }
+                                    showCategoryDialog = false
+                                    selectedItems.clear()
+                                }
+                            ) { Text("Confirm") }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = { showCategoryDialog = false }) {
+                                Text("Cancel")
+                            }
+                        }
                     )
                 }
 
-// --- Add Sub Category Dialog ---
-                if (showSubCategoryDialog) {
+                if (showSubCategoryDialog && isSameType && isSameCategory) {
                     val expenseSubCategoryMap = mapOf(
                         "Food" to listOf("Breakfast", "Lunch", "Dinner", "Snacks", "Groceries"),
                         "Transport" to listOf("Bus", "Train", "Taxi", "Fuel", "Flight"),
@@ -375,11 +401,11 @@ fun InsightsScreen(
                     )
 
                     val category = selectedTransactions.firstOrNull()?.category ?: ""
-                    val type = selectedTransactions.firstOrNull()?.type ?: TransactionType.EXPENSE
-                    val subcategories = when (type) {
+                    val typeForSubs = selectedTransactions.firstOrNull()?.type ?: TransactionType.EXPENSE
+                    val subcategories = when (typeForSubs) {
                         TransactionType.INCOME -> incomeSubCategoryMap[category].orEmpty()
                         TransactionType.EXPENSE -> expenseSubCategoryMap[category].orEmpty()
-                        else -> transferSubCategoryMap[category].orEmpty()
+                        TransactionType.TRANSFER -> transferSubCategoryMap[category].orEmpty()
                     }
 
                     AlertDialog(
@@ -388,50 +414,58 @@ fun InsightsScreen(
                         text = {
                             Column {
                                 subcategories.forEach { sub ->
-                                    Text(
-                                        text = sub,
+                                    Row(
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .clickable {
-                                                selectedTransactions.forEach { tx ->
-                                                    viewModel.updateMoney(
-                                                        id = tx.id,
-                                                        amount = parseAmount(tx.amount),
-                                                        description = tx.description ?: "",
-                                                        type = tx.type,
-                                                        category = tx.category ?: "Others",
-                                                        subCategory = sub,
-                                                        date = tx.date ?: ""
-                                                    )
-                                                }
-                                                showSubCategoryDialog = false
-                                                selectedItems.clear()
-                                            }
-                                            .padding(12.dp)
-                                    )
+                                            .clickable { selectedSubCategory = sub }
+                                            .padding(12.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        RadioButton(
+                                            selected = selectedSubCategory == sub,
+                                            onClick = { selectedSubCategory = sub }
+                                        )
+                                        Text(sub, modifier = Modifier.padding(start = 8.dp))
+                                    }
                                 }
                             }
                         },
-                        confirmButton = {}
+                        confirmButton = {
+                            TextButton(
+                                onClick = {
+                                    if (selectedSubCategory.isNotEmpty()) {
+                                        val ids = selectedItems.map { it.toInt() }
+                                        viewModel.updateSubCategory(ids, selectedSubCategory)
+                                    }
+                                    showSubCategoryDialog = false
+                                    selectedItems.clear()
+                                }
+                            ) { Text("Confirm") }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = { showSubCategoryDialog = false }) {
+                                Text("Cancel")
+                            }
+                        }
                     )
                 }
 
 
+                // --- Delete Dialog ---
                 if (showDeleteDialog) {
                     AlertDialog(
                         onDismissRequest = { showDeleteDialog = false },
                         title = { Text("Delete Transactions") },
                         text = { Text("Are you sure you want to delete ${selectedItems.size} transactions?") },
                         confirmButton = {
-                            TextButton(onClick = {
-                                selectedTransactions.forEach { tx ->
-                                    viewModel.deleteMoney(tx.id)
+                            TextButton(
+                                onClick = {
+                                    val ids = selectedItems.map { it.toInt() }
+                                    viewModel.deleteTransactions(ids)
+                                    showDeleteDialog = false
+                                    selectedItems.clear()
                                 }
-                                showDeleteDialog = false
-                                selectedItems.clear()
-                            }) {
-                                Text("Delete")
-                            }
+                            ) { Text("Delete") }
                         },
                         dismissButton = {
                             TextButton(onClick = { showDeleteDialog = false }) {
@@ -440,11 +474,9 @@ fun InsightsScreen(
                         }
                     )
                 }
-
             }
         )
 
-        // 🔹 Charts
         if (monthlyReceived != 0.0 || monthlySpent != 0.0) {
             Box(
                 modifier = Modifier
@@ -471,7 +503,6 @@ fun InsightsScreen(
                     }
                 }
 
-                // Left arrow for pager
                 if (pagerState.currentPage > 0) {
                     IconButton(
                         onClick = { scope.launch { pagerState.animateScrollToPage(pagerState.currentPage - 1) } },
@@ -484,7 +515,6 @@ fun InsightsScreen(
                         )
                     }
                 }
-                // Right arrow for pager
                 if (pagerState.currentPage < 1) {
                     IconButton(
                         onClick = { scope.launch { pagerState.animateScrollToPage(pagerState.currentPage + 1) } },
@@ -499,6 +529,7 @@ fun InsightsScreen(
                 }
             }
         }
+
         when {
             moneyListLive.value.isEmpty() && monthlySpent == 0.0 && monthlyReceived == 0.0 -> {
                 BlueCircularLoader(Modifier)
@@ -586,6 +617,7 @@ fun InsightsScreen(
     }
 }
 
+
 // Helpers
 private fun enc(s: String): String =
     URLEncoder.encode(s, StandardCharsets.UTF_8.toString()).replace("+", "%20")
@@ -596,3 +628,4 @@ private fun parseAmount(amountAny: Any?): Double =
         is String -> amountAny.toDoubleOrNull() ?: 0.0
         else -> 0.0
     }
+
