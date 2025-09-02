@@ -15,8 +15,8 @@ interface MoneyDao {
     @Query("select * from MONEY order by date asc")
     fun getAllMoney() : LiveData<List<Money>>
 
-    @Query("DELETE FROM money WHERE id =  :id")
-    fun deleteMoney(id : Int)
+    @Delete
+    suspend fun deleteMoney(money: Money)
 
     @Insert
     suspend fun addMoney(money: Money)

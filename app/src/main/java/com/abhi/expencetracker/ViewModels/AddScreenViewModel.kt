@@ -224,7 +224,11 @@ class AddScreenViewModel : ViewModel() {
 
     fun deleteMoney(id: Int) {
         viewModelScope.launch(Dispatchers.IO) {
-            moneyDao.deleteMoney(id)
+            val money = moneyDao.getMoneyById(id)
+            if (money != null) {
+                moneyDao.deleteMoney(money)
+            }
         }
     }
+
 }

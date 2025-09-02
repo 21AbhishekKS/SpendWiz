@@ -41,6 +41,7 @@ import com.abhi.expencetracker.navigation.Routes
 import com.abhi.expencetracker.utils.BlueCircularLoader
 import com.abhi.expencetracker.utils.ExpenseDonutChartByMonth
 import com.abhi.expencetracker.utils.MoneyItem1
+import com.abhi.expencetracker.utils.MoneyItemWithLongPress
 import com.abhi.expencetracker.utils.PieChart
 import kotlinx.coroutines.launch
 import java.net.URLEncoder
@@ -66,6 +67,8 @@ fun InsightsScreen(
 
     val selectedMonth = listOfMonth[selectedMonthIndex]
     val selectedMonthInNum = String.format("%02d", selectedMonthIndex + 1)
+
+    val selectedItems = remember { mutableStateListOf<String>() }
 
     val context = LocalContext.current
     val datePickerDialog = remember {
@@ -94,7 +97,7 @@ fun InsightsScreen(
         .getTransactionsByMonthAndYear(selectedMonthInNum, selectedYear.toString())
         .observeAsState(initial = emptyList())
 
-    val moneyList = remember(moneyListLive.value) { moneyListLive.value.asReversed() }
+    val moneyList = moneyListLive.value.asReversed()
 
     val groupedByDate: List<Pair<String, List<Money>>> =
         remember(moneyList) {
@@ -134,11 +137,10 @@ fun InsightsScreen(
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Start,
-                    //modifier = Modifier.padding(start = 4.dp)
                 ) {
                     Row(
                         modifier = Modifier
-                            .fillMaxHeight()          // <- fills the 48.dp so center works
+                            .fillMaxHeight()
                             .padding(start = 4.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.Start
@@ -188,15 +190,260 @@ fun InsightsScreen(
             },
             title = { },
             actions = {
-                IconButton(onClick = { /* TODO */ }) {
+                if (moneyList.isNotEmpty() && selectedItems.size > 0) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Checkbox(
+                            checked = selectedItems.size == moneyList.size && selectedItems.isNotEmpty(),
+                            onCheckedChange = { isChecked ->
+                                if (isChecked) {
+                                    selectedItems.clear()
+                                    selectedItems.addAll(moneyList.map { it.id.toString() })
+                                } else {
+                                    selectedItems.clear()
+                                }
+                            }
+                        )
+                    }
+                }
+
+                var showChangeTypeDialog by remember { mutableStateOf(false) }
+                var showCategoryDialog by remember { mutableStateOf(false) }
+                var showSubCategoryDialog by remember { mutableStateOf(false) }
+                var showDeleteDialog by remember { mutableStateOf(false) }
+
+                val selectedTransactions = remember(selectedItems, moneyList) {
+                    moneyList.filter { selectedItems.contains(it.id.toString()) }
+                }
+
+                var expanded by remember { mutableStateOf(false) }
+
+                IconButton(onClick = { expanded = true }) {
                     Icon(
                         Icons.Default.MoreVert,
                         contentDescription = "More",
                         modifier = Modifier.size(22.dp)
                     )
                 }
+
+                DropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false }
+                ) {
+                    val enabled = selectedItems.isNotEmpty()
+
+                    DropdownMenuItem(
+                        text = { Text("Change Type") },
+                        onClick = {
+                            expanded = false
+                            showChangeTypeDialog = true
+                        },
+                        enabled = enabled
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Add Category") },
+                        onClick = {
+                            expanded = false
+                            showCategoryDialog = true
+                        },
+                        enabled = enabled
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Add Sub Category") },
+                        onClick = {
+                            expanded = false
+                            showSubCategoryDialog = true
+                        },
+                        // enabled only if all selected items share the same category
+                        enabled = enabled && selectedTransactions.map { it.category }.distinct().size == 1
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Delete") },
+                        onClick = {
+                            expanded = false
+                            showDeleteDialog = true
+                        },
+                        enabled = enabled
+                    )
+                }
+
+// --- Change Type Dialog ---
+                if (showChangeTypeDialog) {
+                    AlertDialog(
+                        onDismissRequest = { showChangeTypeDialog = false },
+                        title = { Text("Change Type") },
+                        text = {
+                            Column {
+                                listOf(
+                                    "Income" to TransactionType.INCOME,
+                                    "Expense" to TransactionType.EXPENSE,
+                                    "Transfer" to TransactionType.TRANSFER
+                                ).forEach { (label, typeEnum) ->
+                                    Text(
+                                        text = label,
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clickable {
+                                                selectedTransactions.forEach { tx ->
+                                                    viewModel.updateMoney(
+                                                        id = tx.id,
+                                                        amount = parseAmount(tx.amount),
+                                                        description = tx.description ?: "",
+                                                        type = typeEnum,
+                                                        category = tx.category ?: "Others",
+                                                        subCategory = tx.subCategory ?: "General",
+                                                        date = tx.date ?: ""
+                                                    )
+                                                }
+                                                showChangeTypeDialog = false
+                                                selectedItems.clear()
+                                            }
+                                            .padding(12.dp)
+                                    )
+                                }
+                            }
+                        },
+                        confirmButton = {}
+                    )
+                }
+// --- Add Category Dialog ---
+                if (showCategoryDialog) {
+                    val incomeCategories = listOf("Salary", "Business", "Investments", "Others")
+                    val expenseCategories = listOf("Food", "Transport", "Shopping", "Bills", "Misc", "Others")
+                    val transferCategories = listOf("Bank Transfer", "UPI", "Others")
+
+                    // detect type of first selected transaction
+                    val type = selectedTransactions.firstOrNull()?.type ?: TransactionType.EXPENSE
+                    val categories = when (type) {
+                        TransactionType.INCOME -> incomeCategories
+                        TransactionType.EXPENSE -> expenseCategories
+                        else -> transferCategories
+                    }
+
+                    AlertDialog(
+                        onDismissRequest = { showCategoryDialog = false },
+                        title = { Text("Select Category") },
+                        text = {
+                            Column {
+                                categories.forEach { cat ->
+                                    Text(
+                                        text = cat,
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clickable {
+                                                selectedTransactions.forEach { tx ->
+                                                    viewModel.updateMoney(
+                                                        id = tx.id,
+                                                        amount = parseAmount(tx.amount),
+                                                        description = tx.description ?: "",
+                                                        type = tx.type,
+                                                        category = cat,
+                                                        subCategory = tx.subCategory ?: "General",
+                                                        date = tx.date ?: ""
+                                                    )
+                                                }
+                                                showCategoryDialog = false
+                                                selectedItems.clear()
+                                            }
+                                            .padding(12.dp)
+                                    )
+                                }
+                            }
+                        },
+                        confirmButton = {}
+                    )
+                }
+
+// --- Add Sub Category Dialog ---
+                if (showSubCategoryDialog) {
+                    val expenseSubCategoryMap = mapOf(
+                        "Food" to listOf("Breakfast", "Lunch", "Dinner", "Snacks", "Groceries"),
+                        "Transport" to listOf("Bus", "Train", "Taxi", "Fuel", "Flight"),
+                        "Shopping" to listOf("Clothes", "Electronics", "Accessories", "Gifts"),
+                        "Bills" to listOf("Electricity", "Internet", "Water", "Mobile"),
+                        "Misc" to listOf("Donation", "Entertainment")
+                    )
+                    val incomeSubCategoryMap = mapOf(
+                        "Salary" to listOf("Monthly", "Bonus", "Overtime"),
+                        "Business" to listOf("Sales", "Services"),
+                        "Investments" to listOf("Stocks", "Crypto", "Bonds")
+                    )
+                    val transferSubCategoryMap = mapOf(
+                        "Bank Transfer" to listOf("Same Bank", "Other Bank"),
+                        "UPI" to listOf("Google Pay", "PhonePe", "Paytm")
+                    )
+
+                    val category = selectedTransactions.firstOrNull()?.category ?: ""
+                    val type = selectedTransactions.firstOrNull()?.type ?: TransactionType.EXPENSE
+                    val subcategories = when (type) {
+                        TransactionType.INCOME -> incomeSubCategoryMap[category].orEmpty()
+                        TransactionType.EXPENSE -> expenseSubCategoryMap[category].orEmpty()
+                        else -> transferSubCategoryMap[category].orEmpty()
+                    }
+
+                    AlertDialog(
+                        onDismissRequest = { showSubCategoryDialog = false },
+                        title = { Text("Select Sub Category") },
+                        text = {
+                            Column {
+                                subcategories.forEach { sub ->
+                                    Text(
+                                        text = sub,
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clickable {
+                                                selectedTransactions.forEach { tx ->
+                                                    viewModel.updateMoney(
+                                                        id = tx.id,
+                                                        amount = parseAmount(tx.amount),
+                                                        description = tx.description ?: "",
+                                                        type = tx.type,
+                                                        category = tx.category ?: "Others",
+                                                        subCategory = sub,
+                                                        date = tx.date ?: ""
+                                                    )
+                                                }
+                                                showSubCategoryDialog = false
+                                                selectedItems.clear()
+                                            }
+                                            .padding(12.dp)
+                                    )
+                                }
+                            }
+                        },
+                        confirmButton = {}
+                    )
+                }
+
+
+                if (showDeleteDialog) {
+                    AlertDialog(
+                        onDismissRequest = { showDeleteDialog = false },
+                        title = { Text("Delete Transactions") },
+                        text = { Text("Are you sure you want to delete ${selectedItems.size} transactions?") },
+                        confirmButton = {
+                            TextButton(onClick = {
+                                selectedTransactions.forEach { tx ->
+                                    viewModel.deleteMoney(tx.id)
+                                }
+                                showDeleteDialog = false
+                                selectedItems.clear()
+                            }) {
+                                Text("Delete")
+                            }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = { showDeleteDialog = false }) {
+                                Text("Cancel")
+                            }
+                        }
+                    )
+                }
+
             }
         )
+
         // 🔹 Charts
         if (monthlyReceived != 0.0 || monthlySpent != 0.0) {
             Box(
@@ -251,26 +498,7 @@ fun InsightsScreen(
                     }
                 }
             }
-
-            // Pager indicators
-            Row(
-                modifier = Modifier
-                    .padding(top = 6.dp)
-                    .fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center
-            ) {
-                repeat(2) { index ->
-                    val selected = pagerState.currentPage == index
-                    Surface(
-                        modifier = Modifier.padding(4.dp).size(if (selected) 10.dp else 8.dp),
-                        shape = CircleShape,
-                        color = if (selected) Color(0xFF1565C0) else Color(0xFFBDBDBD)
-                    ) {}
-                }
-            }
         }
-
-        // 🔹 Transactions List / Loader
         when {
             moneyListLive.value.isEmpty() && monthlySpent == 0.0 && monthlyReceived == 0.0 -> {
                 BlueCircularLoader(Modifier)
@@ -301,7 +529,7 @@ fun InsightsScreen(
                     contentPadding = PaddingValues(bottom = 16.dp)
                 ) {
                     groupedByDate.forEach { (date, itemsForDate) ->
-                        stickyHeader(key = "header_$date") {
+                        item(key = "header_$date") {
                             Text(
                                 text = date,
                                 fontSize = 18.sp,
@@ -315,20 +543,41 @@ fun InsightsScreen(
                         }
                         items(
                             items = itemsForDate,
-                            key = { it.id ?: "${it.description}_${it.amount}_${it.date}" }
+                            key = { it.id }
                         ) { item ->
-                            MoneyItem1(item = item) {
-                                navController1.navigate(
-                                    Routes.UpdateScreen.route +
-                                            "?description=${enc(item.description)}" +
-                                            "&amount=${item.amount}" +
-                                            "&id=${item.id}" +
-                                            "&type=${enc(item.type.toString())}" +
-                                            "&category=${enc(item.category ?: "")}" +
-                                            "&subCategory=${enc(item.subCategory ?: "")}" +
-                                            "&date=${enc(item.date ?: "")}"
-                                )
-                            }
+                            val itemId: String = (item.id.toString())
+
+                            MoneyItemWithLongPress(
+                                item = item,
+                                selected = selectedItems.contains(itemId),
+                                onClick = {
+                                    if (selectedItems.isEmpty()) {
+                                        navController1.navigate(
+                                            Routes.UpdateScreen.route +
+                                                    "?description=${enc(item.description)}" +
+                                                    "&amount=${item.amount}" +
+                                                    "&id=${item.id}" +
+                                                    "&type=${enc(item.type.toString())}" +
+                                                    "&category=${enc(item.category ?: "")}" +
+                                                    "&subCategory=${enc(item.subCategory ?: "")}" +
+                                                    "&date=${enc(item.date ?: "")}"
+                                        )
+                                    } else {
+                                        if (selectedItems.contains(itemId)) {
+                                            selectedItems.remove(itemId)
+                                        } else {
+                                            selectedItems.add(itemId)
+                                        }
+                                    }
+                                },
+                                onLongClick = {
+                                    if (selectedItems.contains(itemId)) {
+                                        selectedItems.remove(itemId)
+                                    } else {
+                                        selectedItems.add(itemId)
+                                    }
+                                }
+                            )
                         }
                     }
                 }
