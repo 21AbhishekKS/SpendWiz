@@ -1,445 +1,349 @@
 package com.abhi.expencetracker.Screens
 
-import android.net.Uri
 import android.os.Build
-import android.widget.Toast
+import android.view.View
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowForward
-import androidx.compose.material.icons.filled.KeyboardArrowLeft
-import androidx.compose.material.icons.filled.KeyboardArrowRight
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.rounded.KeyboardArrowLeft
+import androidx.compose.material.icons.rounded.KeyboardArrowRight
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.abhi.expencetracker.ViewModels.AddScreenViewModel
-import com.abhi.expencetracker.utils.MoneyItem1
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.res.painterResource
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import com.abhi.expencetracker.Database.money.Money
 import com.abhi.expencetracker.Database.money.TransactionType
 import com.abhi.expencetracker.R
+import com.abhi.expencetracker.ViewModels.AddScreenViewModel
 import com.abhi.expencetracker.helper.OnBoarding.LoaderIntro
 import com.abhi.expencetracker.navigation.Routes
+import com.abhi.expencetracker.utils.BlueCircularLoader
 import com.abhi.expencetracker.utils.ExpenseDonutChartByMonth
+import com.abhi.expencetracker.utils.MoneyItem1
 import com.abhi.expencetracker.utils.PieChart
 import kotlinx.coroutines.launch
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
+import java.time.LocalDate
+import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun InsightsScreen(viewModel: AddScreenViewModel, navController1: NavHostController){
-
-    var context = LocalContext.current
-
-    var currentDate = ""
-
-    val scrollableState = rememberScrollState()
-
-    var isMonthExpanded by rememberSaveable {
-        mutableStateOf(false)
-    }
-    var isYearExpanded by rememberSaveable {
-        mutableStateOf(false)
-    }
-
-    var selectedMonth by rememberSaveable {
-        mutableStateOf("January")
-    }
-    var selectedMonthInNum by rememberSaveable {
-        mutableStateOf("01")
-    }
-
-    var selectedYear by rememberSaveable {
-        mutableStateOf("2024")
-    }
-
-    val moneyList1 by viewModel.moneyDao.getTransactionsByMonthAndYear(selectedMonthInNum , selectedYear).observeAsState()
-
-    var MonthlySpent by rememberSaveable {
-        mutableStateOf(0)
-    }
-    var MonthlyReceived by rememberSaveable {
-        mutableStateOf(0)
-    }
-    var MonthlyTransaction by rememberSaveable {
-        mutableStateOf(0)
-    }
-
-
-
-
-
-    LaunchedEffect(moneyList1) {
-        MonthlySpent = 0
-        MonthlyReceived = 0
-        MonthlyTransaction = 0
-
-        moneyList1?.forEach {
-            when (it.type) {
-                TransactionType.EXPENSE -> MonthlySpent += it.amount.toInt()
-                TransactionType.INCOME -> MonthlyReceived += it.amount.toInt()
-                else -> {}
-            }
-        }
-    }
+fun InsightsScreen(
+    viewModel: AddScreenViewModel = viewModel(),
+    navController1: NavHostController
+) {
+    val today = remember { LocalDate.now() }
+    var selectedYear by rememberSaveable { mutableStateOf(today.year) }
+    var selectedMonthIndex by rememberSaveable { mutableStateOf(today.monthValue - 1) }
 
     val listOfMonth = listOf(
-        "January" to "01",
-        "February" to "02",
-        "March" to "03",
-        "April" to "04",
-        "May" to "05",
-        "June" to "06",
-        "July" to "07",
-        "August" to "08",
-        "September" to "09",
-        "October" to "10",
-        "November" to "11",
-        "December" to "12"
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"
     )
-    val listOfYear = listOf("2024", "2025", "2026", "2027" )
 
+    val selectedMonth = listOfMonth[selectedMonthIndex]
+    val selectedMonthInNum = String.format("%02d", selectedMonthIndex + 1)
 
-
-
-    Column(Modifier.background(Color.White),
-        horizontalAlignment = Alignment.CenterHorizontally,) {
-
-
-    Column(Modifier.padding(horizontal = 10.dp).background(Color.White) ,
-        horizontalAlignment = Alignment.CenterHorizontally)
-    {
-
-        Row(
-            Modifier
-                .padding(top = 20.dp, bottom = 5.dp)
-                .fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            ExposedDropdownMenuBox(
-                modifier = Modifier
-                    .background(Color.White)
-                    .fillMaxWidth(.5f)
-                    .border(
-                        1.dp, color = Color.Black,
-                        RoundedCornerShape(4.dp)
-                    )
-                ,
-                expanded = isMonthExpanded,
-                onExpandedChange = { isMonthExpanded =!isMonthExpanded }
-            ) {
-                TextField(
-                    modifier = Modifier
-                        .menuAnchor(),
-                    value = selectedMonth,
-                    onValueChange = {},
-                    readOnly = true,
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = isMonthExpanded) },
-                    colors = ExposedDropdownMenuDefaults.textFieldColors(
-                        unfocusedContainerColor = Color.Transparent,
-                        focusedContainerColor = Color.Transparent ,
-                        focusedIndicatorColor = Color.Transparent,
-                        unfocusedIndicatorColor = Color.Transparent,
-                        unfocusedTextColor = Color.Black,
-                        focusedTextColor = Color.Black,
-                        focusedTrailingIconColor = Color.Black,
-                        unfocusedTrailingIconColor = Color.Black
-                    )
+    val context = LocalContext.current
+    val datePickerDialog = remember {
+        android.app.DatePickerDialog(
+            context,
+            { _, year, month, _ ->
+                selectedYear = year
+                selectedMonthIndex = month
+            },
+            selectedYear,
+            selectedMonthIndex,
+            1
+        ).apply {
+            // Hide the day spinner
+            val daySpinnerId =
+                context.resources.getIdentifier("android:id/day", null, null)
+            val datePicker =
+                this.datePicker.findViewById<View>(
+                    context.resources.getIdentifier("android:id/datePicker", null, null)
                 )
-
-                ExposedDropdownMenu(
-                    expanded = isMonthExpanded,
-                    onDismissRequest = { isMonthExpanded = false },
-                    modifier = Modifier
-                        .background(Color.White)
-
-                ) {
-                    listOfMonth.forEachIndexed { index, text ->
-                        DropdownMenuItem(
-                            text = { Text(text = text.first , color = Color.Black) },
-                            onClick = {
-                                selectedMonth = text.first
-                                selectedMonthInNum = text.second
-                                isMonthExpanded = false
-                            },
-                            contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
-                        )
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.width(10.dp))
-
-            ExposedDropdownMenuBox(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .border(
-                        1.dp, color = Color.Black,
-                        RoundedCornerShape(4.dp)
-                    )
-                ,
-                expanded = isYearExpanded,
-                onExpandedChange = { isYearExpanded =!isYearExpanded }
-            ) {
-                TextField(
-                    modifier = Modifier
-                        .menuAnchor(),
-                    value = selectedYear,
-                    onValueChange = {},
-                    readOnly = true,
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = isYearExpanded) },
-                    colors = ExposedDropdownMenuDefaults.textFieldColors(
-                        unfocusedContainerColor = Color.Transparent,
-                        focusedContainerColor = Color.Transparent ,
-                        focusedIndicatorColor = Color.Transparent,
-                        unfocusedIndicatorColor = Color.Transparent,
-                        unfocusedTextColor = Color.Black,
-                        focusedTextColor = Color.Black,
-                        focusedTrailingIconColor = Color.Black,
-                        unfocusedTrailingIconColor = Color.Black
-                    )
-                )
-
-                ExposedDropdownMenu(
-                    expanded = isYearExpanded,
-                    onDismissRequest = { isYearExpanded = false },
-                    modifier = Modifier
-                        .background(Color.White)
-                ) {
-                    listOfYear.forEachIndexed { index, text ->
-                        DropdownMenuItem(
-                            text = { Text(text = text  , color = Color.Black) },
-                            onClick = {
-                                selectedYear = listOfYear[index]
-                                isYearExpanded = false
-                            },
-                            contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
-                        )
-                    }
-                }
-            }
-            }
-
-
+            datePicker?.findViewById<View>(daySpinnerId)?.visibility = View.GONE
+        }
     }
 
+    val moneyListLive = viewModel.moneyDao
+        .getTransactionsByMonthAndYear(selectedMonthInNum, selectedYear.toString())
+        .observeAsState(initial = emptyList())
 
-        if (MonthlyReceived != 0 || MonthlySpent != 0) {
-                val pagerState = rememberPagerState(initialPage = 0, pageCount = { 2 })
-                val coroutineScope = rememberCoroutineScope()
+    val moneyList = remember(moneyListLive.value) { moneyListLive.value.asReversed() }
 
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally
+    val groupedByDate: List<Pair<String, List<Money>>> =
+        remember(moneyList) {
+            moneyList.groupBy { it.date ?: "" }
+                .toList()
+                .sortedByDescending { it.first }
+        }
+
+    val monthlyTotals by remember(moneyList) {
+        derivedStateOf {
+            var spent = 0.0
+            var received = 0.0
+            for (t in moneyList) {
+                val amt = parseAmount(t.amount)
+                when (t.type) {
+                    TransactionType.EXPENSE -> spent += amt
+                    TransactionType.INCOME -> received += amt
+                    else -> Unit
+                }
+            }
+            spent to received
+        }
+    }
+    val (monthlySpent, monthlyReceived) = monthlyTotals
+
+    val pagerState = rememberPagerState(initialPage = 0, pageCount = { 2 })
+    val scope = rememberCoroutineScope()
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.White)
+    ) {
+        TopAppBar(
+            modifier = Modifier.height(40.dp),
+            navigationIcon = {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Start,
+                    //modifier = Modifier.padding(start = 4.dp)
                 ) {
-                    Box(modifier = Modifier
-                        .fillMaxWidth()
-                        .fillMaxHeight(0.45f)) {
-
-                        // Pager
-                        HorizontalPager(
-                            state = pagerState,
-                            modifier = Modifier.fillMaxSize()
-                        ) { page ->
-                            when (page) {
-                                0 ->
-                                    PieChart(
-                                    spent = MonthlySpent.toDouble(),
-                                    earned = MonthlyReceived.toDouble(),
-                                    modifier = Modifier.fillMaxSize())
-
-                                1 ->
-                                    ExpenseDonutChartByMonth(
-                                        viewModel = viewModel,
-                                        month = selectedMonthInNum,
-                                        year = selectedYear,
-                                        modifier = Modifier.fillMaxSize()
-                                    )
-                            }
-                        }
-
-                        if (pagerState.currentPage > 0) {
-                            IconButton(
-                                onClick = {
-                                    coroutineScope.launch {
-                                        pagerState.animateScrollToPage(pagerState.currentPage - 1)
-                                    }
-                                },
-                                modifier = Modifier
-                                    .align(Alignment.BottomStart)
-                                    .padding(8.dp)
-                            ) {
-                                Image(
-                                    painter = painterResource(id = R.drawable.right_arrow),
-                                    contentDescription = "Previous",
-                                    modifier = Modifier
-                                        .size(28.dp)
-                                        .graphicsLayer {
-                                            rotationY = 180f
-                                        }
-                                )
-                            }
-                        }
-                        if (pagerState.currentPage < pagerState.pageCount - 1) {
-                            IconButton(
-                                onClick = {
-                                    coroutineScope.launch {
-                                        pagerState.animateScrollToPage(pagerState.currentPage + 1)
-                                    }
-                                },
-                                modifier = Modifier
-                                    .align(Alignment.BottomEnd)
-                                    .padding(8.dp)
-                            ) {
-                                Image(
-                                    painter = painterResource(id = R.drawable.right_arrow),
-                                    contentDescription = "Next",
-                                    modifier = Modifier.size(28.dp)
-                                )
-                            }
-                        }
-                    }
                     Row(
                         modifier = Modifier
-                            .padding(top = 8.dp),
-                        horizontalArrangement = Arrangement.Center,
-                        verticalAlignment = Alignment.CenterVertically
+                            .fillMaxHeight()          // <- fills the 48.dp so center works
+                            .padding(start = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Start
                     ) {
-                        repeat(pagerState.pageCount) { index ->
-                            val isSelected = pagerState.currentPage == index
-                            Surface(
-                                modifier = Modifier
-                                    .padding(4.dp)
-                                    .size(if (isSelected) 10.dp else 8.dp),
-                                shape = CircleShape,
-                                color = if (isSelected) Color.Blue else Color.Gray
-                            ) {}
-                        }
+                        Icon(
+                            Icons.Rounded.KeyboardArrowLeft,
+                            contentDescription = "Previous",
+                            modifier = Modifier
+                                .size(20.dp)
+                                .clickable {
+                                    if (selectedMonthIndex == 0) {
+                                        selectedMonthIndex = 11
+                                        selectedYear--
+                                    } else {
+                                        selectedMonthIndex--
+                                    }
+                                }
+                        )
+
+                        // 📅 Month / Year
+                        Text(
+                            text = "${selectedMonth.take(3)} ${selectedYear % 100}",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier
+                                .clickable { datePickerDialog.show() }
+                                .padding(horizontal = 4.dp)
+                        )
+
+                        // ➡️ Next
+                        Icon(
+                            Icons.Rounded.KeyboardArrowRight,
+                            contentDescription = "Next",
+                            modifier = Modifier
+                                .size(20.dp)
+                                .clickable {
+                                    if (selectedMonthIndex == 11) {
+                                        selectedMonthIndex = 0
+                                        selectedYear++
+                                    } else {
+                                        selectedMonthIndex++
+                                    }
+                                }
+                        )
+                    }
+                }
+            },
+            title = { },
+            actions = {
+                IconButton(onClick = { /* TODO */ }) {
+                    Icon(
+                        Icons.Default.MoreVert,
+                        contentDescription = "More",
+                        modifier = Modifier.size(22.dp)
+                    )
+                }
+            }
+        )
+        // 🔹 Charts
+        if (monthlyReceived != 0.0 || monthlySpent != 0.0) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 220.dp, max = 280.dp)
+                    .padding(horizontal = 10.dp)
+            ) {
+                HorizontalPager(
+                    state = pagerState,
+                    modifier = Modifier.fillMaxSize()
+                ) { page ->
+                    when (page) {
+                        0 -> PieChart(
+                            spent = monthlySpent,
+                            earned = monthlyReceived,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                        1 -> ExpenseDonutChartByMonth(
+                            viewModel = viewModel,
+                            month = selectedMonthInNum,
+                            year = selectedYear.toString(),
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
+                }
+
+                // Left arrow for pager
+                if (pagerState.currentPage > 0) {
+                    IconButton(
+                        onClick = { scope.launch { pagerState.animateScrollToPage(pagerState.currentPage - 1) } },
+                        modifier = Modifier.align(Alignment.BottomStart).padding(8.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.right_arrow),
+                            contentDescription = "Previous Chart",
+                            modifier = Modifier.size(28.dp).rotate(180f)
+                        )
+                    }
+                }
+                // Right arrow for pager
+                if (pagerState.currentPage < 1) {
+                    IconButton(
+                        onClick = { scope.launch { pagerState.animateScrollToPage(pagerState.currentPage + 1) } },
+                        modifier = Modifier.align(Alignment.BottomEnd).padding(8.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.right_arrow),
+                            contentDescription = "Next Chart",
+                            modifier = Modifier.size(28.dp)
+                        )
                     }
                 }
             }
 
-
-
-        Column(modifier = Modifier
-        .fillMaxSize()
-        .background(Color.White)
-        .verticalScroll(scrollableState),
-
-    ) {
-        if (moneyList1?.reversed().isNullOrEmpty()) {
-
-            Column(Modifier.fillMaxSize(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center) {
-
-                Text("No transactions found" ,
-                    Modifier
-                        .background(Color.DarkGray)
-                        .fillMaxWidth()
-                        .padding(horizontal = 20.dp) ,
-                    color = Color.White ,)
-
-                LoaderIntro(modifier = Modifier
-                    .fillMaxSize(.8f)
-                    , image = R.raw.a8)
-
+            // Pager indicators
+            Row(
+                modifier = Modifier
+                    .padding(top = 6.dp)
+                    .fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center
+            ) {
+                repeat(2) { index ->
+                    val selected = pagerState.currentPage == index
+                    Surface(
+                        modifier = Modifier.padding(4.dp).size(if (selected) 10.dp else 8.dp),
+                        shape = CircleShape,
+                        color = if (selected) Color(0xFF1565C0) else Color(0xFFBDBDBD)
+                    ) {}
+                }
             }
+        }
 
-
-
-
-        } else {
-            moneyList1?.reversed()?.forEachIndexed() { index, item ->
-                if (currentDate != item.date ){
+        // 🔹 Transactions List / Loader
+        when {
+            moneyListLive.value.isEmpty() && monthlySpent == 0.0 && monthlyReceived == 0.0 -> {
+                BlueCircularLoader(Modifier)
+            }
+            moneyList.isEmpty() -> {
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
                     Text(
-                        text = item.date,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(16.dp) ,
-                        color = Color.Black
+                        "No transactions found",
+                        modifier = Modifier
+                            .background(Color(0xFF424242))
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp, vertical = 8.dp),
+                        color = Color.White
                     )
-                    currentDate = item.date
-                    MoneyItem1(item = item) {
-                        navController1.navigate(
-                            Routes.UpdateScreen.route +
-                                    "?description=${Uri.encode(item.description)}" +
-                                    "&amount=${item.amount}" +
-                                    "&id=${item.id}" +
-                                    "&type=${Uri.encode(item.type.toString())}" +
-                                    "&category=${Uri.encode(item.category ?: "")}" +
-                                    "&subCategory=${Uri.encode(item.subCategory ?: "")}" +
-                                    "&date=${Uri.encode(item.date ?: "")}"
-                        )
+                    LoaderIntro(
+                        modifier = Modifier.fillMaxSize(0.8f),
+                        image = R.raw.a8
+                    )
+                }
+            }
+            else -> {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize().background(Color.White),
+                    contentPadding = PaddingValues(bottom = 16.dp)
+                ) {
+                    groupedByDate.forEach { (date, itemsForDate) ->
+                        stickyHeader(key = "header_$date") {
+                            Text(
+                                text = date,
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color.Black,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(Color.White)
+                                    .padding(horizontal = 16.dp, vertical = 10.dp)
+                            )
+                        }
+                        items(
+                            items = itemsForDate,
+                            key = { it.id ?: "${it.description}_${it.amount}_${it.date}" }
+                        ) { item ->
+                            MoneyItem1(item = item) {
+                                navController1.navigate(
+                                    Routes.UpdateScreen.route +
+                                            "?description=${enc(item.description)}" +
+                                            "&amount=${item.amount}" +
+                                            "&id=${item.id}" +
+                                            "&type=${enc(item.type.toString())}" +
+                                            "&category=${enc(item.category ?: "")}" +
+                                            "&subCategory=${enc(item.subCategory ?: "")}" +
+                                            "&date=${enc(item.date ?: "")}"
+                                )
+                            }
+                        }
                     }
-
-                }else{
-                    MoneyItem1(item = item) {
-                        navController1.navigate(
-                            Routes.UpdateScreen.route +
-                                    "?description=${Uri.encode(item.description)}" +
-                                    "&amount=${item.amount}" +
-                                    "&id=${item.id}" +
-                                    "&type=${Uri.encode(item.type.toString())}" +
-                                    "&category=${Uri.encode(item.category ?: "")}" +
-                                    "&subCategory=${Uri.encode(item.subCategory ?: "")}" +
-                                    "&date=${Uri.encode(item.date ?: "")}"
-                        )
-
-                    }
-
                 }
             }
         }
     }
-
-
-
-
-}
 }
 
+// Helpers
+private fun enc(s: String): String =
+    URLEncoder.encode(s, StandardCharsets.UTF_8.toString()).replace("+", "%20")
+
+private fun parseAmount(amountAny: Any?): Double =
+    when (amountAny) {
+        is Number -> amountAny.toDouble()
+        is String -> amountAny.toDoubleOrNull() ?: 0.0
+        else -> 0.0
+    }
