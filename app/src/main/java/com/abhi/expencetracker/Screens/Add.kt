@@ -1,10 +1,12 @@
 package com.abhi.expencetracker.Screens
 
+import android.app.DatePickerDialog
 import android.os.Build
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -15,7 +17,6 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
@@ -29,8 +30,8 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.abhi.expencetracker.Database.money.TransactionType
 import com.abhi.expencetracker.ViewModels.AddScreenViewModel
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
+import java.text.SimpleDateFormat
+import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @RequiresApi(Build.VERSION_CODES.O)
@@ -78,8 +79,9 @@ fun AddScreen(
     var amount by rememberSaveable { mutableStateOf("") }
     var description by rememberSaveable { mutableStateOf("") }
 
-    val dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yy (EEE)   hh:mm a")
-    val currentDateTime = LocalDateTime.now().format(dateFormatter)
+    val dateFormatter = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+    var currentDate by rememberSaveable { mutableStateOf(dateFormatter.format(Date())) }
+    val calendar = Calendar.getInstance()
 
     val categories = when (selectedType) {
         "Income" -> incomeCategories
@@ -99,15 +101,6 @@ fun AddScreen(
         else -> Color(0xFF2196F3)
     }
 
-    fun Color.darken(factor: Float): Color {
-        return Color(
-            red = (red * (1 - factor)).coerceIn(0f, 1f),
-            green = (green * (1 - factor)).coerceIn(0f, 1f),
-            blue = (blue * (1 - factor)).coerceIn(0f, 1f),
-            alpha = alpha
-        )
-    }
-
     fun saveTransaction() {
         if (amount.isBlank()) {
             Toast.makeText(context, "Enter amount", Toast.LENGTH_SHORT).show()
@@ -123,15 +116,22 @@ fun AddScreen(
             "Expense" -> TransactionType.EXPENSE
             else -> TransactionType.TRANSFER
         }
-        val finalCategory = if (selectedCategory == "Others") customCategory else selectedCategory
+        val finalCategory = when {
+            selectedCategory == "Others" && customCategory.isNotBlank() -> customCategory
+            selectedCategory.isNotBlank() -> selectedCategory
+            else -> "Others"
+        }
+
         viewModel.addMoney1(
             id = 0,
             amount = amountDouble,
-            description = description,
+            description = description.ifBlank { "No description" },
             type = typeEnum,
+            date = currentDate,
             category = finalCategory,
-            subCategory = selectedSubCategory
+            subCategory = selectedSubCategory.ifBlank { "General" }
         )
+        Toast.makeText(context, "Transaction saved!", Toast.LENGTH_SHORT).show()
         navController.popBackStack()
     }
 
@@ -140,54 +140,104 @@ fun AddScreen(
             .fillMaxSize()
             .background(Color.White)
             .padding(12.dp)
-            .verticalScroll(rememberScrollState()),
+            .verticalScroll(rememberScrollState())
     ) {
+        // transaction type buttons
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 6.dp),
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            transactionTypes.forEach { type ->
-                val selectedColor = when (type) {
+            transactionTypes.forEach { t ->
+                val selectedColor = when (t) {
                     "Income" -> Color(0xFF4CAF50)
                     "Expense" -> Color(0xFFF44336)
                     else -> Color(0xFF2196F3)
                 }
-
                 Surface(
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(8.dp),
                     color = Color.White,
-                    border = BorderStroke(1.dp, if (selectedType == type) selectedColor else Color.Gray),
+                    border = BorderStroke(1.dp, if (selectedType == t) selectedColor else Color.Gray),
                     onClick = {
-                        selectedType = type
+                        selectedType = t
                         selectedCategory = ""
                         selectedSubCategory = ""
                         customCategory = ""
                     }
                 ) {
                     Text(
-                        text = type,
+                        text = t,
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(vertical = 6.dp),
                         textAlign = TextAlign.Center,
-                        color = if (selectedType == type) selectedColor else Color.DarkGray
+                        color = if (selectedType == t) selectedColor else Color.DarkGray
                     )
                 }
             }
         }
 
-        FieldRow(label = "Date", readOnlyText = currentDateTime)
+        // Date Row with DatePicker
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Date:",
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Medium,
+                modifier = Modifier.width(90.dp)
+            )
+
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .clickable {
+                        val parsedDate = try { dateFormatter.parse(currentDate) } catch (_: Exception) { null }
+                        val cal = Calendar.getInstance()
+                        if (parsedDate != null) cal.time = parsedDate
+
+                        DatePickerDialog(
+                            context,
+                            { _, year, month, dayOfMonth ->
+                                val pickedCal = Calendar.getInstance()
+                                pickedCal.set(year, month, dayOfMonth)
+                                currentDate = dateFormatter.format(pickedCal.time)
+                            },
+                            cal.get(Calendar.YEAR),
+                            cal.get(Calendar.MONTH),
+                            cal.get(Calendar.DAY_OF_MONTH)
+                        ).show()
+                    }
+            ) {
+                OutlinedTextField(
+                    value = currentDate,
+                    onValueChange = {},
+                    readOnly = true,
+                    enabled = false,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = TextFieldDefaults.outlinedTextFieldColors(
+                        disabledBorderColor = typeColor,
+                        disabledTextColor = Color.Black
+                    )
+                )
+            }
+        }
+
+        // Amount & Note
         FieldRow(
             label = "Amount",
             value = amount,
-            onValueChange = { if (it.matches(Regex("^[0-9]*$"))) amount = it },
+            onValueChange = { if (it.isEmpty() || it.matches(Regex("^[0-9]*\\.?[0-9]*$"))) amount = it },
             keyboardType = KeyboardType.Number,
             borderColor = typeColor,
             modifier = Modifier.focusRequester(focusRequester)
         )
+
         FieldRow(
             label = "Note",
             value = description,
@@ -195,6 +245,7 @@ fun AddScreen(
             borderColor = typeColor
         )
 
+        // Category + Subcategory
         var expanded by remember { mutableStateOf(false) }
         Row(
             modifier = Modifier
@@ -227,15 +278,12 @@ fun AddScreen(
                         focusedTrailingIconColor = typeColor
                     )
                 )
-                ExposedDropdownMenu(
-                    expanded = expanded,
-                    onDismissRequest = { expanded = false }
-                ) {
-                    categories.forEach { category ->
+                ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                    categories.forEach { cat ->
                         DropdownMenuItem(
-                            text = { Text(category) },
+                            text = { Text(cat) },
                             onClick = {
-                                selectedCategory = category
+                                selectedCategory = cat
                                 selectedSubCategory = ""
                                 customCategory = ""
                                 expanded = false
@@ -247,11 +295,7 @@ fun AddScreen(
         }
 
         if (selectedCategory == "Others") {
-            FieldRow(
-                label = "Custom",
-                value = customCategory,
-                onValueChange = { customCategory = it }
-            )
+            FieldRow(label = "Custom", value = customCategory, onValueChange = { customCategory = it })
         } else if (selectedCategory.isNotEmpty()) {
             FlowRow(
                 modifier = Modifier
@@ -302,8 +346,7 @@ fun FieldRow(
     modifier: Modifier = Modifier
 ) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.Bottom
     ) {
         Text(
@@ -329,7 +372,7 @@ fun FieldRow(
                 colors = TextFieldDefaults.textFieldColors(
                     containerColor = fieldBackgroundColor,
                     cursorColor = borderColor,
-                    focusedIndicatorColor = borderColor,
+                    focusedIndicatorColor = borderColor
                 ),
                 keyboardOptions = KeyboardOptions(
                     imeAction = ImeAction.Next,

@@ -72,6 +72,7 @@ class AddScreenViewModel : ViewModel() {
         amount: Double,
         description: String,
         type: TransactionType,
+        date: String,
         category: String = "Others",
         subCategory: String? = null
     ) {
@@ -81,7 +82,7 @@ class AddScreenViewModel : ViewModel() {
                 amount = amount,
                 description = description,
                 type = type,
-                date = formattedDateCustom,
+                date = date,
                 category = category,
                 subCategory = subCategory
             )
