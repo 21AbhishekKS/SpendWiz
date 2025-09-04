@@ -40,6 +40,7 @@ import com.abhi.expencetracker.ViewModels.AddScreenViewModel
 import com.abhi.expencetracker.helper.OnBoarding.LoaderIntro
 import com.abhi.expencetracker.navigation.Routes
 import com.abhi.expencetracker.utils.BlueCircularLoader
+import com.abhi.expencetracker.utils.ChipSelectionDialog
 import com.abhi.expencetracker.utils.ExpenseDonutChartByMonth
 import com.abhi.expencetracker.utils.MoneyItem1
 import com.abhi.expencetracker.utils.MoneyItemWithLongPress
@@ -276,173 +277,100 @@ fun InsightsScreen(
                     )
                 }
 
-                // --- Change Type Dialog ---
                 if (showChangeTypeDialog) {
-                    AlertDialog(
-                        onDismissRequest = { showChangeTypeDialog = false },
-                        title = { Text("Change Type") },
-                        text = {
-                            Column {
-                                listOf(
-                                    "Income" to TransactionType.INCOME,
-                                    "Expense" to TransactionType.EXPENSE,
-                                    "Transfer" to TransactionType.TRANSFER
-                                ).forEach { (label, typeEnum) ->
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .clickable { selectedType = typeEnum }
-                                            .padding(12.dp),
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        RadioButton(
-                                            selected = selectedType == typeEnum,
-                                            onClick = { selectedType = typeEnum }
-                                        )
-                                        Text(label, modifier = Modifier.padding(start = 8.dp))
-                                    }
-                                }
-                            }
+                    ChipSelectionDialog(
+                        title = "Select Type",
+                        type = selectedType ?: TransactionType.EXPENSE, // default
+                        options = listOf(
+                            TransactionType.INCOME.name,
+                            TransactionType.EXPENSE.name,
+                            TransactionType.TRANSFER.name
+                        ),
+                        selectedOption = selectedType?.name ?: "",
+                        onOptionSelected = { selected ->
+                            selectedType = TransactionType.valueOf(selected)
                         },
-                        confirmButton = {
-                            TextButton(
-                                onClick = {
-                                    if (selectedType != null) {
-                                        val ids = selectedItems.map { it.toInt() }
-                                        viewModel.updateTransactionType(ids, selectedType!!)
-                                    }
-                                    showChangeTypeDialog = false
-                                }
-                            ) { Text("Confirm") }
-                        },
-                        dismissButton = {
-                            TextButton(onClick = { showChangeTypeDialog = false }) {
-                                Text("Cancel")
+                        onDismiss = { showChangeTypeDialog = false },
+                        onConfirm = {
+                            if (selectedType != null) {
+                                val ids = selectedItems.map { it.toInt() }
+                                viewModel.updateTransactionType(ids, selectedType!!)
                             }
+                            showChangeTypeDialog = false
                         }
                     )
                 }
 
-                // --- Add Category Dialog ---
                 if (showCategoryDialog) {
-                    val incomeCategories = listOf("Salary", "Business", "Investments", "Others")
-                    val expenseCategories = listOf("Food", "Transport", "Shopping", "Bills", "Misc", "Others")
-                    val transferCategories = listOf("Bank Transfer", "UPI", "Others")
-
                     val typeForCats = selectedTransactions.firstOrNull()?.type ?: TransactionType.EXPENSE
                     val categories = when (typeForCats) {
-                        TransactionType.INCOME -> incomeCategories
-                        TransactionType.EXPENSE -> expenseCategories
-                        TransactionType.TRANSFER -> transferCategories
+                        TransactionType.INCOME -> listOf("Salary", "Business", "Investments", "Others")
+                        TransactionType.EXPENSE -> listOf("Food", "Transport", "Shopping", "Bills", "Misc", "Others")
+                        TransactionType.TRANSFER -> listOf("Bank Transfer", "UPI", "Others")
                     }
 
-                    AlertDialog(
-                        onDismissRequest = { showCategoryDialog = false },
-                        title = { Text("Select Category") },
-                        text = {
-                            Column {
-                                categories.forEach { cat ->
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .clickable { selectedCategory = cat }
-                                            .padding(12.dp),
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        RadioButton(
-                                            selected = selectedCategory == cat,
-                                            onClick = { selectedCategory = cat }
-                                        )
-                                        Text(cat, modifier = Modifier.padding(start = 8.dp))
-                                    }
-                                }
+                    ChipSelectionDialog(
+                        title = "Select Category",
+                        type = typeForCats,
+                        options = categories,
+                        selectedOption = selectedCategory,
+                        onOptionSelected = { selectedCategory = it },
+                        onDismiss = { showCategoryDialog = false },
+                        onConfirm = {
+                            if (selectedCategory.isNotEmpty()) {
+                                val ids = selectedItems.map { it.toInt() }
+                                viewModel.updateCategory(ids, selectedCategory)
                             }
-                        },
-                        confirmButton = {
-                            TextButton(
-                                onClick = {
-                                    if (selectedCategory.isNotEmpty()) {
-                                        val ids = selectedItems.map { it.toInt() }
-                                        viewModel.updateCategory(ids, selectedCategory)
-                                    }
-                                    showCategoryDialog = false
-                                }
-                            ) { Text("Confirm") }
-                        },
-                        dismissButton = {
-                            TextButton(onClick = { showCategoryDialog = false }) {
-                                Text("Cancel")
-                            }
+                            showCategoryDialog = false
                         }
                     )
                 }
 
+
                 if (showSubCategoryDialog && isSameType && isSameCategory) {
-                    val expenseSubCategoryMap = mapOf(
+                    val typeForSubs = selectedTransactions.firstOrNull()?.type ?: TransactionType.EXPENSE
+                    val category = selectedTransactions.firstOrNull()?.category ?: ""
+
+                    val expenseMap = mapOf(
                         "Food" to listOf("Breakfast", "Lunch", "Dinner", "Snacks", "Groceries"),
                         "Transport" to listOf("Bus", "Train", "Taxi", "Fuel", "Flight"),
                         "Shopping" to listOf("Clothes", "Electronics", "Accessories", "Gifts"),
                         "Bills" to listOf("Electricity", "Internet", "Water", "Mobile"),
                         "Misc" to listOf("Donation", "Entertainment")
                     )
-                    val incomeSubCategoryMap = mapOf(
+                    val incomeMap = mapOf(
                         "Salary" to listOf("Monthly", "Bonus", "Overtime"),
                         "Business" to listOf("Sales", "Services"),
                         "Investments" to listOf("Stocks", "Crypto", "Bonds")
                     )
-                    val transferSubCategoryMap = mapOf(
+                    val transferMap = mapOf(
                         "Bank Transfer" to listOf("Same Bank", "Other Bank"),
                         "UPI" to listOf("Google Pay", "PhonePe", "Paytm")
                     )
 
-                    val category = selectedTransactions.firstOrNull()?.category ?: ""
-                    val typeForSubs = selectedTransactions.firstOrNull()?.type ?: TransactionType.EXPENSE
                     val subcategories = when (typeForSubs) {
-                        TransactionType.INCOME -> incomeSubCategoryMap[category].orEmpty()
-                        TransactionType.EXPENSE -> expenseSubCategoryMap[category].orEmpty()
-                        TransactionType.TRANSFER -> transferSubCategoryMap[category].orEmpty()
+                        TransactionType.INCOME -> incomeMap[category].orEmpty()
+                        TransactionType.EXPENSE -> expenseMap[category].orEmpty()
+                        TransactionType.TRANSFER -> transferMap[category].orEmpty()
                     }
 
-                    AlertDialog(
-                        onDismissRequest = { showSubCategoryDialog = false },
-                        title = { Text("Select Sub Category") },
-                        text = {
-                            Column {
-                                subcategories.forEach { sub ->
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .clickable { selectedSubCategory = sub }
-                                            .padding(12.dp),
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        RadioButton(
-                                            selected = selectedSubCategory == sub,
-                                            onClick = { selectedSubCategory = sub }
-                                        )
-                                        Text(sub, modifier = Modifier.padding(start = 8.dp))
-                                    }
-                                }
+                    ChipSelectionDialog(
+                        title = "Select Sub Category",
+                        type = typeForSubs,
+                        options = subcategories,
+                        selectedOption = selectedSubCategory,
+                        onOptionSelected = { selectedSubCategory = it },
+                        onDismiss = { showSubCategoryDialog = false },
+                        onConfirm = {
+                            if (selectedSubCategory.isNotEmpty()) {
+                                val ids = selectedItems.map { it.toInt() }
+                                viewModel.updateSubCategory(ids, selectedSubCategory)
                             }
-                        },
-                        confirmButton = {
-                            TextButton(
-                                onClick = {
-                                    if (selectedSubCategory.isNotEmpty()) {
-                                        val ids = selectedItems.map { it.toInt() }
-                                        viewModel.updateSubCategory(ids, selectedSubCategory)
-                                    }
-                                    showSubCategoryDialog = false
-                                }
-                            ) { Text("Confirm") }
-                        },
-                        dismissButton = {
-                            TextButton(onClick = { showSubCategoryDialog = false }) {
-                                Text("Cancel")
-                            }
+                            showSubCategoryDialog = false
                         }
                     )
                 }
+
 
                 // --- Delete Dialog ---
                 if (showDeleteDialog) {
