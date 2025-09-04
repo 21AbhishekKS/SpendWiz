@@ -214,16 +214,13 @@ fun InsightsScreen(
                 var selectedCategory by remember { mutableStateOf("") }
                 var selectedSubCategory by remember { mutableStateOf("") }
 
-                val selectedTransactions = remember(selectedItems, moneyList) {
+                val selectedTransactions = remember(selectedItems.size, moneyList) {
                     moneyList.filter { selectedItems.contains(it.id.toString()) }
                 }
 
                 val isSameType = selectedTransactions.map { it.type }.distinct().size == 1
 
                 val isSameCategory = selectedTransactions.map { it.category.ifBlank { "Others" } }.distinct().size == 1
-
-                val isSameSubCategory = selectedTransactions.map { it.subCategory ?: "" }.distinct().size == 1
-
 
                 var expanded by remember { mutableStateOf(false) }
 
@@ -315,7 +312,6 @@ fun InsightsScreen(
                                         viewModel.updateTransactionType(ids, selectedType!!)
                                     }
                                     showChangeTypeDialog = false
-                                    selectedItems.clear()
                                 }
                             ) { Text("Confirm") }
                         },
@@ -370,7 +366,6 @@ fun InsightsScreen(
                                         viewModel.updateCategory(ids, selectedCategory)
                                     }
                                     showCategoryDialog = false
-                                    selectedItems.clear()
                                 }
                             ) { Text("Confirm") }
                         },
@@ -438,7 +433,6 @@ fun InsightsScreen(
                                         viewModel.updateSubCategory(ids, selectedSubCategory)
                                     }
                                     showSubCategoryDialog = false
-                                    selectedItems.clear()
                                 }
                             ) { Text("Confirm") }
                         },
@@ -449,7 +443,6 @@ fun InsightsScreen(
                         }
                     )
                 }
-
 
                 // --- Delete Dialog ---
                 if (showDeleteDialog) {
