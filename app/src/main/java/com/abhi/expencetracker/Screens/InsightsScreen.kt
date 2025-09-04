@@ -187,30 +187,11 @@ fun InsightsScreen(
             },
             title = { },
             actions = {
-                if (moneyList.isNotEmpty() && selectedItems.size > 0) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Checkbox(
-                            checked = selectedItems.size == moneyList.size && selectedItems.isNotEmpty(),
-                            onCheckedChange = { isChecked ->
-                                if (isChecked) {
-                                    selectedItems.clear()
-                                    selectedItems.addAll(moneyList.map { it.id.toString() })
-                                } else {
-                                    selectedItems.clear()
-                                }
-                            }
-                        )
-                    }
-                }
-
                 var showChangeTypeDialog by remember { mutableStateOf(false) }
                 var showCategoryDialog by remember { mutableStateOf(false) }
                 var showSubCategoryDialog by remember { mutableStateOf(false) }
                 var showDeleteDialog by remember { mutableStateOf(false) }
 
-                // NEW: tracked selections for dialogs
                 var selectedType by remember { mutableStateOf<TransactionType?>(null) }
                 var selectedCategory by remember { mutableStateOf("") }
                 var selectedSubCategory by remember { mutableStateOf("") }
@@ -239,6 +220,32 @@ fun InsightsScreen(
                 ) {
                     val enabled = selectedItems.isNotEmpty()
                     DropdownMenuItem(
+                        text = {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Checkbox(
+                                    checked = selectedItems.size == moneyList.size && moneyList.isNotEmpty(),
+                                    onCheckedChange = null // handled by onClick
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Select All")
+                            }
+                        },
+                        onClick = {
+                            if (selectedItems.size == moneyList.size) {
+                                selectedItems.clear()
+                            } else {
+                                selectedItems.clear()
+                                selectedItems.addAll(moneyList.map { it.id.toString() })
+                            }
+                        },
+                        enabled = moneyList.isNotEmpty()
+                    )
+
+                    Divider()
+
+                    DropdownMenuItem(
                         text = { Text("Change Type") },
                         onClick = {
                             expanded = false
@@ -247,6 +254,9 @@ fun InsightsScreen(
                         },
                         enabled = enabled
                     )
+
+                    Divider()
+
                     DropdownMenuItem(
                         text = { Text("Add Category") },
                         onClick = {
@@ -257,6 +267,8 @@ fun InsightsScreen(
                         enabled = enabled && isSameType
                     )
 
+                    Divider()
+
                     DropdownMenuItem(
                         text = { Text("Add Sub Category") },
                         onClick = {
@@ -266,6 +278,8 @@ fun InsightsScreen(
                         },
                         enabled = enabled && isSameType && isSameCategory
                     )
+
+                    Divider()
 
                     DropdownMenuItem(
                         text = { Text("Delete") },
