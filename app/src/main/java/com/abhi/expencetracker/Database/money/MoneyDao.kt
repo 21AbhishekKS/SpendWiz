@@ -26,6 +26,11 @@ interface MoneyDao {
     @Query("SELECT * from money where date = :date")
     fun getTodayTransactionByDate(date: String) : LiveData<List<Money>>
 
+    //get today's transaction without live data
+    @Query("SELECT * FROM money WHERE date = :date")
+    suspend fun getTodayTransactionsRaw(date: String): List<Money>
+
+
 
     @Query("SELECT * FROM money WHERE substr(date, 4, 2) = :month AND substr(date, 7, 4) = :year")
     fun getTransactionsByMonthAndYear(month: String, year: String): LiveData<List<Money>>

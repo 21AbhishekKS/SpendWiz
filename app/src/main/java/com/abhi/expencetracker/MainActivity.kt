@@ -119,8 +119,8 @@ class MainActivity : ComponentActivity() {
         )
 
         val calendar = Calendar.getInstance().apply {
-            set(Calendar.HOUR_OF_DAY, 18) // 5 PM
-            set(Calendar.MINUTE,30)
+            set(Calendar.HOUR_OF_DAY, 22)
+            set(Calendar.MINUTE,0)
             set(Calendar.SECOND, 0)
             if (before(Calendar.getInstance())) {
                 add(Calendar.DATE, 1)

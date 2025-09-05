@@ -29,8 +29,6 @@ class AddScreenViewModel : ViewModel() {
 
     val moneyDao = MainApplication.moneyDatabase.getMoneyDao()
 
-    val moneyList: LiveData<List<Money>> = moneyDao.getAllMoney()
-
     @RequiresApi(Build.VERSION_CODES.O)
     private val today = LocalDate.now()
 
@@ -211,10 +209,6 @@ class AddScreenViewModel : ViewModel() {
             Color(0xFF5D4037),  // Rich Brown
             Color(0xFFB71C1C)  // Deep Red
         )
-
-
-
-
 
         return expenses.mapIndexed { index, item ->
             PieChartData(
