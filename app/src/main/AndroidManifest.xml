@@ -52,6 +52,15 @@
         <receiver android:name=".Notifications.NotificationReceiver" />
         <receiver android:name=".Notifications.DismissReceiver" />
 
+        <receiver
+            android:name=".SMSTransactionTracker.SmsReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.provider.Telephony.SMS_RECEIVED"/>
+            </intent-filter>
+        </receiver>
+
 
 
     </application>

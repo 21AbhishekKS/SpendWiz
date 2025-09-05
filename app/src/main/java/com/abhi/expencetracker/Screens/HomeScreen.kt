@@ -53,22 +53,13 @@ fun HomeScreen(
     var totalMoneyEarned by remember { mutableStateOf(0.0) }
 
     val context = LocalContext.current
-    val smsPermission = Manifest.permission.READ_SMS
-    val permissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        if (isGranted) {
-            viewModel.insertTransactionsFromSms(context)
-        }
+
+    LaunchedEffect(true) {
+            viewModel.runSmsImportOnce(context)
     }
 
-    LaunchedEffect(Unit) {
-        if (ContextCompat.checkSelfPermission(context, smsPermission) != PackageManager.PERMISSION_GRANTED) {
-            permissionLauncher.launch(smsPermission)
-        } else {
-            viewModel.insertTransactionsFromSms(context)
-        }
-    }
+
+
 
     LaunchedEffect(todayMoneyList) {
         totalMoneySpent = 0.0

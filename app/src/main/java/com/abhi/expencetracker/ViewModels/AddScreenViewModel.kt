@@ -1,6 +1,9 @@
 package com.abhi.expencetracker.ViewModels
 
+import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.provider.Telephony
@@ -9,6 +12,9 @@ import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.core.app.ActivityCompat
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.map
@@ -18,8 +24,11 @@ import com.abhi.expencetracker.Database.money.CategoryExpense
 import com.abhi.expencetracker.MainApplication
 import com.abhi.expencetracker.Database.money.Money
 import com.abhi.expencetracker.Database.money.TransactionType
+import com.abhi.expencetracker.MainActivity
+import com.abhi.expencetracker.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -90,6 +99,14 @@ class AddScreenViewModel : ViewModel() {
 
     @RequiresApi(Build.VERSION_CODES.O)
     fun insertTransactionsFromSms(context: Context) {
+
+        if (ActivityCompat.checkSelfPermission(context, android.Manifest.permission.READ_SMS)
+            != PackageManager.PERMISSION_GRANTED
+        ) {
+            Log.e("AddScreenViewModel", "READ_SMS permission not granted!")
+            return
+        }
+
         viewModelScope.launch(Dispatchers.IO) {
             val uri = Uri.parse("content://sms/inbox")
             val cursor = context.contentResolver.query(
@@ -184,11 +201,27 @@ class AddScreenViewModel : ViewModel() {
                         )
 
                         moneyDao.addMoney(money)
+
                     }
                 }
             }
         }
     }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun runSmsImportOnce(context: Context) {
+        val prefs = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+        val hasRunBefore = prefs.getBoolean("sms_import_done", false)
+
+        if (!hasRunBefore) {
+            insertTransactionsFromSms(context)
+
+            prefs.edit()
+                .putBoolean("sms_import_done", true)
+                .apply()
+        }
+    }
+
 
     fun getCategoryExpensesForMonth(month: String, year: String): LiveData<List<PieChartData>> {
         return moneyDao.getCategoryExpensesByMonthAndYear(month, year).map { categoryList ->
@@ -242,5 +275,29 @@ class AddScreenViewModel : ViewModel() {
 
     fun deleteTransactions(ids: List<Int>) =
         viewModelScope.launch { moneyDao.deleteTransactions(ids) }
+
+    private fun showTransactionNotification(context: Context, money: Money) {
+        val notificationIntent = Intent(context, MainActivity::class.java)
+        val pendingIntent = PendingIntent.getActivity(
+            context, 0, notificationIntent, PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val notification = NotificationCompat.Builder(context, "transaction_channel")
+            .setSmallIcon(R.drawable.notification_icon)
+            .setContentTitle("New ${money.type.name.lowercase().replaceFirstChar { it.uppercase() }} added")
+            .setContentText("${money.bankName}: ₹${money.amount} on ${money.date}")
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setAutoCancel(true)
+            .setContentIntent(pendingIntent)
+            .build()
+
+        val manager = NotificationManagerCompat.from(context)
+        if (ActivityCompat.checkSelfPermission(
+                context, android.Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
+            manager.notify(System.currentTimeMillis().toInt(), notification)
+        }
+    }
 
 }
