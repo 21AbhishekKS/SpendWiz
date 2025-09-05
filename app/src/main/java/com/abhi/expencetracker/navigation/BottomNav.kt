@@ -15,10 +15,12 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.DateRange
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Divider
@@ -52,6 +54,7 @@ import com.abhi.expencetracker.ViewModels.AddScreenViewModel
 import com.abhi.expencetracker.Screens.AddScreen
 import com.abhi.expencetracker.Screens.HomeScreen
 import com.abhi.expencetracker.Screens.InsightsScreen
+import com.abhi.expencetracker.Screens.MoreOptionsScreen
 import com.abhi.expencetracker.Screens.TransactionScreen
 import com.abhi.expencetracker.Screens.UpdateScreen
 import com.abhi.expencetracker.helper.BottomNavigationItem
@@ -124,8 +127,8 @@ fun BottomNav(navController: NavHostController, moneyViewModel: AddScreenViewMod
                     TransactionScreen(moneyViewModel)
                 }
 
-                composable(Routes.SettingScreen.route) {
-                    TransactionScreen(moneyViewModel)
+                composable(Routes.More.route) {
+                    MoreOptionsScreen(moneyViewModel , navController1)
                 }
             }
     }
@@ -137,11 +140,12 @@ fun MyBottomBar(navController1: NavHostController) {
 
     // Define navigation items (excluding the Add button which will be in center)
     val items = listOf(
-        BottomNavigationItem("Home", Icons.Filled.Home, Icons.Outlined.Home, false, null),
-        BottomNavigationItem("History", Icons.Filled.Info, Icons.Outlined.Info, false, null),
-        BottomNavigationItem("Insights", Icons.Filled.DateRange, Icons.Outlined.DateRange, false, null),
-        BottomNavigationItem("Settings", Icons.Filled.Settings, Icons.Outlined.Settings, false, null),
+        BottomNavigationItem(Routes.HomeScreen.route, Icons.Filled.Home, Icons.Outlined.Home, false, null),
+        BottomNavigationItem(Routes.SpentScreen.route, Icons.Filled.Info, Icons.Outlined.Info, false, null),
+        BottomNavigationItem(Routes.InsightsScreen.route, Icons.Filled.DateRange, Icons.Outlined.DateRange, false, null),
+        BottomNavigationItem(Routes.More.route, Icons.Filled.MoreVert, Icons.Outlined.MoreVert, false, null),
     )
+
 
     Column {
         Divider(
