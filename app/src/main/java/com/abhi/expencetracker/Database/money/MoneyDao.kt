@@ -7,7 +7,6 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
-import androidx.room.Upsert
 
 @Dao
 interface MoneyDao {
@@ -18,9 +17,8 @@ interface MoneyDao {
     @Delete
     suspend fun deleteMoney(money: Money)
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun addMoney(money: Money)
-
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun addMoney(money: Money): Long
 
     //function to get today's transaction
     @Query("SELECT * from money where date = :date")
@@ -29,7 +27,6 @@ interface MoneyDao {
     //get today's transaction without live data
     @Query("SELECT * FROM money WHERE date = :date")
     suspend fun getTodayTransactionsRaw(date: String): List<Money>
-
 
 
     @Query("SELECT * FROM money WHERE substr(date, 4, 2) = :month AND substr(date, 7, 4) = :year")

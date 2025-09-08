@@ -1,10 +1,13 @@
 package com.abhi.expencetracker.Database.money
 
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "money")
-data class Money(
+@Entity(
+    tableName = "money",
+    indices = [Index(value = ["upiRefNo"], unique = true)]
+)data class Money(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
 
