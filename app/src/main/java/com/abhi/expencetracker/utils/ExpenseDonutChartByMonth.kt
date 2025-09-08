@@ -44,9 +44,16 @@ fun ExpenseDonutChartByMonth(viewModel: AddScreenViewModel, month: String, year:
 
         }
     } else {
-        Text(
-            text = "No expenses for $month/$year",
-            style = TextStyle(color = Color.Gray)
-        )
+        Column(
+            Modifier.fillMaxSize().
+            padding(top = 10.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = "No expenses for $month/$year",
+                style = TextStyle(color = Color.Gray)
+            )
+        }
     }
 }

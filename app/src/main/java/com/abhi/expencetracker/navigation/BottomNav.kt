@@ -62,9 +62,6 @@ import com.abhi.expencetracker.helper.BottomNavigationItem
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun BottomNav(navController: NavHostController, moneyViewModel: AddScreenViewModel) {
-    var isBottomBarVisible by rememberSaveable {
-        mutableStateOf(false)
-    }
 
     val navController1 = rememberNavController()
     Scaffold(
