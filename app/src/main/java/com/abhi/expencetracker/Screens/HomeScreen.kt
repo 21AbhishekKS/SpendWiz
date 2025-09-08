@@ -54,13 +54,6 @@ fun HomeScreen(
 
     val context = LocalContext.current
 
-    LaunchedEffect(true) {
-            viewModel.runSmsImportOnce(context)
-    }
-
-
-
-
     LaunchedEffect(todayMoneyList) {
         totalMoneySpent = 0.0
         totalMoneyEarned = 0.0

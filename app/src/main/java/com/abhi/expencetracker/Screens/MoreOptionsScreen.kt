@@ -35,12 +35,12 @@ fun MoreOptionsScreen(
     navController: NavHostController
 ) {
     val options = listOf(
-        OptionItem("Backup", Icons.Filled.Settings),
+       // OptionItem("Backup", Icons.Filled.Settings),
         OptionItem("Share", Icons.Filled.Share),
-        OptionItem("Settings", Icons.Filled.Settings),
-        OptionItem("Notifications", Icons.Filled.Notifications),
-        OptionItem("History", Icons.Filled.Settings),
-        OptionItem("Help", Icons.Filled.Settings)
+//        OptionItem("Settings", Icons.Filled.Settings),
+//        OptionItem("Notifications", Icons.Filled.Notifications),
+//        OptionItem("History", Icons.Filled.Settings),
+//        OptionItem("Help", Icons.Filled.Settings)
     )
 
     Box(
@@ -111,7 +111,6 @@ fun OptionCard(item: OptionItem, onClick: () -> Unit) {
 }
 
 private fun shareAppLink(context: android.content.Context) {
-    val appPackageName = context.packageName
     val shareIntent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
         type = "text/plain"
         putExtra(

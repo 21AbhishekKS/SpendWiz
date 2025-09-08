@@ -6,14 +6,14 @@ plugins {
 
 android {
     namespace = "com.abhi.expencetracker"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.abhi.expencetracker"
         minSdk = 23
-        targetSdk = 34
-        versionCode = 5
-        versionName = "1.5"
+        targetSdk = 35
+        versionCode = 6
+        versionName = "1.5.3"
 
 
 

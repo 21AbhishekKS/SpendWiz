@@ -1,24 +1,23 @@
 package com.abhi.expencetracker
 
 import android.app.AlarmManager
+import android.app.AlertDialog
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
+import android.content.DialogInterface
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.core.content.ContextCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.compose.rememberNavController
@@ -32,42 +31,30 @@ class MainActivity : ComponentActivity() {
 
     private lateinit var moneyViewModel: AddScreenViewModel
 
-    // All required permissions
-    private val REQUIRED_PERMISSIONS = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-        arrayOf(
-            android.Manifest.permission.POST_NOTIFICATIONS,
-            android.Manifest.permission.RECEIVE_SMS,
-            android.Manifest.permission.READ_SMS
-        )
-    } else {
-        arrayOf(
-            android.Manifest.permission.RECEIVE_SMS,
-            android.Manifest.permission.READ_SMS
-        )
-    }
-
-    // Launcher for multiple permissions
-    @RequiresApi(Build.VERSION_CODES.O)
-    private val permissionsLauncher = registerForActivityResult(
-        ActivityResultContracts.RequestMultiplePermissions()
-    ) { permissions ->
-        val smsGranted = permissions[android.Manifest.permission.READ_SMS] == true
-        val receiveSmsGranted = permissions[android.Manifest.permission.RECEIVE_SMS] == true
-
-        if (smsGranted && receiveSmsGranted) {
-            // ✅ Only run after both permissions are granted
-            moneyViewModel.runSmsImportOnce(this)
-        }
+    private fun isNotificationServiceEnabled(): Boolean {
+        val flat = Settings.Secure.getString(contentResolver, "enabled_notification_listeners")
+        return flat?.contains(packageName) == true
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        if (!isNotificationServiceEnabled()) {
+            showNotificationAccessDialog()
+        }
+
         installSplashScreen()
         moneyViewModel = ViewModelProvider(this)[AddScreenViewModel::class.java]
 
-        requestAllPermissions()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS)
+                != android.content.pm.PackageManager.PERMISSION_GRANTED
+            ) {
+                requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 101)
+            }
+        }
+
         createNotificationChannels()
         scheduleDailyNotification()
 
@@ -93,19 +80,22 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    // Ask all required permissions
-    @RequiresApi(Build.VERSION_CODES.O)
-    private fun requestAllPermissions() {
-        val notGranted = REQUIRED_PERMISSIONS.filter {
-            ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
-        }
-
-        if (notGranted.isNotEmpty()) {
-            permissionsLauncher.launch(REQUIRED_PERMISSIONS)
-        } else {
-            // ✅ Permissions already granted
-            moneyViewModel.runSmsImportOnce(this)
-        }
+    private fun showNotificationAccessDialog() {
+        AlertDialog.Builder(this)
+            .setTitle("Enable Notification Access")
+            .setMessage(
+                "To automatically detect transactions from SMS, the app needs access to notifications. " +
+                        "You will be redirected to the settings to enable this permission."
+            )
+            .setPositiveButton("Go to Settings") { _: DialogInterface, _: Int ->
+                val intent = Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
+                startActivity(intent)
+            }
+            .setNegativeButton("Cancel") { dialog: DialogInterface, _: Int ->
+                dialog.dismiss()
+            }
+            .setCancelable(false)
+            .show()
     }
 
     private fun createNotificationChannels() {
