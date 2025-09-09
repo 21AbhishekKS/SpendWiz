@@ -71,6 +71,13 @@ interface MoneyDao {
 
     @Query("DELETE FROM money WHERE id IN (:ids)")
     suspend fun deleteTransactions(ids: List<Int>)
+
+    @Query("UPDATE money SET category = :category WHERE id = :id")
+    suspend fun updateCategory(id: Int, category: String)
+
+    @Query("SELECT * FROM money WHERE id = :id LIMIT 1")
+    fun getTransactionById(id: Int): Money?
+
 }
 
 

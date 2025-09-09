@@ -40,6 +40,9 @@
 
         <receiver android:name=".Notifications.NotificationReceiver" />
         <receiver android:name=".Notifications.DismissReceiver" />
+        <receiver
+            android:name=".Notifications.CategoryReceiver"
+            android:exported="false" />
 
         <service
             android:name=".Notifications.SmsNotificationListener"
