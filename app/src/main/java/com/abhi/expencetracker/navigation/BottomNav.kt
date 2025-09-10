@@ -70,7 +70,7 @@ import com.abhi.expencetracker.helper.BottomNavigationItem
 fun BottomNav(navController: NavController,
               moneyViewModel: AddScreenViewModel,
               prefs: PreferencesManager,
-              onDailyToggle: (Boolean) -> Unit,
+              onDailyToggle: (Boolean, Int, Int) -> Unit,
               onTransactionToggle: (Boolean) -> Unit) {
 val context = LocalContext.current
     val navController1 = rememberNavController()

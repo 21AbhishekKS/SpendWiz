@@ -85,9 +85,9 @@ class MainActivity : ComponentActivity() {
                         navController,
                         moneyViewModel,
                         prefs = prefs,
-                        onDailyToggle = { enabled ->
+                        onDailyToggle = { enabled, hour, minute ->
                             if (enabled) {
-                                scheduleDailyNotification()
+                                scheduleDailyNotification(hour, minute)
                             } else {
                                 cancelDailyNotification()
                             }
@@ -98,6 +98,7 @@ class MainActivity : ComponentActivity() {
                             }
                         }
                     )
+
                 }
             }
         }
@@ -145,7 +146,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    fun scheduleDailyNotification() {
+    fun scheduleDailyNotification(hour: Int, minute: Int) {
         val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
         val intent = Intent(this, NotificationReceiver::class.java)
         val pendingIntent = PendingIntent.getBroadcast(
@@ -153,19 +154,11 @@ class MainActivity : ComponentActivity() {
         )
 
         val calendar = Calendar.getInstance().apply {
-            set(Calendar.HOUR_OF_DAY, 22)
-            set(Calendar.MINUTE, 5)
+            set(Calendar.HOUR_OF_DAY, hour)
+            set(Calendar.MINUTE, minute)
             set(Calendar.SECOND, 0)
             if (before(Calendar.getInstance())) {
                 add(Calendar.DATE, 1)
-            }
-        }
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            if (!alarmManager.canScheduleExactAlarms()) {
-                val intentPerm = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM)
-                startActivity(intentPerm)
-                return
             }
         }
 
@@ -184,6 +177,7 @@ class MainActivity : ComponentActivity() {
             )
         }
     }
+
 
     fun cancelDailyNotification() {
         val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
