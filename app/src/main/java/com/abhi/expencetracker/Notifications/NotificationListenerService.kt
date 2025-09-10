@@ -53,8 +53,9 @@ class SmsNotificationListener : NotificationListenerService() {
                 }
 
                 // Extract UPI Ref No
-                val upiRegex = Regex("""(?:UPI:?|UPI Ref(?:erence)? no\.?)\s*[:#]?\s*([0-9A-Za-z]{6,})""", RegexOption.IGNORE_CASE)
+                val upiRegex = Regex("""(?:UPI\s*[:#]?\s*|UPI Ref(?:erence)? no\.?\s*[:#]?\s*|Ref\s*No\.?\s*)([0-9A-Za-z]{6,})""", RegexOption.IGNORE_CASE)
                 val upiRefNo = upiRegex.find(messageBody)?.groups?.get(1)?.value
+
 
                 // Date extraction
                 val dateRegex = Regex("""\b(\d{2}-\d{2}-\d{2})\b""")
@@ -75,26 +76,43 @@ class SmsNotificationListener : NotificationListenerService() {
                 }
 
                 // Extract Name
-                val name = when (type) {
+                var name: String? = null
+
+// 1. Try normal name patterns
+                name = when (type) {
                     TransactionType.EXPENSE -> {
-                        Regex("""trf to ([A-Z\s]+)""", RegexOption.IGNORE_CASE)
+                        Regex("""trf to ([A-Z\s]+?)(?:\s+(?:Ref|UPI|Txn|No|\d)|$)""", RegexOption.IGNORE_CASE)
                             .find(messageBody)?.groups?.get(1)?.value?.trim()
                     }
                     TransactionType.INCOME -> {
-                        Regex("""from ([A-Z\s]+)""", RegexOption.IGNORE_CASE)
+                        Regex("""from ([A-Z\s]+?)(?:\s+(?:Ref|UPI|Txn|No|\d)|$)""", RegexOption.IGNORE_CASE)
                             .find(messageBody)?.groups?.get(1)?.value?.trim()
                     }
                     else -> {
-                        Regex("""transfer (?:to|from) ([A-Z\s]+)""", RegexOption.IGNORE_CASE)
+                        Regex("""transfer (?:to|from) ([A-Z\s]+?)(?:\s+(?:Ref|UPI|Txn|No|\d)|$)""", RegexOption.IGNORE_CASE)
                             .find(messageBody)?.groups?.get(1)?.value?.trim()
                     }
-                } ?: "Unknown"
+                }
+
+// 2. If still null → look for UPI VPA like abhi@upi, paytm@icici, phonepe@ybl, etc.
+                if (name.isNullOrBlank()) {
+                    val upiNameRegex = Regex("""\b([a-zA-Z0-9.\-_]+@[a-zA-Z]+)\b""", RegexOption.IGNORE_CASE)
+                    name = upiNameRegex.find(messageBody)?.groups?.get(1)?.value?.trim()
+                }
+
+// 3. Final fallback
+                if (name.isNullOrBlank()) {
+                    name = "Name not found"
+                }
+
+
 
                 // Extract Bank Name
                 var bankName: String? = null
                 val words = messageBody.split(" ", "\n", "\t")
                 for (i in words.indices) {
                     val word = words[i]
+
                     if (word.equals("bank", ignoreCase = true) && i > 0) {
                         bankName = words[i - 1].replace("[^A-Za-z]".toRegex(), "") + " Bank"
                         break
@@ -104,8 +122,14 @@ class SmsNotificationListener : NotificationListenerService() {
                             .replaceFirstChar { it.uppercase() }
                         break
                     }
+                    // Special case for SBI
+                    if (word.equals("SBI", ignoreCase = true)) {
+                        bankName = "SBI Bank"
+                        break
+                    }
                 }
                 if (bankName.isNullOrBlank()) bankName = "Unknown Bank"
+
 
                 // Save transaction
                 val money = Money(
