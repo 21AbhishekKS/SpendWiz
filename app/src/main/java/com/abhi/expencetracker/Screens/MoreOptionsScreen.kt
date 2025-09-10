@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.abhi.expencetracker.ViewModels.AddScreenViewModel
+import com.abhi.expencetracker.navigation.Routes
 
 data class OptionItem(
     val title: String,
@@ -38,7 +39,7 @@ fun MoreOptionsScreen(
        // OptionItem("Backup", Icons.Filled.Settings),
         OptionItem("Share", Icons.Filled.Share),
 //        OptionItem("Settings", Icons.Filled.Settings),
-//        OptionItem("Notifications", Icons.Filled.Notifications),
+        OptionItem("Notifications", Icons.Filled.Notifications),
 //        OptionItem("History", Icons.Filled.Settings),
 //        OptionItem("Help", Icons.Filled.Settings)
     )
@@ -73,7 +74,7 @@ fun MoreOptionsScreen(
                             "Backup" -> { /* call backup function */ }
                             "Share" -> { shareAppLink(navController.context)  }
                             "Settings" -> { /* open settings */ }
-                            "Notifications" -> { /* open notifications */ }
+                            "Notifications" -> { navController.navigate(Routes.NotificationSettingsScreen.route) }
                             "History" -> { /* open history */ }
                             "Help" -> { /* open help */ }
                         }

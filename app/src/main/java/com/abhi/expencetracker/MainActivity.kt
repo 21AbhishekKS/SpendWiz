@@ -20,16 +20,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.rememberNavController
 import com.abhi.expencetracker.Notifications.NotificationReceiver
+import com.abhi.expencetracker.Notifications.PreferencesManager
 import com.abhi.expencetracker.ViewModels.AddScreenViewModel
 import com.abhi.expencetracker.navigation.BottomNav
 import com.abhi.expencetracker.ui.theme.ExpenceTrackerTheme
+import kotlinx.coroutines.launch
 import java.util.Calendar
 
 class MainActivity : ComponentActivity() {
 
     private lateinit var moneyViewModel: AddScreenViewModel
+    private lateinit var prefs: PreferencesManager
 
     private fun isNotificationServiceEnabled(): Boolean {
         val flat = Settings.Secure.getString(contentResolver, "enabled_notification_listeners")
@@ -46,6 +50,7 @@ class MainActivity : ComponentActivity() {
 
         installSplashScreen()
         moneyViewModel = ViewModelProvider(this)[AddScreenViewModel::class.java]
+        prefs = PreferencesManager(this)
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS)
@@ -56,7 +61,9 @@ class MainActivity : ComponentActivity() {
         }
 
         createNotificationChannels()
-        scheduleDailyNotification()
+
+        // 🔧 FIX → Removed lifecycleScope launch with prefs checks
+        // Because NotificationReceiver & SmsNotificationListener now read preferences themselves
 
         setContent {
             ExpenceTrackerTheme {
@@ -74,7 +81,23 @@ class MainActivity : ComponentActivity() {
                         }
                     }
 
-                    BottomNav(navController, moneyViewModel)
+                    BottomNav(
+                        navController,
+                        moneyViewModel,
+                        prefs = prefs,
+                        onDailyToggle = { enabled ->
+                            if (enabled) {
+                                scheduleDailyNotification()
+                            } else {
+                                cancelDailyNotification()
+                            }
+                        },
+                        onTransactionToggle = { enabled ->
+                            lifecycleScope.launch {
+                                prefs.setTransactionNotification(enabled)
+                            }
+                        }
+                    )
                 }
             }
         }
@@ -122,7 +145,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun scheduleDailyNotification() {
+    fun scheduleDailyNotification() {
         val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
         val intent = Intent(this, NotificationReceiver::class.java)
         val pendingIntent = PendingIntent.getBroadcast(
@@ -139,7 +162,6 @@ class MainActivity : ComponentActivity() {
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            // On Android 12+ you must have SCHEDULE_EXACT_ALARM permission
             if (!alarmManager.canScheduleExactAlarms()) {
                 val intentPerm = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM)
                 startActivity(intentPerm)
@@ -161,5 +183,14 @@ class MainActivity : ComponentActivity() {
                 pendingIntent
             )
         }
+    }
+
+    fun cancelDailyNotification() {
+        val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val intent = Intent(this, NotificationReceiver::class.java)
+        val pendingIntent = PendingIntent.getBroadcast(
+            this, 0, intent, PendingIntent.FLAG_IMMUTABLE
+        )
+        alarmManager.cancel(pendingIntent)
     }
 }

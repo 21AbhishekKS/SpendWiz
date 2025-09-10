@@ -40,7 +40,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -50,19 +52,27 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.abhi.expencetracker.Database.money.TransactionType
+import com.abhi.expencetracker.MainActivity
+import com.abhi.expencetracker.Notifications.PreferencesManager
 import com.abhi.expencetracker.ViewModels.AddScreenViewModel
 import com.abhi.expencetracker.Screens.AddScreen
 import com.abhi.expencetracker.Screens.HomeScreen
 import com.abhi.expencetracker.Screens.InsightsScreen
 import com.abhi.expencetracker.Screens.MoreOptionsScreen
+import com.abhi.expencetracker.Screens.NotificationSettingsScreen
 import com.abhi.expencetracker.Screens.TransactionScreen
 import com.abhi.expencetracker.Screens.UpdateScreen
 import com.abhi.expencetracker.helper.BottomNavigationItem
 
+
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun BottomNav(navController: NavHostController, moneyViewModel: AddScreenViewModel) {
-
+fun BottomNav(navController: NavController,
+              moneyViewModel: AddScreenViewModel,
+              prefs: PreferencesManager,
+              onDailyToggle: (Boolean) -> Unit,
+              onTransactionToggle: (Boolean) -> Unit) {
+val context = LocalContext.current
     val navController1 = rememberNavController()
     Scaffold(
         bottomBar = { MyBottomBar(navController1 = navController1) }
@@ -78,6 +88,13 @@ fun BottomNav(navController: NavHostController, moneyViewModel: AddScreenViewMod
 
                 composable(Routes.AddScreen.route) {
                     AddScreen(moneyViewModel, navController1)
+                }
+                composable("NotificationSettingsScreen") {
+                    NotificationSettingsScreen(
+                        prefs = PreferencesManager(context),
+                        onDailyToggle = onDailyToggle,
+                        onTransactionToggle = onTransactionToggle
+                    )
                 }
 
                 composable(

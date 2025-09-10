@@ -104,11 +104,8 @@ dependencies {
 //charts
     implementation("io.github.thechance101:chart:1.1.0")
 
-
-
-
-
-
+    //Data store
+    implementation("androidx.datastore:datastore-preferences:1.0.0")
 
 }
 
