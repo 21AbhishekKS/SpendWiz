@@ -23,6 +23,7 @@ import com.aay.compose.donutChart.model.PieChartData
 import com.abhi.expencetracker.Database.money.CategoryExpense
 import com.abhi.expencetracker.MainApplication
 import com.abhi.expencetracker.Database.money.Money
+import com.abhi.expencetracker.Database.money.SubCategoryExpense
 import com.abhi.expencetracker.Database.money.TransactionType
 import com.abhi.expencetracker.MainActivity
 import com.abhi.expencetracker.Notifications.NotificationHelper
@@ -162,6 +163,38 @@ class AddScreenViewModel : ViewModel() {
             )
         }
     }
+
+    fun getSubCategoryExpensesForMonth(
+        category: String,
+        month: String,
+        year: String
+    ): LiveData<List<PieChartData>> {
+        return moneyDao.getSubCategoryExpensesByMonthAndYear(category, month, year)
+            .map { subCategoryList ->
+                mapSubCategoryExpensesToPieChartData(subCategoryList)
+            }
+    }
+
+    private fun mapSubCategoryExpensesToPieChartData(expenses: List<SubCategoryExpense>): List<PieChartData> {
+        val colors = listOf(
+            Color(0xFF1976D2),
+            Color(0xFF0288D1),
+            Color(0xFF26C6DA),
+            Color(0xFF4DD0E1),
+            Color(0xFF80DEEA),
+            Color(0xFFB2EBF2),
+            Color(0xFFE0F7FA)
+        )
+
+        return expenses.mapIndexed { index, item ->
+            PieChartData(
+                partName = (item.subCategory ?: "Others") + ": " + item.total,
+                data = item.total,
+                color = colors[index % colors.size]
+            )
+        }
+    }
+
 
     fun deleteMoney(id: Int) {
         Log.v( "delete", "delete method called")

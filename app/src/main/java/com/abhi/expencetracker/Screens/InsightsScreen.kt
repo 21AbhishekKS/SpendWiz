@@ -51,6 +51,7 @@ import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 import java.time.LocalDate
 import androidx.compose.ui.unit.LayoutDirection
+import com.abhi.expencetracker.utils.ExpenseDonutChartBySubCategory
 import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
@@ -124,7 +125,7 @@ fun InsightsScreen(
     }
     val (monthlySpent, monthlyReceived) = monthlyTotals
 
-    val pagerState = rememberPagerState(initialPage = 0, pageCount = { 2 })
+    val pagerState = rememberPagerState(initialPage = 0, pageCount = { 3 })
     val scope = rememberCoroutineScope()
             Column(
                 modifier = Modifier
@@ -172,25 +173,38 @@ fun InsightsScreen(
                                     year = selectedYear.toString(),
                                     modifier = Modifier.fillMaxSize()
                                 )
+                                2 -> ExpenseDonutChartBySubCategory(
+                                    viewModel = viewModel,
+                                    month = selectedMonthInNum,
+                                    year = selectedYear.toString(),
+                                    modifier = Modifier.fillMaxSize()
+                                )
+
                             }
                         }
-
                         if (pagerState.currentPage > 0) {
                             IconButton(
                                 onClick = { scope.launch { pagerState.animateScrollToPage(pagerState.currentPage - 1) } },
-                                modifier = Modifier.align(Alignment.BottomStart).padding(8.dp)
+                                modifier = Modifier
+                                    .align(Alignment.BottomStart)
+                                    .padding(8.dp)
                             ) {
                                 Icon(
                                     painter = painterResource(id = R.drawable.right_arrow),
                                     contentDescription = "Previous Chart",
-                                    modifier = Modifier.size(28.dp).rotate(180f)
+                                    modifier = Modifier
+                                        .size(28.dp)
+                                        .rotate(180f)
                                 )
                             }
                         }
-                        if (pagerState.currentPage < 1) {
+
+                        if (pagerState.currentPage < pagerState.pageCount - 1) {
                             IconButton(
                                 onClick = { scope.launch { pagerState.animateScrollToPage(pagerState.currentPage + 1) } },
-                                modifier = Modifier.align(Alignment.BottomEnd).padding(8.dp)
+                                modifier = Modifier
+                                    .align(Alignment.BottomEnd)
+                                    .padding(8.dp)
                             ) {
                                 Icon(
                                     painter = painterResource(id = R.drawable.right_arrow),
@@ -199,6 +213,7 @@ fun InsightsScreen(
                                 )
                             }
                         }
+
                     }
                 }
 

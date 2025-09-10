@@ -45,6 +45,7 @@ interface MoneyDao {
     @Query("SELECT * FROM money WHERE id = :id LIMIT 1")
     suspend fun getMoneyById(id: Int): Money?
 
+    //for category donut chart
     @Query("""
     SELECT category, SUM(amount) as total 
     FROM money 
@@ -59,7 +60,24 @@ interface MoneyDao {
         transactionType: TransactionType = TransactionType.EXPENSE
     ): LiveData<List<CategoryExpense>>
 
-// for list of money items from insight screen
+    //for subcategory donut chart
+    @Query("""
+    SELECT subCategory, SUM(amount) as total 
+    FROM money 
+    WHERE type = :transactionType 
+      AND category = :category
+      AND substr(date, 4, 2) = :month 
+      AND substr(date, 7, 4) = :year
+    GROUP BY subCategory
+""")
+    fun getSubCategoryExpensesByMonthAndYear(
+        category: String,
+        month: String,
+        year: String,
+        transactionType: TransactionType = TransactionType.EXPENSE
+    ): LiveData<List<SubCategoryExpense>>
+
+    // for list of money items from insight screen
     @Query("UPDATE money SET type = :newType WHERE id IN (:ids)")
     suspend fun updateTransactionType(ids: List<Int>, newType: TransactionType)
 
@@ -82,6 +100,10 @@ interface MoneyDao {
 
 
 
+data class SubCategoryExpense(
+    val subCategory: String?,
+    val total: Double
+)
 
 
 
