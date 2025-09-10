@@ -138,6 +138,15 @@ class MainActivity : ComponentActivity() {
             }
         }
 
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            // On Android 12+ you must have SCHEDULE_EXACT_ALARM permission
+            if (!alarmManager.canScheduleExactAlarms()) {
+                val intentPerm = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM)
+                startActivity(intentPerm)
+                return
+            }
+        }
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             alarmManager.setExactAndAllowWhileIdle(
                 AlarmManager.RTC_WAKEUP,
