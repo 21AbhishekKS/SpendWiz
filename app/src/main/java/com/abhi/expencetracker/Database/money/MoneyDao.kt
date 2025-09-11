@@ -77,6 +77,11 @@ interface MoneyDao {
         transactionType: TransactionType = TransactionType.EXPENSE
     ): LiveData<List<SubCategoryExpense>>
 
+    //To update sub category from notification
+    @Query("UPDATE money SET subCategory = :subCategory WHERE id = :id")
+    suspend fun updateSubCategory(id: Int, subCategory: String)
+
+
     // for list of money items from insight screen
     @Query("UPDATE money SET type = :newType WHERE id IN (:ids)")
     suspend fun updateTransactionType(ids: List<Int>, newType: TransactionType)

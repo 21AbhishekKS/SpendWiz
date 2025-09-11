@@ -43,8 +43,16 @@
         <receiver
             android:name=".Notifications.CategoryReceiver"
             android:exported="false" />
-        <receiver android:name=".Notifications.ShowMoreReceiver" />
 
+        <receiver
+            android:name=".Notifications.SubCategoryReceiver"
+            android:exported="false" />
+        <receiver
+            android:name=".Notifications.ShowMoreReceiver"
+            android:exported="false" />
+        <receiver
+            android:name=".Notifications.ShowMoreSubCategoryReceiver"
+            android:exported="false" />
 
         <service
             android:name=".Notifications.SmsNotificationListener"
