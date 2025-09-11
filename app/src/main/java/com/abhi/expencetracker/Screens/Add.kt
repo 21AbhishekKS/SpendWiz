@@ -32,7 +32,7 @@ import com.abhi.expencetracker.Database.money.TransactionType
 import com.abhi.expencetracker.ViewModels.AddScreenViewModel
 import java.text.SimpleDateFormat
 import java.util.*
-
+import com.abhi.expencetracker.Database.money.CategoryData.*
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -49,29 +49,6 @@ fun AddScreen(
 
     val transactionTypes = listOf("Income", "Expense", "Transfer")
     var selectedType by rememberSaveable { mutableStateOf(transactionTypes[0]) }
-
-    val incomeCategories = listOf("Salary", "Business", "Investments", "Others")
-    val expenseCategories = listOf("Food", "Transport", "Shopping", "Bills", "Misc", "Others")
-    val transferCategories = listOf("Bank Transfer", "UPI", "Others")
-
-    val incomeSubCategoryMap = mapOf(
-        "Salary" to listOf("Monthly", "Bonus", "Overtime"),
-        "Business" to listOf("Sales", "Services"),
-        "Investments" to listOf("Stocks", "Crypto", "Bonds")
-    )
-
-    val expenseSubCategoryMap = mapOf(
-        "Food" to listOf("Breakfast", "Lunch", "Dinner", "Snacks", "Groceries"),
-        "Transport" to listOf("Bus", "Train", "Taxi", "Fuel", "Flight"),
-        "Shopping" to listOf("Clothes", "Electronics", "Accessories", "Gifts"),
-        "Bills" to listOf("Electricity", "Internet", "Water", "Mobile"),
-        "Misc" to listOf("Donation", "Entertainment")
-    )
-
-    val transferSubCategoryMap = mapOf(
-        "Bank Transfer" to listOf("Same Bank", "Other Bank"),
-        "UPI" to listOf("Google Pay", "PhonePe", "Paytm")
-    )
 
     var selectedCategory by rememberSaveable { mutableStateOf("") }
     var customCategory by rememberSaveable { mutableStateOf("") }

@@ -11,6 +11,7 @@ import androidx.core.app.RemoteInput
 import com.abhi.expencetracker.Database.money.Money
 import com.abhi.expencetracker.Database.money.TransactionType
 import com.abhi.expencetracker.R
+import com.abhi.expencetracker.Database.money.CategoryData.*
 
 object NotificationHelper {
 
@@ -18,15 +19,15 @@ object NotificationHelper {
 
     fun showTransactionNotification(context: Context, money: Money) {
         val categories = if (money.type == TransactionType.INCOME) {
-            arrayOf("Salary", "Business", "Investments", "Others")
+            incomeCategories
         } else {
-            arrayOf("Food", "Transport", "Shopping", "Bills", "Misc", "Others")
+            expenseCategories
         }
 
         // RemoteInput
         val remoteInput = RemoteInput.Builder(KEY_CATEGORY_REPLY)
             .setLabel("Choose category")
-            .setChoices(categories)
+            .setChoices(categories.toTypedArray())
             .build()
 
         // Intent → CategoryReceiver
