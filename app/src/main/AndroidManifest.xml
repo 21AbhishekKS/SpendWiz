@@ -43,6 +43,7 @@
         <receiver
             android:name=".Notifications.CategoryReceiver"
             android:exported="false" />
+        <receiver android:name=".Notifications.ShowMoreReceiver" />
 
 
         <service
