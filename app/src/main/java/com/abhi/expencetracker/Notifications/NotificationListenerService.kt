@@ -91,18 +91,19 @@ class SmsNotificationListener : NotificationListenerService() {
 
                 name = when (type) {
                     TransactionType.EXPENSE -> {
-                        Regex("""trf to ([A-Z\s]+?)(?:\s+(?:Ref|UPI|Txn|No|\d)|$)""", RegexOption.IGNORE_CASE)
+                        Regex("""trf to ([A-Za-z\s]+?)(?=\s+[A-Z0-9]{4,}|\.|,|UPI|Ref|Txn|No|\d|$)""", RegexOption.IGNORE_CASE)
                             .find(messageBody)?.groups?.get(1)?.value?.trim()
                     }
                     TransactionType.INCOME -> {
-                        Regex("""from ([A-Z\s]+?)(?:\s+(?:Ref|UPI|Txn|No|\d)|$)""", RegexOption.IGNORE_CASE)
+                        Regex("""from ([A-Za-z\s]+?)(?=\s+[A-Z0-9]{4,}|\.|,|UPI|Ref|Txn|No|\d|$)""", RegexOption.IGNORE_CASE)
                             .find(messageBody)?.groups?.get(1)?.value?.trim()
                     }
                     else -> {
-                        Regex("""transfer (?:to|from) ([A-Z\s]+?)(?:\s+(?:Ref|UPI|Txn|No|\d)|$)""", RegexOption.IGNORE_CASE)
+                        Regex("""transfer (?:to|from) ([A-Za-z\s]+?)(?=\s+[A-Z0-9]{4,}|\.|,|UPI|Ref|Txn|No|\d|$)""", RegexOption.IGNORE_CASE)
                             .find(messageBody)?.groups?.get(1)?.value?.trim()
                     }
                 }
+
 
                 if (name.isNullOrBlank()) {
                     val upiNameRegex = Regex("""\b([a-zA-Z0-9.\-_]+@[a-zA-Z]+)\b""", RegexOption.IGNORE_CASE)
