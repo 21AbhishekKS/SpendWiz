@@ -58,10 +58,12 @@ import com.abhi.expencetracker.ViewModels.AddScreenViewModel
 import com.abhi.expencetracker.Screens.AddScreen
 import com.abhi.expencetracker.Screens.HomeScreen
 import com.abhi.expencetracker.Screens.InsightsScreen
+import com.abhi.expencetracker.Screens.ManageCategoriesScreen
 import com.abhi.expencetracker.Screens.MoreOptionsScreen
 import com.abhi.expencetracker.Screens.NotificationSettingsScreen
 import com.abhi.expencetracker.Screens.TransactionScreen
 import com.abhi.expencetracker.Screens.UpdateScreen
+import com.abhi.expencetracker.ViewModels.CategoryViewModel
 import com.abhi.expencetracker.helper.BottomNavigationItem
 
 
@@ -69,6 +71,7 @@ import com.abhi.expencetracker.helper.BottomNavigationItem
 @Composable
 fun BottomNav(navController: NavController,
               moneyViewModel: AddScreenViewModel,
+              categoryViewModel: CategoryViewModel,
               prefs: PreferencesManager,
               onDailyToggle: (Boolean, Int, Int) -> Unit,
               onTransactionToggle: (Boolean) -> Unit) {
@@ -144,6 +147,12 @@ val context = LocalContext.current
                 composable(Routes.More.route) {
                     MoreOptionsScreen(moneyViewModel , navController1)
                 }
+                composable(Routes.ManageCategoriesScreen.route) {
+                    ManageCategoriesScreen(categoryViewModel)
+                }
+
+
+
             }
     }
 }

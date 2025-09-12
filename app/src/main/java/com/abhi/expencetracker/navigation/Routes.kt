@@ -8,7 +8,7 @@ sealed class Routes( val route : String) {
     object HomeScreen : Routes("Home")
     object NotificationSettingsScreen : Routes("NotificationSettingsScreen")
 
-    object TransferScreen : Routes("Trans")
+    object ManageCategoriesScreen : Routes("ManageCategoriesScreen")
     object BottomNav : Routes("BottomNav")
 
     object InsightsScreen : Routes("Insights")

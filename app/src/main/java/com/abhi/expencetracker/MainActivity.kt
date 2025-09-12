@@ -22,9 +22,12 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.rememberNavController
+import com.abhi.expencetracker.Database.money.MoneyDatabase
 import com.abhi.expencetracker.Notifications.NotificationReceiver
 import com.abhi.expencetracker.Notifications.PreferencesManager
 import com.abhi.expencetracker.ViewModels.AddScreenViewModel
+import com.abhi.expencetracker.ViewModels.CategoryViewModel
+import com.abhi.expencetracker.ViewModels.CategoryViewModelFactory
 import com.abhi.expencetracker.navigation.BottomNav
 import com.abhi.expencetracker.ui.theme.ExpenceTrackerTheme
 import kotlinx.coroutines.launch
@@ -33,6 +36,7 @@ import java.util.Calendar
 class MainActivity : ComponentActivity() {
 
     private lateinit var moneyViewModel: AddScreenViewModel
+    private lateinit var categoryViewModel: CategoryViewModel
     private lateinit var prefs: PreferencesManager
 
     private fun isNotificationServiceEnabled(): Boolean {
@@ -50,6 +54,10 @@ class MainActivity : ComponentActivity() {
 
         installSplashScreen()
         moneyViewModel = ViewModelProvider(this)[AddScreenViewModel::class.java]
+        val database = MoneyDatabase.getDatabase(this)
+        val dao = database.getCategoryDao()
+        val factory = CategoryViewModelFactory(dao)
+        categoryViewModel = ViewModelProvider(this, factory)[CategoryViewModel::class.java]
         prefs = PreferencesManager(this)
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -84,6 +92,7 @@ class MainActivity : ComponentActivity() {
                     BottomNav(
                         navController,
                         moneyViewModel,
+                        categoryViewModel,
                         prefs = prefs,
                         onDailyToggle = { enabled, hour, minute ->
                             if (enabled) {
