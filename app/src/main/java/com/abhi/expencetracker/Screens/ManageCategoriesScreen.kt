@@ -8,112 +8,164 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.abhi.expencetracker.Database.money.MoneyDatabase
 import com.abhi.expencetracker.ViewModels.CategoryViewModel
 
 @Composable
-fun ManageCategoriesScreen(viewModel : CategoryViewModel) {
+fun ManageCategoriesScreen(viewModel: CategoryViewModel) {
     var selectedType by remember { mutableStateOf("Expense") }
     var newCategoryName by remember { mutableStateOf("") }
 
-  //  val context = LocalContext.current
- //   val dao = remember { MoneyDatabase.getDatabase(context).getCategoryDao() }
+    val categories by viewModel.getCategories(selectedType).collectAsState(initial = emptyList())
 
-//    val viewModel: CategoryViewModel = viewModel(
-//        factory = CategoryViewModelFactory(dao)
-//    )
+    // Dialog states
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    var showResetDialog by remember { mutableStateOf(false) }
+    var deleteAction: (() -> Unit)? by remember { mutableStateOf(null) }
 
-    // ✅ Load categories whenever selectedType changes
-    LaunchedEffect(selectedType) {
-        viewModel.loadCategories(selectedType)
-    }
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        // Header with Reset button
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Manage Categories",
+                style = MaterialTheme.typography.headlineSmall
+            )
+            IconButton(onClick = { showResetDialog = true }) {
+                Icon(Icons.Default.Refresh, contentDescription = "Reset")
+            }
+        }
 
-    Column(Modifier.padding(16.dp)) {
+        Spacer(Modifier.height(12.dp))
+
         // Dropdown for type
         DropdownMenuBox(
             label = "Transaction Type",
             items = listOf("Income", "Expense", "Transfer"),
             selected = selectedType,
-            onItemSelected = { selectedType = it } // triggers LaunchedEffect
+            onItemSelected = { selectedType = it }
         )
 
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(12.dp))
 
         // Categories list
-        val categories by viewModel.categories.collectAsState(emptyList())
-        LazyColumn {
+        LazyColumn(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
             items(categories) { category ->
                 var expanded by remember { mutableStateOf(false) }
 
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 4.dp)
+                Card(
+                    shape = MaterialTheme.shapes.medium,
+                    elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    // Category row (acts like table header)
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { expanded = !expanded }
-                            .padding(8.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Row {
-                            Icon(
-                                if (expanded) Icons.Default.ArrowDropDown else Icons.Default.KeyboardArrowRight,
-                                contentDescription = "Expand"
-                            )
-                            Spacer(Modifier.width(4.dp))
-                            Text(category.name, style = MaterialTheme.typography.bodyMedium)
-                        }
-
-                        // ❌ Only allow delete if not default
-                        if (!category.isDefault) {
-                            IconButton(onClick = { viewModel.deleteCategory(category) }) {
-                                Icon(Icons.Default.Delete, contentDescription = "Delete")
+                    Column(Modifier.padding(8.dp)) {
+                        // Category header
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { expanded = !expanded }
+                                .padding(4.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    if (expanded) Icons.Default.ArrowDropDown else Icons.Default.KeyboardArrowRight,
+                                    contentDescription = "Expand"
+                                )
+                                Spacer(Modifier.width(6.dp))
+                                Text(
+                                    category.name,
+                                    style = MaterialTheme.typography.titleMedium
+                                )
+                            }
+                            IconButton(
+                                onClick = {
+                                    deleteAction = { viewModel.deleteCategory(category) }
+                                    showDeleteDialog = true
+                                }
+                            ) {
+                                Icon(
+                                    Icons.Default.Delete,
+                                    contentDescription = "Delete",
+                                    tint = MaterialTheme.colorScheme.error
+                                )
                             }
                         }
-                    }
 
-                    if (expanded) {
-                        val subcategories by viewModel.getSubCategories(category.id).collectAsState(emptyList())
-                        subcategories.forEach { sub ->
-                            Row(
+                        if (expanded) {
+                            val subcategories by viewModel.getSubCategories(category.id)
+                                .collectAsState(emptyList())
+
+                            Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(start = 32.dp, top = 2.dp, bottom = 2.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween
+                                    .padding(start = 32.dp, top = 4.dp),
+                                verticalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
-                                Text(text = sub.name, style = MaterialTheme.typography.bodySmall)
-                                if (!sub.isDefault) {
-                                    IconButton(onClick = { viewModel.deleteSubCategory(sub) }) {
-                                        Icon(Icons.Default.Delete, contentDescription = "Delete")
+                                subcategories.forEach { sub ->
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = sub.name,
+                                            style = MaterialTheme.typography.bodyMedium
+                                        )
+                                        IconButton(
+                                            onClick = {
+                                                deleteAction = { viewModel.deleteSubCategory(sub) }
+                                                showDeleteDialog = true
+                                            }
+                                        ) {
+                                            Icon(
+                                                Icons.Default.Delete,
+                                                contentDescription = "Delete",
+                                                tint = MaterialTheme.colorScheme.error
+                                            )
+                                        }
                                     }
                                 }
-                            }
-                        }
 
-                        // Add new subcategory inline
-                        var newSub by remember { mutableStateOf("") }
-                        Row(Modifier.padding(start = 32.dp, top = 4.dp)) {
-                            OutlinedTextField(
-                                value = newSub,
-                                onValueChange = { newSub = it },
-                                label = { Text("Add Subcategory") },
-                                modifier = Modifier.weight(1f)
-                            )
-                            Button(onClick = {
-                                if (newSub.isNotBlank()) {
-                                    viewModel.addSubCategory(category.id, newSub)
-                                    newSub = ""
+                                // Add new subcategory field
+                                var newSub by remember { mutableStateOf("") }
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    OutlinedTextField(
+                                        value = newSub,
+                                        onValueChange = { newSub = it },
+                                        label = { Text("New Subcategory") },
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                    Spacer(Modifier.width(8.dp))
+                                    Button(
+                                        onClick = {
+                                            if (newSub.isNotBlank()) {
+                                                viewModel.addSubCategory(category.id, newSub)
+                                                newSub = ""
+                                            }
+                                        }
+                                    ) { Text("+") }
                                 }
-                            }) { Text("+") }
+                            }
                         }
                     }
                 }
@@ -121,24 +173,84 @@ fun ManageCategoriesScreen(viewModel : CategoryViewModel) {
         }
 
         // Add category field
-        Spacer(Modifier.height(16.dp))
-        OutlinedTextField(
-            value = newCategoryName,
-            onValueChange = { newCategoryName = it },
-            label = { Text("New Category") },
-            modifier = Modifier.fillMaxWidth()
-        )
-        Button(
-            onClick = {
-                if (newCategoryName.isNotBlank()) {
-                    viewModel.addCategory(selectedType, newCategoryName)
-                    newCategoryName = ""
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            OutlinedTextField(
+                value = newCategoryName,
+                onValueChange = { newCategoryName = it },
+                label = { Text("New Category") },
+                modifier = Modifier.weight(1f)
+            )
+
+            Spacer(modifier = Modifier.width(8.dp))
+
+            Button(
+                onClick = {
+                    if (newCategoryName.isNotBlank()) {
+                        viewModel.addCategory(selectedType, newCategoryName)
+                        newCategoryName = ""
+                    }
+                },
+                modifier = Modifier.height(56.dp), // match OutlinedTextField height
+                shape = MaterialTheme.shapes.medium,
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp)
+            ) {
+                Text("+") // compact, looks like an add icon
+            }
+        }
+
+    }
+
+    // Delete confirmation dialog
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text("Confirm Delete") },
+            text = { Text("Are you sure you want to delete this item?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        deleteAction?.invoke()
+                        showDeleteDialog = false
+                    }
+                ) {
+                    Text("Delete", color = MaterialTheme.colorScheme.error)
                 }
             },
-            modifier = Modifier.padding(top = 8.dp)
-        ) {
-            Text("Add Category")
-        }
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
+
+    if (showResetDialog) {
+        AlertDialog(
+            onDismissRequest = { showResetDialog = false },
+            title = { Text("Reset Categories") },
+            text = { Text("This will erase all changes and restore default categories. Continue?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.resetDatabase()
+                        showResetDialog = false
+                    }
+                ) {
+                    Text("Reset", color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showResetDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
 }
 
@@ -162,7 +274,9 @@ fun DropdownMenuBox(
             readOnly = true,
             label = { Text(label) },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-            modifier = Modifier.menuAnchor()
+            modifier = Modifier
+                .menuAnchor()
+                .fillMaxWidth()
         )
 
         DropdownMenu(

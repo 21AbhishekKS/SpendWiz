@@ -49,7 +49,7 @@ abstract class MoneyDatabase : RoomDatabase() {
                     try {
                         Log.d(TAG, "Prepopulate check: querying categories...")
                         val dao = instance.getCategoryDao()
-                        val expenses = dao.getCategoriesByType("Expense")
+                        val expenses = dao.getCategoriesByTypeOnce("Expense")
                         if (expenses.isEmpty()) {
                             Log.d(TAG, "Prepopulate check: no categories found -> inserting defaults")
                             insertDefaultData(dao)
@@ -62,13 +62,14 @@ abstract class MoneyDatabase : RoomDatabase() {
                     }
                 }
 
+
                 instance
             }
         }
 
         const val NAME = "Money_DB"
 
-        private suspend fun insertDefaultData(dao: CategoryDao) {
+        suspend fun insertDefaultData(dao: CategoryDao) {
             try {
                 Log.d(TAG, "insertDefaultData(): start")
 
