@@ -51,6 +51,7 @@ import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 import java.time.LocalDate
 import androidx.compose.ui.unit.LayoutDirection
+import com.abhi.expencetracker.ViewModels.CategoryViewModel
 import com.abhi.expencetracker.utils.ExpenseDonutChartBySubCategory
 import java.util.*
 
@@ -59,6 +60,7 @@ import java.util.*
 @Composable
 fun InsightsScreen(
     viewModel: AddScreenViewModel = viewModel(),
+    categoryViewModel : CategoryViewModel,
     navController1: NavHostController
 ) {
     val today = remember { LocalDate.now() }
@@ -141,6 +143,7 @@ fun InsightsScreen(
                     moneyList = moneyList,
                     datePickerDialog = datePickerDialog,
                     viewModel = viewModel,
+                    categoryViewModel = categoryViewModel,
                     onMonthChange = { newMonthIndex, newYear ->
                         selectedMonthIndex = newMonthIndex
                         selectedYear = newYear
@@ -326,9 +329,11 @@ fun CustomTopBar(
     moneyList: List<Money>,
     datePickerDialog: DatePickerDialog,
     viewModel: AddScreenViewModel,
+    categoryViewModel : CategoryViewModel,
     onMonthChange: (Int, Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
+
     var monthIndex by remember { mutableStateOf(selectedMonthIndex) }
     var year by remember { mutableStateOf(selectedYear) }
 
@@ -350,6 +355,16 @@ fun CustomTopBar(
 
     var expanded by remember { mutableStateOf(false) }
 
+    // 🔥 Fetch categories dynamically
+    val incomeCategories by categoryViewModel.getCategories("Income")
+        .collectAsState(initial = emptyList())
+
+    val expenseCategories by categoryViewModel.getCategories("Expense")
+        .collectAsState(initial = emptyList())
+
+    val transferCategories by categoryViewModel.getCategories("Transfer")
+        .collectAsState(initial = emptyList())
+
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -358,9 +373,7 @@ fun CustomTopBar(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically
-        ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
                 Icons.Rounded.KeyboardArrowLeft,
                 contentDescription = "Previous",
@@ -495,7 +508,7 @@ fun CustomTopBar(
         }
     }
 
-    // 🔥 Dialogs (same as before, just moved below)
+    // 🔥 Change Type Dialog
     if (showChangeTypeDialog) {
         ChipSelectionDialog(
             title = "Select Type",
@@ -518,12 +531,13 @@ fun CustomTopBar(
         )
     }
 
+    // 🔥 Category Dialog (dynamic from DB)
     if (showCategoryDialog) {
         val typeForCats = selectedTransactions.firstOrNull()?.type ?: TransactionType.EXPENSE
-        val categories = when (typeForCats) {
-            TransactionType.INCOME -> listOf("Salary", "Business", "Investments", "Others")
-            TransactionType.EXPENSE -> listOf("Food", "Transport", "Shopping", "Bills", "Misc", "Others")
-            TransactionType.TRANSFER -> listOf("Bank Transfer", "UPI", "Others")
+        val categories: List<String> = when (typeForCats) {
+            TransactionType.INCOME -> incomeCategories.map { it.name }
+            TransactionType.EXPENSE -> expenseCategories.map { it.name }
+            TransactionType.TRANSFER -> transferCategories.map { it.name }
         }
 
         ChipSelectionDialog(
@@ -543,37 +557,31 @@ fun CustomTopBar(
         )
     }
 
+    // 🔥 SubCategory Dialog (dynamic from DB)
     if (showSubCategoryDialog && isSameType && isSameCategory) {
         val typeForSubs = selectedTransactions.firstOrNull()?.type ?: TransactionType.EXPENSE
         val category = selectedTransactions.firstOrNull()?.category ?: ""
 
-        val expenseMap = mapOf(
-            "Food" to listOf("Breakfast", "Lunch", "Dinner", "Snacks", "Groceries"),
-            "Transport" to listOf("Bus", "Train", "Taxi", "Fuel", "Flight"),
-            "Shopping" to listOf("Clothes", "Electronics", "Accessories", "Gifts"),
-            "Bills" to listOf("Electricity", "Internet", "Water", "Mobile"),
-            "Misc" to listOf("Donation", "Entertainment")
-        )
-        val incomeMap = mapOf(
-            "Salary" to listOf("Monthly", "Bonus", "Overtime"),
-            "Business" to listOf("Sales", "Services"),
-            "Investments" to listOf("Stocks", "Crypto", "Bonds")
-        )
-        val transferMap = mapOf(
-            "Bank Transfer" to listOf("Same Bank", "Other Bank"),
-            "UPI" to listOf("Google Pay", "PhonePe", "Paytm")
-        )
-
-        val subcategories = when (typeForSubs) {
-            TransactionType.INCOME -> incomeMap[category].orEmpty()
-            TransactionType.EXPENSE -> expenseMap[category].orEmpty()
-            TransactionType.TRANSFER -> transferMap[category].orEmpty()
+        // find category object
+        val selectedCategoryObj = when (typeForSubs) {
+            TransactionType.INCOME -> incomeCategories.find { it.name == category }
+            TransactionType.EXPENSE -> expenseCategories.find { it.name == category }
+            TransactionType.TRANSFER -> transferCategories.find { it.name == category }
         }
+
+        // load subcategories dynamically
+        val subCategories by remember(selectedCategoryObj?.id) {
+            selectedCategoryObj?.id?.let { categoryId ->
+                categoryViewModel.getSubCategories(categoryId)
+            } ?: kotlinx.coroutines.flow.flowOf(emptyList())
+        }.collectAsState(initial = emptyList())
+
+        val subCategoryNames = subCategories.map { it.name }
 
         ChipSelectionDialog(
             title = "Select Sub Category",
             type = typeForSubs,
-            options = subcategories,
+            options = subCategoryNames,
             selectedOption = selectedSubCategory,
             onOptionSelected = { selectedSubCategory = it },
             onDismiss = { showSubCategoryDialog = false },
@@ -587,6 +595,7 @@ fun CustomTopBar(
         )
     }
 
+    // 🔥 Delete Dialog
     if (showDeleteDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
@@ -610,3 +619,4 @@ fun CustomTopBar(
         )
     }
 }
+

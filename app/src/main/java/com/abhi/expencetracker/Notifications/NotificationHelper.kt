@@ -9,39 +9,53 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.RemoteInput
 import com.abhi.expencetracker.Database.money.Money
+import com.abhi.expencetracker.Database.money.MoneyDatabase
 import com.abhi.expencetracker.Database.money.TransactionType
 import com.abhi.expencetracker.R
-import com.abhi.expencetracker.Database.money.CategoryData.*
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 
 object NotificationHelper {
 
     private const val KEY_CATEGORY_REPLY = "transaction_category"
-    private const val PAGE_SIZE = 3 // change as you like
+    private const val PAGE_SIZE = 3
 
-    fun showTransactionNotification(context: Context, money: Money, page: Int = 0) {
-        val categories = when (money.type) {
-            TransactionType.INCOME -> incomeCategories
-            TransactionType.EXPENSE -> expenseCategories
-            TransactionType.TRANSFER -> transferCategories
+    fun showTransactionNotification(
+        context: Context,
+        money: Money,
+        page: Int = 0
+    ) {
+        // Get database & DAO
+        val database = MoneyDatabase.getDatabase(context)
+        val categoryDao = database.getCategoryDao()
+
+        // Fetch categories from database synchronously
+        val categories: List<String> = runBlocking {
+            when (money.type) {
+                TransactionType.INCOME -> categoryDao.getCategoriesByType("Income").first().map { it.name }
+                TransactionType.EXPENSE -> categoryDao.getCategoriesByType("Expense").first().map { it.name }
+                TransactionType.TRANSFER -> categoryDao.getCategoriesByType("Transfer").first().map { it.name }
+            }
         }
 
+        // Pagination
         val start = page * PAGE_SIZE
         val end = minOf(start + PAGE_SIZE, categories.size)
         val currentPageCategories = categories.subList(start, end)
 
-        // RemoteInput for current page
+        // Remote input for category selection
         val remoteInput = RemoteInput.Builder(KEY_CATEGORY_REPLY)
             .setLabel("Choose category")
             .setChoices(currentPageCategories.toTypedArray())
             .build()
 
-        // Reply intent (category selection)
         val replyIntent = Intent(context, CategoryReceiver::class.java).apply {
             putExtra("transaction_id", money.id)
         }
+
         val replyPendingIntent = PendingIntent.getBroadcast(
             context,
-            money.id, // unique requestCode for reply
+            money.id,
             replyIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
         )
@@ -62,49 +76,41 @@ object NotificationHelper {
             .setOngoing(true)
             .addAction(selectAction)
 
-        // If there are more pages, show "Show More" -> page+1
+        // Pagination actions
         if (end < categories.size) {
             val moreIntent = Intent(context, ShowMoreReceiver::class.java).apply {
                 putExtra("transaction_id", money.id)
                 putExtra("page", page + 1)
             }
-
-            // use a requestCode that depends on page to avoid reuse surprises
             val morePendingIntent = PendingIntent.getBroadcast(
                 context,
                 money.id + 1000 + page,
                 moreIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
             )
-
             builder.addAction(R.drawable.notification_icon, "Show More", morePendingIntent)
-
-            // If this is the last page AND there was more than one page total, show "Start Over"
         } else if (categories.size > PAGE_SIZE) {
             val restartIntent = Intent(context, ShowMoreReceiver::class.java).apply {
                 putExtra("transaction_id", money.id)
-                putExtra("page", 0) // restart from beginning
+                putExtra("page", 0)
             }
-
             val restartPendingIntent = PendingIntent.getBroadcast(
                 context,
-                money.id + 2000, // different requestCode for restart
+                money.id + 2000,
                 restartIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
             )
-
             builder.addAction(R.drawable.notification_icon, "Start Over", restartPendingIntent)
         }
 
-        val notification = builder.build()
-
+        // Show notification
         val manager = NotificationManagerCompat.from(context)
         if (ActivityCompat.checkSelfPermission(
                 context,
                 android.Manifest.permission.POST_NOTIFICATIONS
             ) == PackageManager.PERMISSION_GRANTED
         ) {
-            manager.notify(money.id, notification)
+            manager.notify(money.id, builder.build())
         }
     }
 }

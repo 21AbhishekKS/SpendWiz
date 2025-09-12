@@ -33,11 +33,14 @@ import com.abhi.expencetracker.ViewModels.AddScreenViewModel
 import java.text.SimpleDateFormat
 import java.util.*
 import com.abhi.expencetracker.Database.money.CategoryData.*
+import com.abhi.expencetracker.ViewModels.CategoryViewModel
+
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun AddScreen(
     viewModel: AddScreenViewModel,
+    categoryViewModel: CategoryViewModel,
     navController: NavController
 ) {
     val context = LocalContext.current
@@ -60,17 +63,39 @@ fun AddScreen(
     var currentDate by rememberSaveable { mutableStateOf(dateFormatter.format(Date())) }
     val calendar = Calendar.getInstance()
 
-    val categories = when (selectedType) {
-        "Income" -> incomeCategories
-        "Expense" -> expenseCategories
-        else -> transferCategories
+    // collect categories
+    val incomeCategories by categoryViewModel.getCategories("Income")
+        .collectAsState(initial = emptyList())
+
+    val expenseCategories by categoryViewModel.getCategories("Expense")
+        .collectAsState(initial = emptyList())
+
+    val transferCategories by categoryViewModel.getCategories("Transfer")
+        .collectAsState(initial = emptyList())
+
+    val categories: List<String> = when (selectedType) {
+        "Income" -> incomeCategories.map { it.name }
+        "Expense" -> expenseCategories.map { it.name }
+        else -> transferCategories.map { it.name }
     }
 
-    val subCategoryMap = when (selectedType) {
-        "Income" -> incomeSubCategoryMap
-        "Expense" -> expenseSubCategoryMap
-        else -> transferSubCategoryMap
+// ✅ find the Category object by selected name
+    val selectedCategoryObj = when (selectedType) {
+        "Income" -> incomeCategories.find { it.name == selectedCategory }
+        "Expense" -> expenseCategories.find { it.name == selectedCategory }
+        else -> transferCategories.find { it.name == selectedCategory }
     }
+
+// ✅ collect subcategories dynamically
+    val subCategories by remember(selectedCategoryObj?.id) {
+        selectedCategoryObj?.id?.let { categoryId ->
+            categoryViewModel.getSubCategories(categoryId)
+        } ?: kotlinx.coroutines.flow.flowOf(emptyList())
+    }.collectAsState(initial = emptyList())
+
+    val subCategoryNames = subCategories.map { it.name }
+
+
 
     val typeColor = when (selectedType) {
         "Income" -> Color(0xFF4CAF50)
@@ -280,7 +305,7 @@ fun AddScreen(
                     .padding(vertical = 4.dp),
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                subCategoryMap[selectedCategory]?.forEach { sub ->
+                subCategoryNames.forEach { sub ->
                     FilterChip(
                         selected = selectedSubCategory == sub,
                         onClick = { selectedSubCategory = sub },

@@ -90,7 +90,7 @@ val context = LocalContext.current
                 }
 
                 composable(Routes.AddScreen.route) {
-                    AddScreen(moneyViewModel, navController1)
+                    AddScreen(moneyViewModel, categoryViewModel ,navController1)
                 }
                 composable("NotificationSettingsScreen") {
                     NotificationSettingsScreen(
@@ -125,6 +125,7 @@ val context = LocalContext.current
 
                     UpdateScreen(
                         viewModel = moneyViewModel,
+                        categoryViewModel = categoryViewModel,
                         navController = navController1,
                         description = description,
                         amount = amount.toDouble(),
@@ -137,7 +138,7 @@ val context = LocalContext.current
                 }
 
                 composable(Routes.InsightsScreen.route) {
-                    InsightsScreen(moneyViewModel , navController1)
+                    InsightsScreen(moneyViewModel , categoryViewModel ,navController1)
                 }
 
                 composable(Routes.SpentScreen.route) {
