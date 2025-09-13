@@ -23,7 +23,11 @@ import androidx.core.view.WindowCompat
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.rememberNavController
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
 import com.abhi.expencetracker.Database.money.MoneyDatabase
+import com.abhi.expencetracker.Notifications.DailyNotificationWorker
 import com.abhi.expencetracker.Notifications.NotificationReceiver
 import com.abhi.expencetracker.Notifications.PreferencesManager
 import com.abhi.expencetracker.ViewModels.AddScreenViewModel
@@ -33,6 +37,7 @@ import com.abhi.expencetracker.navigation.BottomNav
 import com.abhi.expencetracker.ui.theme.ExpenceTrackerTheme
 import kotlinx.coroutines.launch
 import java.util.Calendar
+import java.util.concurrent.TimeUnit
 
 class MainActivity : ComponentActivity() {
 
@@ -74,9 +79,6 @@ class MainActivity : ComponentActivity() {
 
         createNotificationChannels()
 
-        // 🔧 FIX → Removed lifecycleScope launch with prefs checks
-        // Because NotificationReceiver & SmsNotificationListener now read preferences themselves
-
         setContent {
             ExpenceTrackerTheme {
                 Surface(
@@ -84,14 +86,6 @@ class MainActivity : ComponentActivity() {
                     color = Color.White
                 ) {
                     val navController = rememberNavController()
-
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                        val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
-                        if (!alarmManager.canScheduleExactAlarms()) {
-                            val intent = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM)
-                            startActivity(intent)
-                        }
-                    }
 
                     BottomNav(
                         navController,
@@ -140,7 +134,7 @@ class MainActivity : ComponentActivity() {
             val dailyChannel = NotificationChannel(
                 "daily_channel",
                 "Daily Reminders",
-                NotificationManager.IMPORTANCE_DEFAULT
+                NotificationManager.IMPORTANCE_HIGH
             ).apply {
                 description = "Reminders about categorizing daily transactions"
             }
@@ -160,44 +154,34 @@ class MainActivity : ComponentActivity() {
     }
 
     fun scheduleDailyNotification(hour: Int, minute: Int) {
-        val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
-        val intent = Intent(this, NotificationReceiver::class.java)
-        val pendingIntent = PendingIntent.getBroadcast(
-            this, 0, intent, PendingIntent.FLAG_IMMUTABLE
-        )
-
-        val calendar = Calendar.getInstance().apply {
+        val currentTime = Calendar.getInstance()
+        val targetTime = Calendar.getInstance().apply {
             set(Calendar.HOUR_OF_DAY, hour)
             set(Calendar.MINUTE, minute)
             set(Calendar.SECOND, 0)
-            if (before(Calendar.getInstance())) {
-                add(Calendar.DATE, 1)
-            }
         }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            alarmManager.setExactAndAllowWhileIdle(
-                AlarmManager.RTC_WAKEUP,
-                calendar.timeInMillis,
-                pendingIntent
-            )
-        } else {
-            alarmManager.setRepeating(
-                AlarmManager.RTC_WAKEUP,
-                calendar.timeInMillis,
-                AlarmManager.INTERVAL_DAY,
-                pendingIntent
-            )
+        // If time already passed today, schedule for tomorrow
+        if (targetTime.before(currentTime)) {
+            targetTime.add(Calendar.DAY_OF_MONTH, 1)
         }
+
+        val delay = targetTime.timeInMillis - currentTime.timeInMillis
+
+        val dailyWork = PeriodicWorkRequestBuilder<DailyNotificationWorker>(24, TimeUnit.HOURS)
+            .setInitialDelay(delay, TimeUnit.MILLISECONDS)
+            .build()
+
+        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+            "daily_notification",
+            ExistingPeriodicWorkPolicy.REPLACE,
+            dailyWork
+        )
     }
-
 
     fun cancelDailyNotification() {
-        val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
-        val intent = Intent(this, NotificationReceiver::class.java)
-        val pendingIntent = PendingIntent.getBroadcast(
-            this, 0, intent, PendingIntent.FLAG_IMMUTABLE
-        )
-        alarmManager.cancel(pendingIntent)
+        WorkManager.getInstance(this).cancelUniqueWork("daily_notification")
     }
+
+
 }

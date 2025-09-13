@@ -103,6 +103,10 @@ dependencies {
     //Status bar blending with app
     implementation ("com.google.accompanist:accompanist-systemuicontroller:0.32.0")
 
+    //work manager for daily notifcaion
+    implementation ("androidx.work:work-runtime-ktx:2.9.0")
+
+
 }
 
 
