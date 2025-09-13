@@ -18,6 +18,26 @@ import androidx.compose.ui.unit.sp
 import com.abhi.expencetracker.Database.money.Money
 import com.abhi.expencetracker.Database.money.TransactionType
 import com.abhi.expencetracker.R
+import java.text.SimpleDateFormat
+import java.util.Locale
+
+fun formatTimeTo12Hr(time24: String): String {
+    val possibleFormats = listOf("HH:mm:ss", "HH:mm")
+    for (pattern in possibleFormats) {
+        try {
+            val inputFormat = SimpleDateFormat(pattern, Locale.getDefault())
+            val outputFormat = SimpleDateFormat("hh:mm a", Locale.getDefault())
+            val date = inputFormat.parse(time24)
+            if (date != null) {
+                return outputFormat.format(date)
+            }
+        } catch (_: Exception) {
+            // ignore and try next pattern
+        }
+    }
+    return time24 // fallback if nothing works
+}
+
 
 @Composable
 fun MoneyItem1(
@@ -49,13 +69,13 @@ fun MoneyItem1(
                 contentDescription = "",
                 modifier = Modifier
                     .padding(end = 8.dp)
-                    .size(32.dp) // smaller icon
+                    .size(32.dp)
             )
 
             Column(
                 modifier = Modifier.weight(1f)
             ) {
-                // Description - single line
+                // Description
                 Text(
                     text = item.description,
                     maxLines = 1,
@@ -64,7 +84,7 @@ fun MoneyItem1(
                     color = Color.Black
                 )
 
-                // Bank name + Date in same row
+                // Bank name + Date
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.fillMaxWidth()
@@ -78,7 +98,7 @@ fun MoneyItem1(
                     )
                     Spacer(Modifier.width(6.dp))
                     Text(
-                        text =  if(item.bankName != null ) "("+item.bankName+")" else "(Cash Payment)",
+                        text = if (item.bankName != null) "(${item.bankName})" else "(Cash Payment)",
                         fontSize = 12.sp,
                         color = Color.DarkGray,
                         maxLines = 1,
@@ -86,7 +106,7 @@ fun MoneyItem1(
                     )
                 }
 
-                // UPI Ref (if exists)
+                // UPI Ref
                 item.upiRefNo?.let {
                     Text(
                         text = "UPI Ref: $it",
@@ -98,22 +118,33 @@ fun MoneyItem1(
                 }
             }
 
-            // Right side (amount)
-            Text(
-                text = when (item.type) {
-                    TransactionType.INCOME -> "+ ${item.amount}"
-                    TransactionType.EXPENSE -> "- ${item.amount}"
-                    else -> "${item.amount}"
-                },
-                color = when (item.type) {
-                    TransactionType.INCOME -> Color(0xFF4CAF50)
-                    TransactionType.EXPENSE -> Color(0xFFF44336)
-                    else -> Color(0xFF3F51B5)
-                },
-                fontSize = 14.sp,
-                textAlign = TextAlign.End,
-                modifier = Modifier.widthIn(min = 70.dp) // keeps alignment
-            )
+            // Right side (amount + formatted time)
+            Column(
+                horizontalAlignment = Alignment.End,
+                modifier = Modifier.widthIn(min = 70.dp)
+            ) {
+                Text(
+                    text = when (item.type) {
+                        TransactionType.INCOME -> "+ ${item.amount}"
+                        TransactionType.EXPENSE -> "- ${item.amount}"
+                        else -> "${item.amount}"
+                    },
+                    color = when (item.type) {
+                        TransactionType.INCOME -> Color(0xFF4CAF50)
+                        TransactionType.EXPENSE -> Color(0xFFF44336)
+                        else -> Color(0xFF3F51B5)
+                    },
+                    fontSize = 14.sp,
+                    textAlign = TextAlign.End
+                )
+
+                Text(
+                    text = formatTimeTo12Hr(item.time), // 🔹 formatted here
+                    color = Color.Black,
+                    fontSize = 12.sp,
+                    textAlign = TextAlign.End
+                )
+            }
         }
     }
 }

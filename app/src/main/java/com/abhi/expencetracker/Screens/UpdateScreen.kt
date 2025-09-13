@@ -253,26 +253,49 @@ fun UpdateScreen(
                         ).show()
                     }
             ) {
-                OutlinedTextField(
+                TextField(
                     value = currentDate,
                     onValueChange = {},
                     readOnly = true,
                     enabled = false,
+                    label = { Text("Select Date") },
                     modifier = Modifier.fillMaxWidth(),
-                    colors = TextFieldDefaults.outlinedTextFieldColors(
-                        disabledBorderColor = typeColor,
-                        disabledTextColor = Color.Black
+                    colors = TextFieldDefaults.colors(
+                        disabledTextColor = Color.Black,
+                        disabledIndicatorColor = Color.Gray, // underline color
+                        disabledLabelColor = Color.Gray,
+                        disabledContainerColor = Color.Transparent
                     )
                 )
             }
         }
 
-        TimePickerField(
-            selectedTime = selectedTime,
-            onTimeSelected = { newTime ->
-                selectedTime = newTime
+        // Time Row with TimePicker
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Time:",
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Medium,
+                modifier = Modifier.width(90.dp)
+            )
+
+            Box(
+                modifier = Modifier.weight(1f)
+            ) {
+                TimePickerField(
+                    selectedTime = selectedTime,
+                    onTimeSelected = { newTime ->
+                        selectedTime = newTime
+                    }
+                )
             }
-        )
+        }
+
 
         // amount row
         FieldRow(

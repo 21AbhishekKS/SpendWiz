@@ -50,6 +50,7 @@ fun TransactionList(
                         val category = Uri.encode(item.category ?: "")
                         val subCategory = Uri.encode(item.subCategory ?: "")
                         val date = Uri.encode(item.date ?: "")
+                        val time = Uri.encode(item.time ?: "")
 
                         navController.navigate(
                             Routes.UpdateScreen.route +
@@ -60,7 +61,7 @@ fun TransactionList(
                                     "&category=$category" +
                                     "&subCategory=$subCategory" +
                                     "&date=$date" +
-                                    "&time=${item.time }"
+                                    "&time=$time"
                         )
                     })
                 }

@@ -420,46 +420,53 @@ fun CustomTopBar(
             )
         }
 
-        // ⋮ Menu Actions
-        Box {
-            IconButton(onClick = { expanded = true }) {
-                Icon(
-                    Icons.Default.MoreVert,
-                    contentDescription = "More",
-                    tint = Color.Black,
-                    modifier = Modifier.size(22.dp)
-                )
-            }
-
-            DropdownMenu(
-                expanded = expanded,
-                onDismissRequest = { expanded = false }
-            ) {
-                val enabled = selectedItems.isNotEmpty()
-
-                DropdownMenuItem(
-                    text = {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Checkbox(
-                                checked = selectedItems.size == moneyList.size && moneyList.isNotEmpty(),
-                                onCheckedChange = null
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("Select All")
-                        }
-                    },
-                    onClick = {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(end = 8.dp)
+        ) {
+            // Select All
+            Icon(
+                painter = painterResource(
+                    id = if (selectedItems.size == moneyList.size && moneyList.isNotEmpty())
+                        R.drawable.deselect_all   // show deselect icon
+                    else
+                        R.drawable.select_all     // show select icon
+                ),
+                contentDescription = if (selectedItems.size == moneyList.size && moneyList.isNotEmpty())
+                    "Deselect All"
+                else
+                    "Select All",
+                tint = Color.Unspecified, // keep original PNG colors
+                modifier = Modifier
+                    .size(24.dp)
+                    .clickable {
                         if (selectedItems.size == moneyList.size) {
                             selectedItems.clear()
                         } else {
                             selectedItems.clear()
                             selectedItems.addAll(moneyList.map { it.id.toString() })
                         }
-                    },
-                    enabled = moneyList.isNotEmpty()
-                )
+                    }
+            )
 
-                Divider()
+            // space between the two icons
+            Spacer(modifier = Modifier.width(8.dp))
+
+            // 3 dots for other actions
+            Icon(
+                Icons.Default.MoreVert,
+                contentDescription = "More",
+                tint = Color.Black,
+                modifier = Modifier
+                    .size(22.dp)
+                    .clickable { expanded = true }
+            )
+
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false }
+            ) {
+                val enabled = selectedItems.isNotEmpty()
 
                 DropdownMenuItem(
                     text = { Text("Change Type") },

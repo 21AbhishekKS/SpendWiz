@@ -4,11 +4,12 @@ import android.app.TimePickerDialog
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import java.util.Calendar
 
@@ -40,7 +41,8 @@ fun TimePickerField(
                 TimePickerDialog(
                     context,
                     { _, selectedHour: Int, selectedMinute: Int ->
-                        val formattedTime = String.format("%02d:%02d", selectedHour, selectedMinute)
+                        val formattedTime =
+                            String.format("%02d:%02d", selectedHour, selectedMinute)
                         onTimeSelected(formattedTime)
                     },
                     hour,
@@ -49,14 +51,19 @@ fun TimePickerField(
                 ).show()
             }
     ) {
-        OutlinedTextField(
+        TextField(
             value = selectedTime,
             onValueChange = {},
-            label = { Text("Select Time") },
             readOnly = true,
-            enabled = false, // disable editing
-            modifier = Modifier.fillMaxWidth()
+            enabled = false, // disable manual typing
+            label = { Text("Select Time") },
+            modifier = Modifier.fillMaxWidth(),
+            colors = TextFieldDefaults.colors(
+                disabledTextColor = Color.Black,
+                disabledIndicatorColor = Color.Gray, // underline color
+                disabledLabelColor = Color.Gray,
+                disabledContainerColor = Color.Transparent
+            )
         )
     }
 }
-
