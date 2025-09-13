@@ -103,7 +103,7 @@ val context = LocalContext.current
                 composable(
                     route = Routes.UpdateScreen.route +
                             "?description={description}&amount={amount}&id={id}&type={type}" +
-                            "&category={category}&subCategory={subCategory}&date={date}",
+                            "&category={category}&subCategory={subCategory}&date={date}&time={time}",
                     arguments = listOf(
                         navArgument("description") { type = NavType.StringType; defaultValue = "" },
                         navArgument("amount") { type = NavType.FloatType; defaultValue = 0f },
@@ -111,7 +111,8 @@ val context = LocalContext.current
                         navArgument("type") { type = NavType.StringType; defaultValue = TransactionType.EXPENSE.toString() },
                         navArgument("category") { type = NavType.StringType; defaultValue = "" },
                         navArgument("subCategory") { type = NavType.StringType; defaultValue = "" },
-                        navArgument("date") { type = NavType.StringType; defaultValue = "" }
+                        navArgument("date") { type = NavType.StringType; defaultValue = "" },
+                        navArgument("time") { type = NavType.StringType; defaultValue = "" }
                     )
                 ) { backStackEntry ->
                     val description = backStackEntry.arguments?.getString("description") ?: ""
@@ -122,6 +123,7 @@ val context = LocalContext.current
                     val category = backStackEntry.arguments?.getString("category") ?: ""
                     val subCategory = backStackEntry.arguments?.getString("subCategory") ?: ""
                     val date = backStackEntry.arguments?.getString("date") ?: ""
+                    val time = backStackEntry.arguments?.getString("time") ?: ""
 
                     UpdateScreen(
                         viewModel = moneyViewModel,
@@ -133,7 +135,8 @@ val context = LocalContext.current
                         type = type.name,
                         category = category,
                         subCategory = subCategory,
-                        date = date
+                        date = date,
+                        time = time
                     )
                 }
 

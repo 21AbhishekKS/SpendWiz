@@ -33,7 +33,9 @@ import com.abhi.expencetracker.ViewModels.AddScreenViewModel
 import java.text.SimpleDateFormat
 import java.util.*
 import com.abhi.expencetracker.Database.money.CategoryData.*
+import com.abhi.expencetracker.Database.money.Money
 import com.abhi.expencetracker.ViewModels.CategoryViewModel
+import com.abhi.expencetracker.utils.TimePickerField
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @RequiresApi(Build.VERSION_CODES.O)
@@ -58,7 +60,11 @@ fun AddScreen(
     var selectedSubCategory by rememberSaveable { mutableStateOf("") }
     var amount by rememberSaveable { mutableStateOf("") }
     var description by rememberSaveable { mutableStateOf("") }
-
+    var selectedTime by rememberSaveable {
+        mutableStateOf(
+             Money.getCurrentTime()  // only default if no incoming time
+        )
+    }
     val dateFormatter = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
     var currentDate by rememberSaveable { mutableStateOf(dateFormatter.format(Date())) }
     val calendar = Calendar.getInstance()
@@ -130,6 +136,7 @@ fun AddScreen(
             description = description.ifBlank { "No description" },
             type = typeEnum,
             date = currentDate,
+            time = selectedTime,
             category = finalCategory,
             subCategory = selectedSubCategory.ifBlank { "General" }
         )
@@ -229,7 +236,12 @@ fun AddScreen(
                 )
             }
         }
-
+        TimePickerField(
+            selectedTime = selectedTime,
+            onTimeSelected = { newTime ->
+                selectedTime = newTime
+            }
+        )
         // Amount & Note
         FieldRow(
             label = "Amount",

@@ -33,7 +33,9 @@ import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 import com.abhi.expencetracker.Database.money.CategoryData.*
+import com.abhi.expencetracker.Database.money.Money
 import com.abhi.expencetracker.ViewModels.CategoryViewModel
+import com.abhi.expencetracker.utils.TimePickerField
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @RequiresApi(Build.VERSION_CODES.O)
@@ -48,7 +50,8 @@ fun UpdateScreen(
     type: String,
     category: String = "",
     subCategory: String = "",
-    date: String = ""
+    date: String = "",
+    time : String
 ) {
 
     val context = LocalContext.current
@@ -80,8 +83,11 @@ fun UpdateScreen(
     var selectedSubCategory by rememberSaveable { mutableStateOf(subCategory) }
     var amount by rememberSaveable { mutableStateOf(amount.toString()) }
     var description by rememberSaveable { mutableStateOf(description) }
-
-    // ✅ Date handling
+    var selectedTime by rememberSaveable {
+        mutableStateOf(
+            if (time.isNotEmpty()) time else Money.getCurrentTime()
+        )
+    }
     val dateFormatter = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
     var currentDate by rememberSaveable { mutableStateOf(date.ifEmpty { dateFormatter.format(Date()) }) }
     val calendar = Calendar.getInstance()
@@ -159,6 +165,7 @@ fun UpdateScreen(
             description = description.ifBlank { "No description" },
             type = typeEnum,
             category = finalCategory,
+            time = selectedTime,
             subCategory = selectedSubCategory.ifBlank { "General" },
             date = currentDate
         )
@@ -260,7 +267,12 @@ fun UpdateScreen(
             }
         }
 
-
+        TimePickerField(
+            selectedTime = selectedTime,
+            onTimeSelected = { newTime ->
+                selectedTime = newTime
+            }
+        )
 
         // amount row
         FieldRow(

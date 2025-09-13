@@ -283,7 +283,8 @@ fun InsightsScreen(
                                                             "&type=${enc(item.type.toString())}" +
                                                             "&category=${enc(item.category ?: "")}" +
                                                             "&subCategory=${enc(item.subCategory ?: "")}" +
-                                                            "&date=${enc(item.date ?: "")}"
+                                                            "&date=${enc(item.date ?: "")}" +
+                                                            "&time=${item.time}"
                                                 )
                                             } else {
                                                 if (selectedItems.contains(itemId)) {

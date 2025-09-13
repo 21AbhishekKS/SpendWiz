@@ -58,6 +58,7 @@ class AddScreenViewModel : ViewModel() {
         description: String,
         type: TransactionType,
         category: String,
+        time: String,
         subCategory: String,
         date: String
     ) = viewModelScope.launch(Dispatchers.IO) {
@@ -69,7 +70,8 @@ class AddScreenViewModel : ViewModel() {
             type = type,
             category = category,
             subCategory = subCategory,
-            date = date
+            date = date,
+            time = time
         )
         moneyDao.updateMoney(updated)
     }
@@ -117,6 +119,7 @@ class AddScreenViewModel : ViewModel() {
         description: String,
         type: TransactionType,
         date: String,
+        time: String,
         category: String = "Others",
         subCategory: String? = null
     ) {
@@ -127,6 +130,7 @@ class AddScreenViewModel : ViewModel() {
                 description = description,
                 type = type,
                 date = date,
+                time = time,
                 category = category,
                 subCategory = subCategory
             )

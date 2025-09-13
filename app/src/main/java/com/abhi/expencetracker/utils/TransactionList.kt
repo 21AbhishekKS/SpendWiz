@@ -59,7 +59,8 @@ fun TransactionList(
                                     "&type=$type" +
                                     "&category=$category" +
                                     "&subCategory=$subCategory" +
-                                    "&date=$date"
+                                    "&date=$date" +
+                                    "&time=${item.time }"
                         )
                     })
                 }
