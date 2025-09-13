@@ -152,6 +152,7 @@ fun InsightsScreen(
 
                 Divider(color = Color.LightGray)
 
+// Show Pager only if there is some data (income or expense > 0)
                 if (monthlyReceived != 0.0 || monthlySpent != 0.0) {
                     Box(
                         modifier = Modifier
@@ -159,32 +160,42 @@ fun InsightsScreen(
                             .heightIn(min = 220.dp, max = 280.dp)
                             .padding(horizontal = 10.dp)
                     ) {
+                        val pages = buildList {
+                            // Only add PieChart if both values are > 0
+                            if (monthlyReceived != 0.0 && monthlySpent != 0.0) {
+                                add("Pie")
+                            }
+                            add("ByMonth")
+                            add("BySubCategory")
+                        }
+
+                        val pagerState = rememberPagerState(initialPage = 0, pageCount = { pages.size })
+
                         HorizontalPager(
                             state = pagerState,
                             modifier = Modifier.fillMaxSize()
                         ) { page ->
-                            when (page) {
-                                0 -> PieChart(
+                            when (pages[page]) {
+                                "Pie" -> PieChart(
                                     spent = monthlySpent,
                                     earned = monthlyReceived,
                                     modifier = Modifier.fillMaxSize()
                                 )
-
-                                1 -> ExpenseDonutChartByMonth(
+                                "ByMonth" -> ExpenseDonutChartByMonth(
                                     viewModel = viewModel,
                                     month = selectedMonthInNum,
                                     year = selectedYear.toString(),
                                     modifier = Modifier.fillMaxSize()
                                 )
-                                2 -> ExpenseDonutChartBySubCategory(
+                                "BySubCategory" -> ExpenseDonutChartBySubCategory(
                                     viewModel = viewModel,
                                     month = selectedMonthInNum,
                                     year = selectedYear.toString(),
                                     modifier = Modifier.fillMaxSize()
                                 )
-
                             }
                         }
+
                         if (pagerState.currentPage > 0) {
                             IconButton(
                                 onClick = { scope.launch { pagerState.animateScrollToPage(pagerState.currentPage - 1) } },
@@ -216,7 +227,6 @@ fun InsightsScreen(
                                 )
                             }
                         }
-
                     }
                 }
 

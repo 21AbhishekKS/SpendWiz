@@ -119,6 +119,10 @@ fun AddScreen(
             Toast.makeText(context, "Invalid amount", Toast.LENGTH_SHORT).show()
             return
         }
+        if (amountDouble > 99_99_999) {
+            Toast.makeText(context, "Amount cannot exceed 1 crore", Toast.LENGTH_SHORT).show()
+            return
+        }
         val typeEnum = when (selectedType) {
             "Income" -> TransactionType.INCOME
             "Expense" -> TransactionType.EXPENSE
@@ -269,11 +273,19 @@ fun AddScreen(
         FieldRow(
             label = "Amount",
             value = amount,
-            onValueChange = { if (it.isEmpty() || it.matches(Regex("^[0-9]*\\.?[0-9]*$"))) amount = it },
+            onValueChange = {
+                if (it.isEmpty() || it.matches(Regex("^[0-9]*\\.?[0-9]*$"))) {
+                    val parsed = it.toDoubleOrNull()
+                    if (parsed == null || parsed <= 99_99_999) { // 1 crore limit
+                        amount = it
+                    }
+                }
+            },
             keyboardType = KeyboardType.Number,
             borderColor = typeColor,
             modifier = Modifier.focusRequester(focusRequester)
         )
+
 
         FieldRow(
             label = "Note",
