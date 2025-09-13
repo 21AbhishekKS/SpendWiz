@@ -81,13 +81,9 @@ dependencies {
     implementation ("androidx.navigation:navigation-compose:2.7.7")
 
     //Live data
-
-
     implementation("androidx.compose.runtime:runtime-livedata:1.6.7")
 
     //Room Database
-
-
     implementation ("androidx.room:room-runtime:2.6.1")
     kapt("androidx.room:room-compiler:2.6.1")
     implementation ("androidx.room:room-ktx:2.6.1") // For Kotlin projects
@@ -95,17 +91,17 @@ dependencies {
     //Flow row
     implementation ("com.google.accompanist:accompanist-flowlayout:0.30.1")
 
-
-// Splash screen
-
+    // Splash screen
     implementation ("androidx.core:core-splashscreen:1.0.1")
 
-
-//charts
+    //charts
     implementation("io.github.thechance101:chart:1.1.0")
 
     //Data store
     implementation("androidx.datastore:datastore-preferences:1.0.0")
+
+    //Status bar blending with app
+    implementation ("com.google.accompanist:accompanist-systemuicontroller:0.32.0")
 
 }
 
