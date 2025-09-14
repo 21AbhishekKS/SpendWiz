@@ -7,7 +7,8 @@
         android:required="false" />
 
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-
+    <uses-permission android:name="android.permission.READ_SMS"/>
+    <uses-permission android:name="android.permission.RECEIVE_SMS"/>
 
     <application
         android:allowBackup="true"
@@ -37,7 +38,6 @@
             </intent-filter>
         </activity>
 
-        <receiver android:name=".Notifications.NotificationReceiver" />
         <receiver android:name=".Notifications.DismissReceiver" />
         <receiver
             android:name=".Notifications.CategoryReceiver"
@@ -53,18 +53,14 @@
             android:name=".Notifications.ShowMoreSubCategoryReceiver"
             android:exported="false" />
 
-        <service
-            android:name=".Notifications.SmsNotificationListener"
-            android:label="SMS Notification Reader"
-            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE"
+        <receiver
+            android:name=".SMSTransactionTracker.SmsReceiver"
+            android:enabled="true"
             android:exported="true">
             <intent-filter>
-                <action android:name="android.service.notification.NotificationListenerService" />
+                <action android:name="android.provider.Telephony.SMS_RECEIVED"/>
             </intent-filter>
-        </service>
-
-
-
+        </receiver>
     </application>
 
 

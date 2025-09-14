@@ -8,16 +8,19 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.DialogInterface
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.core.content.ContextCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.ViewModelProvider
@@ -28,7 +31,6 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import com.abhi.expencetracker.Database.money.MoneyDatabase
 import com.abhi.expencetracker.Notifications.DailyNotificationWorker
-import com.abhi.expencetracker.Notifications.NotificationReceiver
 import com.abhi.expencetracker.Notifications.PreferencesManager
 import com.abhi.expencetracker.ViewModels.AddScreenViewModel
 import com.abhi.expencetracker.ViewModels.CategoryViewModel
@@ -45,9 +47,31 @@ class MainActivity : ComponentActivity() {
     private lateinit var categoryViewModel: CategoryViewModel
     private lateinit var prefs: PreferencesManager
 
-    private fun isNotificationServiceEnabled(): Boolean {
-        val flat = Settings.Secure.getString(contentResolver, "enabled_notification_listeners")
-        return flat?.contains(packageName) == true
+    // All required permissions
+    private val REQUIRED_PERMISSIONS = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        arrayOf(
+            android.Manifest.permission.POST_NOTIFICATIONS,
+            android.Manifest.permission.RECEIVE_SMS,
+            android.Manifest.permission.READ_SMS
+        )
+    } else {
+        arrayOf(
+            android.Manifest.permission.RECEIVE_SMS,
+            android.Manifest.permission.READ_SMS
+        )
+    }
+
+    // Launcher for multiple permissions
+    @RequiresApi(Build.VERSION_CODES.O)
+    private val permissionsLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        val smsGranted = permissions[android.Manifest.permission.READ_SMS] == true
+        val receiveSmsGranted = permissions[android.Manifest.permission.RECEIVE_SMS] == true
+
+        if (smsGranted && receiveSmsGranted) {
+            moneyViewModel.runSmsImportOnce(this)
+        }
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -57,10 +81,6 @@ class MainActivity : ComponentActivity() {
         //To blend status bar with app
         WindowCompat.setDecorFitsSystemWindows(window, false)
 
-        if (!isNotificationServiceEnabled()) {
-            showNotificationAccessDialog()
-        }
-
         installSplashScreen()
         moneyViewModel = ViewModelProvider(this)[AddScreenViewModel::class.java]
         val database = MoneyDatabase.getDatabase(this)
@@ -69,14 +89,7 @@ class MainActivity : ComponentActivity() {
         categoryViewModel = ViewModelProvider(this, factory)[CategoryViewModel::class.java]
         prefs = PreferencesManager(this)
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS)
-                != android.content.pm.PackageManager.PERMISSION_GRANTED
-            ) {
-                requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 101)
-            }
-        }
-
+        requestAllPermissions()
         createNotificationChannels()
 
         setContent {
@@ -111,23 +124,37 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun showNotificationAccessDialog() {
-        AlertDialog.Builder(this)
-            .setTitle("Enable Notification Access")
-            .setMessage(
-                "To automatically detect transactions from SMS, the app needs access to notifications. " +
-                        "You will be redirected to the settings to enable this permission."
-            )
-            .setPositiveButton("Go to Settings") { _: DialogInterface, _: Int ->
-                val intent = Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
-                startActivity(intent)
-            }
-            .setNegativeButton("Cancel") { dialog: DialogInterface, _: Int ->
-                dialog.dismiss()
-            }
-            .setCancelable(false)
-            .show()
+    // Ask all required permissions
+    @RequiresApi(Build.VERSION_CODES.O)
+    private fun requestAllPermissions() {
+        val notGranted = REQUIRED_PERMISSIONS.filter {
+            ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
+        }
+
+        if (notGranted.isNotEmpty()) {
+            // Show Prominent Disclosure BEFORE asking system permission
+            AlertDialog.Builder(this)
+                .setTitle("SMS Permission Required")
+                .setMessage(
+                    "This app needs access to your SMS messages to automatically detect " +
+                            "bank and UPI transaction alerts. These are used only to track your " +
+                            "expenses and show insights like graphs and reports. Personal messages " +
+                            "are not read, stored, or shared. SMS data never leaves your device."
+                )
+                .setPositiveButton("Allow") { _, _ ->
+                    permissionsLauncher.launch(REQUIRED_PERMISSIONS)
+                }
+                .setNegativeButton("Cancel") { dialog, _ ->
+                    dialog.dismiss()
+                }
+                .setCancelable(false) // Prevent closing without choosing
+                .show()
+        } else {
+            // ✅ Permissions already granted
+            moneyViewModel.runSmsImportOnce(this)
+        }
     }
+
 
     private fun createNotificationChannels() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
