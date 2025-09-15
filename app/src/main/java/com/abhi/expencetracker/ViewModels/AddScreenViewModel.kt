@@ -229,16 +229,21 @@ class AddScreenViewModel : ViewModel() {
                     if (bankName.isNullOrBlank()) bankName = "Unknown Bank"
 
                     // ------------------------------------------------------
+                    // Format timestamp into time (HH:mm:ss)
+                    val time = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
+                        .format(Date(timestamp))
 
                     val money = Money(
                         id = 0,
                         amount = amount,
                         description = name,
                         type = type,
-                        date = date,
+                        date = date,         // still your formatted "dd/MM/yyyy"
+                        time = time,         // <-- pass SMS time instead of default current time
                         upiRefNo = upiRefNo,
-                        bankName = bankName   // <-- added field
+                        bankName = bankName
                     )
+
 
                     moneyDao.addMoney(money)
                     insertedCount++
