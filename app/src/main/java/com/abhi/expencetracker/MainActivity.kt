@@ -80,7 +80,6 @@ class MainActivity : ComponentActivity() {
 
         //To blend status bar with app
         WindowCompat.setDecorFitsSystemWindows(window, false)
-
         installSplashScreen()
         moneyViewModel = ViewModelProvider(this)[AddScreenViewModel::class.java]
         val database = MoneyDatabase.getDatabase(this)

@@ -3,6 +3,8 @@ package com.abhi.expencetracker.SMSTransactionTracker
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.os.Handler
+import android.os.Looper
 import android.provider.Telephony
 import android.util.Log
 import androidx.annotation.RequiresApi
@@ -121,9 +123,22 @@ class SmsReceiver : BroadcastReceiver() {
                             bankName = bankName
                         )
 
-                        dao.addMoney(money)
-                        Log.i(TAG, "Inserted money from SMS: $money")
-                        NotificationHelper.showTransactionNotification(context, money)
+                        val rowId = dao.addMoney(money)
+
+                        if (rowId != -1L) {
+                            val insertedMoney = money.copy(id = rowId.toInt())
+
+                            // Post notification with delay like before
+                            val delayMillis = 6_000L
+                            Handler(Looper.getMainLooper()).postDelayed({
+                                NotificationHelper.showTransactionNotification(context.applicationContext, insertedMoney)
+                            }, delayMillis)
+
+                            Log.i(TAG, "Inserted money from SMS: $insertedMoney")
+                        } else {
+                            Log.w(TAG, "⚠️ Duplicate SMS skipped: $upiRefNo")
+                        }
+
                     } catch (e: Exception) {
                         Log.e(TAG, "Error while inserting SMS transaction", e)
                     }
