@@ -38,9 +38,9 @@ fun MoreOptionsScreen(
     val options = listOf(
        // OptionItem("Backup", Icons.Filled.Settings),
         OptionItem("Share", Icons.Filled.Share),
-        OptionItem("Settings", Icons.Filled.Settings),
+        OptionItem("Category", Icons.Filled.Settings),
         OptionItem("Notifications", Icons.Filled.Notifications),
-//        OptionItem("History", Icons.Filled.Settings),
+        OptionItem("Smart settings", Icons.Filled.Settings),
 //        OptionItem("Help", Icons.Filled.Settings)
     )
 
@@ -75,7 +75,8 @@ fun MoreOptionsScreen(
                             "Share" -> { shareAppLink(navController.context)  }
                             "Settings" -> { navController.navigate(Routes.ManageCategoriesScreen.route) }
                             "Notifications" -> { navController.navigate(Routes.NotificationSettingsScreen.route) }
-                            "History" -> { /* open history */ }
+                            "Smart settings" -> { navController.navigate(Routes.SmartSettings.route)
+                            }
                             "Help" -> { /* open help */ }
                         }
                     })

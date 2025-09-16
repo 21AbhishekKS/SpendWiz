@@ -16,6 +16,7 @@ class PreferencesManager(private val context: Context) {
     companion object {
         val DAILY_NOTIFICATION = booleanPreferencesKey("daily_notification")
         val TRANSACTION_NOTIFICATION = booleanPreferencesKey("transaction_notification")
+        val AUTO_CATEGORIZATION = booleanPreferencesKey("auto_categorization")
     }
 
     val dailyNotificationFlow: Flow<Boolean> =
@@ -50,4 +51,10 @@ class PreferencesManager(private val context: Context) {
     private val DAILY_HOUR_KEY = intPreferencesKey("daily_hour")
     private val DAILY_MINUTE_KEY = intPreferencesKey("daily_minute")
 
+    val autoCategorizationFlow: Flow<Boolean> =
+        context.dataStore.data.map { it[AUTO_CATEGORIZATION] ?: true } // default enabled
+
+    suspend fun setAutoCategorization(enabled: Boolean) {
+        context.dataStore.edit { it[AUTO_CATEGORIZATION] = enabled }
+    }
 }

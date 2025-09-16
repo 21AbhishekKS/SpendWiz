@@ -26,7 +26,7 @@ sealed class Routes( val route : String) {
     }
 
 
-    object OnBoardingScreen : Routes("Board")
+    object SmartSettings : Routes("SmartSettings")
 
 
 }

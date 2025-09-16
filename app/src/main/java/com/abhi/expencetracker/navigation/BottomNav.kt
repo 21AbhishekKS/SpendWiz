@@ -107,6 +107,9 @@ fun BottomNav(
             composable(Routes.ManageCategoriesScreen.route) {
                 ManageCategoriesScreen(categoryViewModel)
             }
+            composable(Routes.SmartSettings.route) {
+                SmartSettings(preferencesManager = PreferencesManager(context))
+            }
         }
     }
 }

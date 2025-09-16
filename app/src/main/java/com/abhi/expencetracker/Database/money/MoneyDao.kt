@@ -101,6 +101,23 @@ interface MoneyDao {
     @Query("SELECT * FROM money WHERE id = :id LIMIT 1")
     fun getTransactionById(id: Int): Money?
 
+    //To check weather the transaction with same amount and description already present
+    @Query("""
+    SELECT * FROM money
+    WHERE description = :name 
+      AND amount = :amount 
+      AND type = :type
+    ORDER BY id DESC 
+    LIMIT :limit
+""")
+    suspend fun findRecentByNameAmountAndType(
+        name: String,
+        amount: Double,
+        type: String,
+        limit: Int
+    ): List<Money>
+
+
 }
 
 

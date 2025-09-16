@@ -12,9 +12,12 @@ import com.abhi.expencetracker.Database.money.Money
 import com.abhi.expencetracker.Database.money.TransactionType
 import com.abhi.expencetracker.MainApplication
 import com.abhi.expencetracker.Notifications.NotificationHelper
+import com.abhi.expencetracker.Notifications.PreferencesManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -93,6 +96,26 @@ class SmsReceiver : BroadcastReceiver() {
                             else -> null
                         } ?: "Unknown"
 
+                        var category: String? = null
+                        var subCategory: String? = null
+
+                        val lastTransactions = dao.findRecentByNameAmountAndType(name, amount, type.name, limit = 3)
+
+                        if (lastTransactions.isNotEmpty()) {
+                            val firstCategory = lastTransactions[0].category
+                            val consistent = lastTransactions.all { it.category.equals(firstCategory, true) }
+
+                            if (consistent && !firstCategory.equals("Other", true)) {
+                                category = firstCategory
+                                subCategory = lastTransactions[0].subCategory
+                                Log.i(TAG, "✅ Auto-assigned category=$category, subCategory=$subCategory (same name+amount+type history)")
+                            } else {
+                                Log.i(TAG, "⚠️ History inconsistent for $name ₹$amount $type → skipping auto-categorization")
+                            }
+                        }
+
+
+
                         // Bank extraction (simple)
                         var bankName: String? = null
                         val words = body.split("\\s+".toRegex())
@@ -120,7 +143,9 @@ class SmsReceiver : BroadcastReceiver() {
                             type = type,
                             date = date,
                             upiRefNo = upiRefNo,
-                            bankName = bankName
+                            bankName = bankName,
+                            category = category ?: "Other",
+                            subCategory = subCategory ?: ""
                         )
 
                         val rowId = dao.addMoney(money)
@@ -128,10 +153,17 @@ class SmsReceiver : BroadcastReceiver() {
                         if (rowId != -1L) {
                             val insertedMoney = money.copy(id = rowId.toInt())
 
-                            // Post notification with delay like before
                             val delayMillis = 6_000L
                             Handler(Looper.getMainLooper()).postDelayed({
-                                NotificationHelper.showTransactionNotification(context.applicationContext, insertedMoney)
+                                if (category != null && !category.equals("Other", true)) {
+                                    NotificationHelper.showCategorizedTransactionNotification(
+                                        context.applicationContext, insertedMoney
+                                    )
+                                } else {
+                                    NotificationHelper.showTransactionNotification(
+                                        context.applicationContext, insertedMoney
+                                    )
+                                }
                             }, delayMillis)
 
                             Log.i(TAG, "Inserted money from SMS: $insertedMoney")
