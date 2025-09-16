@@ -16,6 +16,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.map
 import androidx.lifecycle.viewModelScope
@@ -29,6 +30,7 @@ import com.abhi.expencetracker.Database.money.TransactionType
 import com.abhi.expencetracker.MainActivity
 import com.abhi.expencetracker.Notifications.NotificationHelper
 import com.abhi.expencetracker.R
+import com.abhi.expencetracker.Screens.DayStatus
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -391,6 +393,56 @@ class AddScreenViewModel : ViewModel() {
     //For yearly overview
     fun getYearlyData(year: String): LiveData<List<MoneyDao.MonthlySummary>> {
         return moneyDao.getMonthlyIncomeExpense(year)
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun getDayStatusesForYear(year: Int): LiveData<Map<LocalDate, DayStatus>> {
+        val result = MutableLiveData<Map<LocalDate, DayStatus>>()
+
+        viewModelScope.launch(Dispatchers.IO) {
+            val start = LocalDate.of(year, 1, 1)
+            val end = LocalDate.of(year, 12, 31)
+
+            // Match "dd/MM/yyyy" → need "%/2025" at the end
+            val yearPrefix = "%/$year"
+
+            val rawList = moneyDao.getTransactionsForYear(yearPrefix)
+
+            // Group by LocalDate
+            val transactionsByDate = rawList.groupBy { item ->
+                val parts = item.date.split("/")
+                val d = parts.getOrNull(0)?.toIntOrNull() ?: 1
+                val m = parts.getOrNull(1)?.toIntOrNull() ?: 1
+                val y = parts.getOrNull(2)?.toIntOrNull() ?: year
+                LocalDate.of(y, m, d)
+            }
+
+            val map = mutableMapOf<LocalDate, DayStatus>()
+            var current = start
+            while (!current.isAfter(end)) {
+                val txs = transactionsByDate[current] ?: emptyList()
+
+                val status = when {
+                    txs.isEmpty() -> DayStatus.NoTransaction
+                    txs.all {
+                        it.category != null &&
+                                !it.category.equals("Others", true) &&
+                                it.subCategory != null &&
+                                !it.subCategory.equals("Others", true)
+                    } -> DayStatus.Categorized
+                    else -> DayStatus.NotCategorized
+                }
+
+                map[current] = status
+                current = current.plusDays(1)
+            }
+
+            withContext(Dispatchers.Main) {
+                result.value = map
+            }
+        }
+
+        return result
     }
 
 }

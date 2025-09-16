@@ -135,10 +135,17 @@ interface MoneyDao {
         val totalExpense: Double
     )
 
+    @Query("SELECT id, date, category, subCategory FROM money WHERE date LIKE :yearPrefix")
+    suspend fun getTransactionsForYear(yearPrefix: String): List<MoneyMinimal>
 
 }
 
-
+data class MoneyMinimal(
+    val id: Int,
+    val date: String,       // stored as "dd/MM/yyyy"
+    val category: String?,
+    val subCategory: String?
+)
 
 data class SubCategoryExpense(
     val subCategory: String?,
