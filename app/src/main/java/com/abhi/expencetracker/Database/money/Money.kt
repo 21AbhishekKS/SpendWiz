@@ -9,7 +9,12 @@ import java.util.Locale
 
 @Entity(
     tableName = "money",
-    indices = [Index(value = ["upiRefNo"], unique = true)]
+    indices = [
+        Index(value = ["date"]),
+        Index(value = ["category"]),
+        Index(value = ["subCategory"]),
+        Index(value = ["upiRefNo"], unique = true)
+    ]
 )data class Money(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,

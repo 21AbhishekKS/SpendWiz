@@ -395,54 +395,67 @@ class AddScreenViewModel : ViewModel() {
         return moneyDao.getMonthlyIncomeExpense(year)
     }
 
+    // inside AddScreenViewModel (add imports: kotlinx.coroutines.Dispatchers, kotlinx.coroutines.withContext, androidx.lifecycle.MutableLiveData)
+    private val _dayStatusesLoading = MutableLiveData(false)
+    val dayStatusesLoading: LiveData<Boolean> = _dayStatusesLoading
+
     @RequiresApi(Build.VERSION_CODES.O)
     fun getDayStatusesForYear(year: Int): LiveData<Map<LocalDate, DayStatus>> {
         val result = MutableLiveData<Map<LocalDate, DayStatus>>()
 
-        viewModelScope.launch(Dispatchers.IO) {
-            val start = LocalDate.of(year, 1, 1)
-            val end = LocalDate.of(year, 12, 31)
+        viewModelScope.launch {
+            _dayStatusesLoading.postValue(true)
 
-            // Match "dd/MM/yyyy" → need "%/2025" at the end
-            val yearPrefix = "%/$year"
+            // Do heavy work on Default (CPU-bound)
+            val map = withContext(Dispatchers.Default) {
+                val start = LocalDate.of(year, 1, 1)
+                val end = LocalDate.of(year, 12, 31)
+                val yearPrefix = "%/$year" // matches your DAO query
 
-            val rawList = moneyDao.getTransactionsForYear(yearPrefix)
-
-            // Group by LocalDate
-            val transactionsByDate = rawList.groupBy { item ->
-                val parts = item.date.split("/")
-                val d = parts.getOrNull(0)?.toIntOrNull() ?: 1
-                val m = parts.getOrNull(1)?.toIntOrNull() ?: 1
-                val y = parts.getOrNull(2)?.toIntOrNull() ?: year
-                LocalDate.of(y, m, d)
-            }
-
-            val map = mutableMapOf<LocalDate, DayStatus>()
-            var current = start
-            while (!current.isAfter(end)) {
-                val txs = transactionsByDate[current] ?: emptyList()
-
-                val status = when {
-                    txs.isEmpty() -> DayStatus.NoTransaction
-                    txs.all {
-                        it.category != null &&
-                                !it.category.equals("Others", true) &&
-                                it.subCategory != null &&
-                                !it.subCategory.equals("Others", true)
-                    } -> DayStatus.Categorized
-                    else -> DayStatus.NotCategorized
+                // Query DB on IO
+                val rawList = withContext(Dispatchers.IO) {
+                    moneyDao.getTransactionsForYear(yearPrefix)
                 }
 
-                map[current] = status
-                current = current.plusDays(1)
+                // group by date string -> parse once.
+                val transactionsByDate = rawList.groupBy { item ->
+                    // parse date string "dd/MM/yyyy" safely
+                    val parts = item.date.split("/")
+                    val d = parts.getOrNull(0)?.toIntOrNull() ?: 1
+                    val m = parts.getOrNull(1)?.toIntOrNull() ?: 1
+                    val y = parts.getOrNull(2)?.toIntOrNull() ?: year
+                    LocalDate.of(y, m, d)
+                }
+
+                // Pre-size map for all days
+                val totalDays = java.time.temporal.ChronoUnit.DAYS.between(start, end).toInt() + 1
+                val m = LinkedHashMap<LocalDate, DayStatus>(totalDays)
+
+                var current = start
+                while (!current.isAfter(end)) {
+                    val txs = transactionsByDate[current]
+
+                    val status = when {
+                        txs == null || txs.isEmpty() -> DayStatus.NoTransaction
+                        txs.all {
+                            (it.category != null && !it.category.equals("Others", true))
+                                    && (it.subCategory != null && !it.subCategory.equals("Others", true))
+                        } -> DayStatus.Categorized
+                        else -> DayStatus.NotCategorized
+                    }
+
+                    m[current] = status
+                    current = current.plusDays(1)
+                }
+                m
             }
 
-            withContext(Dispatchers.Main) {
-                result.value = map
-            }
+            result.value = map
+            _dayStatusesLoading.postValue(false)
         }
 
         return result
     }
+
 
 }

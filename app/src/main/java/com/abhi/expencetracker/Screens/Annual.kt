@@ -43,120 +43,134 @@ import java.time.Year
 @Composable
 fun Annual(viewModel: AddScreenViewModel) {
     var selectedYear by remember { mutableStateOf(LocalDate.now().year.toString()) }
+
+    // Data
     val yearlyData by viewModel.getYearlyData(selectedYear).observeAsState(emptyList())
-    val context = LocalContext.current
+    val dayStatuses by viewModel.getDayStatusesForYear(selectedYear.toInt()).observeAsState(emptyMap())
 
-    val months = listOf(
-        "Jan","Feb","Mar","Apr","May","Jun",
-        "Jul","Aug","Sep","Oct","Nov","Dec"
-    )
-
-    // Prepare data
-    val incomeList = MutableList(12) { 0.0 }
-    val expenseList = MutableList(12) { 0.0 }
-    yearlyData.forEach { summary ->
-        val monthIndex = summary.month.toInt() - 1
-        incomeList[monthIndex] = summary.totalIncome
-        expenseList[monthIndex] = summary.totalExpense
+    // Smooth loader for 1 second
+    var isLoading by remember { mutableStateOf(true) }
+    LaunchedEffect(selectedYear) {
+        isLoading = true
+        kotlinx.coroutines.delay(1000) // wait exactly 1 sec
+        isLoading = false
     }
 
-    // Totals for summary
-    val totalIncome = incomeList.sum()
-    val totalExpense = expenseList.sum()
+    val context = LocalContext.current
+    val months = remember {
+        listOf("Jan","Feb","Mar","Apr","May","Jun",
+            "Jul","Aug","Sep","Oct","Nov","Dec")
+    }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(12.dp)
-    ) {
-        // Year selector with DatePickerDialog
-        Text(
-            text = "Year: $selectedYear",
-            modifier = Modifier
-                .clickable {
-                    val currentYear = LocalDate.now().year
-                    val picker = android.app.DatePickerDialog(
-                        context,
-                        { _, year, _, _ -> selectedYear = year.toString() },
-                        selectedYear.toInt(),
-                        0,
-                        1
-                    )
-                    // hide month/day, show only year
-                    picker.datePicker.findViewById<View>(
-                        context.resources.getIdentifier("android:id/day", null, null)
-                    )?.visibility = View.GONE
-                    picker.datePicker.findViewById<View>(
-                        context.resources.getIdentifier("android:id/month", null, null)
-                    )?.visibility = View.GONE
-                    picker.datePicker.minDate = LocalDate.of(2015, 1, 1)
-                        .atStartOfDay(java.time.ZoneId.systemDefault())
-                        .toInstant().toEpochMilli()
-                    picker.datePicker.maxDate = LocalDate.of(currentYear, 12, 31)
-                        .atStartOfDay(java.time.ZoneId.systemDefault())
-                        .toInstant().toEpochMilli()
-                    picker.show()
-                }
-                .padding(8.dp)
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Bar chart fixed at 350.dp
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(350.dp)
-        ) {
-            BarChart(
-                chartParameters = listOf(
-                    BarParameters(
-                        dataName = "Income",
-                        data = incomeList,
-                        barColor = Color(0xFF4CAF50) // green
-                    ),
-                    BarParameters(
-                        dataName = "Expense",
-                        data = expenseList,
-                        barColor = Color(0xFFF44336) // red
-                    )
-                ),
-                gridColor = Color.DarkGray,
-                xAxisData = months,
-                isShowGrid = true,
-                animateChart = true,
-                yAxisRange = 10,
-                barWidth = 14.dp,
-                xAxisStyle = TextStyle(fontSize = 12.sp, fontWeight = FontWeight.W400),
-                yAxisStyle = TextStyle(fontSize = 12.sp, fontWeight = FontWeight.W400),
-                spaceBetweenBars = 0.dp,
-                spaceBetweenGroups = 8.dp,
-            )
+    // Pre-compute lists only after data loads
+    val (incomeList, expenseList) = remember(yearlyData) {
+        val inc = DoubleArray(12) { 0.0 }
+        val exp = DoubleArray(12) { 0.0 }
+        for (summary in yearlyData) {
+            val idx = (summary.month.toIntOrNull() ?: 1) - 1
+            if (idx in 0..11) {
+                inc[idx] = summary.totalIncome
+                exp[idx] = summary.totalExpense
+            }
         }
+        Pair(inc.toList(), exp.toList())
+    }
 
-        // Below the summary row
+    Box(modifier = Modifier.fillMaxSize()) {
+        if (isLoading) {
+            // Loader Screen
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.4f)),
+                contentAlignment = Alignment.Center
+            ) {
+                androidx.compose.material3.CircularProgressIndicator()
+            }
+        } else {
+            // Actual UI
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(12.dp)
+            ) {
+                // Year selector
+                Text(
+                    text = "Year: $selectedYear",
+                    modifier = Modifier
+                        .clickable {
+                            val currentYear = LocalDate.now().year
+                            val picker = android.app.DatePickerDialog(
+                                context,
+                                { _, year, _, _ -> selectedYear = year.toString() },
+                                selectedYear.toInt(),
+                                0,
+                                1
+                            )
+                            picker.datePicker.findViewById<View>(
+                                context.resources.getIdentifier("android:id/day", null, null)
+                            )?.visibility = View.GONE
+                            picker.datePicker.findViewById<View>(
+                                context.resources.getIdentifier("android:id/month", null, null)
+                            )?.visibility = View.GONE
+                            picker.datePicker.minDate = LocalDate.of(2015, 1, 1)
+                                .atStartOfDay(java.time.ZoneId.systemDefault())
+                                .toInstant().toEpochMilli()
+                            picker.datePicker.maxDate = LocalDate.of(currentYear, 12, 31)
+                                .atStartOfDay(java.time.ZoneId.systemDefault())
+                                .toInstant().toEpochMilli()
+                            picker.show()
+                        }
+                        .padding(8.dp)
+                )
 
-        Spacer(modifier = Modifier.height(16.dp))
-        MonthlySummaryTable(
-            months = months,
-            incomeList = incomeList,
-            expenseList = expenseList
-        )
+                Spacer(modifier = Modifier.height(16.dp))
 
-        Spacer(modifier = Modifier.height(16.dp))
+                // Bar chart
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(350.dp)
+                ) {
+                    BarChart(
+                        chartParameters = listOf(
+                            BarParameters("Income", incomeList, Color(0xFF4CAF50)),
+                            BarParameters("Expense", expenseList, Color(0xFFF44336))
+                        ),
+                        gridColor = Color.DarkGray,
+                        xAxisData = months,
+                        isShowGrid = true,
+                        animateChart = true,
+                        yAxisRange = 10,
+                        barWidth = 14.dp,
+                        xAxisStyle = TextStyle(fontSize = 12.sp, fontWeight = FontWeight.W400),
+                        yAxisStyle = TextStyle(fontSize = 12.sp, fontWeight = FontWeight.W400),
+                        spaceBetweenBars = 0.dp,
+                        spaceBetweenGroups = 8.dp,
+                    )
+                }
 
-        val dayStatuses by viewModel.getDayStatusesForYear(selectedYear.toInt())
-            .observeAsState(emptyMap())
+                Spacer(modifier = Modifier.height(16.dp))
 
-        YearlyHeatmapCanvas(
-            year = selectedYear.toInt(),
-            data = dayStatuses,
-            squareSize = 14.dp,
-            spacing = 3.dp,
-            modifier = Modifier.padding(8.dp)
-        )
+                // Summary table
+                MonthlySummaryTable(months, incomeList, expenseList)
 
-    }}
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Heatmap
+                YearlyHeatmapCanvas(
+                    year = selectedYear.toInt(),
+                    data = dayStatuses,
+                    squareSize = 14.dp,
+                    spacing = 3.dp,
+                    modifier = Modifier.padding(8.dp)
+                )
+            }
+        }
+    }
+}
+
+
 
 @Composable
 fun MonthlySummaryTable(
@@ -248,25 +262,43 @@ fun YearlyHeatmapCanvas(
     val squarePx = with(density) { squareSize.toPx() }
     val spacingPx = with(density) { spacing.toPx() }
 
-    // Generate all days of year grouped into weeks
-    val weeks by remember(year) {
-        mutableStateOf(run {
-            val start = LocalDate.of(year, 1, 1)
-            val end = LocalDate.of(year, 12, 31)
-            val allDays = generateSequence(start) { it.plusDays(1) }
-                .takeWhile { !it.isAfter(end) }
-                .toList()
+    // compute weeks once per year (cheap) and remember
+    val weeks: List<List<LocalDate>> = remember(year) {
+        val start = LocalDate.of(year, 1, 1)
+        val end = LocalDate.of(year, 12, 31)
+        val allDays = generateSequence(start) { it.plusDays(1) }.takeWhile { !it.isAfter(end) }.toList()
 
-            // group into weeks (columns)
-            allDays.groupBy {
-                it.get(java.time.temporal.IsoFields.WEEK_OF_WEEK_BASED_YEAR)
-            }.toSortedMap().values.toList()
-        })
+        // group by week-of-year (Int) stable ordering
+        allDays.groupBy { it.get(java.time.temporal.IsoFields.WEEK_OF_WEEK_BASED_YEAR) }
+            .toSortedMap()
+            .values
+            .toList()
+    }
+
+    // Precompute color matrix once per (data, weeks) pair to avoid repeated map lookups in Canvas draw
+    val colorMatrix: List<List<Color>> = remember(data, weeks) {
+        val today = LocalDate.now()
+        weeks.map { week ->
+            // week -> for each DayOfWeek position produce a color
+            DayOfWeek.values().map { dow ->
+                val date = week.find { it.dayOfWeek == dow }
+                val status = when {
+                    date == null -> DayStatus.NoTransaction
+                    date.isAfter(today) -> DayStatus.Future
+                    else -> data[date] ?: DayStatus.NoTransaction
+                }
+                when (status) {
+                    DayStatus.Categorized -> Color(0xFF006400)
+                    DayStatus.NotCategorized -> Color(0xFFD32F2F)
+                    DayStatus.NoTransaction -> Color.LightGray
+                    DayStatus.Future -> Color.LightGray
+                }
+            }
+        }
     }
 
     val columns = weeks.size
-    val rows = DayOfWeek.values().size // 7 days
-
+    val rows = DayOfWeek.values().size
     val widthPx = columns * squarePx + (columns - 1) * spacingPx
     val heightPx = rows * squarePx + (rows - 1) * spacingPx
 
@@ -282,24 +314,10 @@ fun YearlyHeatmapCanvas(
                 .height(with(density) { heightPx.toDp() })
         ) {
             val radius = 2.dp.toPx()
-            val today = LocalDate.now()
 
-            weeks.forEachIndexed { colIndex, weekDays ->
-                DayOfWeek.values().forEachIndexed { rowIndex, dow ->
-                    val date = weekDays.find { it.dayOfWeek == dow }
-                    val status = when {
-                        date == null -> DayStatus.NoTransaction
-                        date.isAfter(today) -> DayStatus.Future
-                        else -> data[date] ?: DayStatus.NoTransaction
-                    }
-
-                    val color = when (status) {
-                        DayStatus.Categorized -> Color(0xFF006400) // Dark Green
-                        DayStatus.NotCategorized -> Color(0xFFD32F2F) // Red
-                        DayStatus.NoTransaction -> Color.LightGray // Light Green
-                        DayStatus.Future -> Color.LightGray
-                    }
-
+            // use indices instead of repeated find/branching
+            colorMatrix.forEachIndexed { colIndex, rowColors ->
+                rowColors.forEachIndexed { rowIndex, color ->
                     val left = colIndex * (squarePx + spacingPx)
                     val top = rowIndex * (squarePx + spacingPx)
                     drawRoundRect(
@@ -313,5 +331,6 @@ fun YearlyHeatmapCanvas(
         }
     }
 }
+
 
 
