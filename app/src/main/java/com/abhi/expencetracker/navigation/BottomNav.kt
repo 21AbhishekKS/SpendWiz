@@ -99,7 +99,7 @@ fun BottomNav(
                 InsightsScreen(moneyViewModel, categoryViewModel, navController1)
             }
             composable(Routes.SpentScreen.route) {
-                TransactionScreen(moneyViewModel)
+                Annual(moneyViewModel)
             }
             composable(Routes.More.route) {
                 MoreOptionsScreen(moneyViewModel, navController1)

@@ -117,6 +117,24 @@ interface MoneyDao {
         limit: Int
     ): List<Money>
 
+    //For yearly graph
+    @Query("""
+    SELECT substr(date, 4, 2) as month,
+           SUM(CASE WHEN type = 'INCOME' THEN amount ELSE 0 END) as totalIncome,
+           SUM(CASE WHEN type = 'EXPENSE' THEN amount ELSE 0 END) as totalExpense
+    FROM money
+    WHERE substr(date, 7, 4) = :year
+    GROUP BY month
+    ORDER BY month
+""")
+    fun getMonthlyIncomeExpense(year: String): LiveData<List<MonthlySummary>>
+
+    data class MonthlySummary(
+        val month: String,        // "01".."12"
+        val totalIncome: Double,
+        val totalExpense: Double
+    )
+
 
 }
 

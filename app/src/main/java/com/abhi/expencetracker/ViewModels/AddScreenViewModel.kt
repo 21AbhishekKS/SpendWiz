@@ -23,6 +23,7 @@ import com.aay.compose.donutChart.model.PieChartData
 import com.abhi.expencetracker.Database.money.CategoryExpense
 import com.abhi.expencetracker.MainApplication
 import com.abhi.expencetracker.Database.money.Money
+import com.abhi.expencetracker.Database.money.MoneyDao
 import com.abhi.expencetracker.Database.money.SubCategoryExpense
 import com.abhi.expencetracker.Database.money.TransactionType
 import com.abhi.expencetracker.MainActivity
@@ -385,6 +386,11 @@ class AddScreenViewModel : ViewModel() {
         ) {
             manager.notify(System.currentTimeMillis().toInt(), notification)
         }
+    }
+
+    //For yearly overview
+    fun getYearlyData(year: String): LiveData<List<MoneyDao.MonthlySummary>> {
+        return moneyDao.getMonthlyIncomeExpense(year)
     }
 
 }
