@@ -494,6 +494,36 @@ class AddScreenViewModel : ViewModel() {
         return result
     }
 
+    // Fetch uncategorized transactions by name for Bulk update feature
+    fun getUncategorizedByNameOnce(name: String, onResult: (List<Money>) -> Unit) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val list = moneyDao.getUncategorizedByNameOnce(name)
+            withContext(Dispatchers.Main) {
+                onResult(list)
+            }
+        }
+    }
+
+    fun getUncategorizedByNameOnceExceptCurrent(
+        name: String,
+        excludeId: Int,
+        onResult: (List<Money>) -> Unit
+    ) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val list = moneyDao.getUncategorizedByNameOnceExceptCurrent(name, excludeId)
+            withContext(Dispatchers.Main) {
+                onResult(list)
+            }
+        }
+    }
+
+    // Bulk update selected transactions
+    fun bulkUpdateCategory(ids: List<Int>, newCategory: String, newSubCategory: String?) {
+        viewModelScope.launch(Dispatchers.IO) {
+            moneyDao.bulkUpdateCategory(ids, newCategory, newSubCategory)
+        }
+    }
+
 }
 // Inside AddScreenViewModel.kt
 data class SubCategoryData(

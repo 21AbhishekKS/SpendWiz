@@ -134,6 +134,31 @@ fun BottomNav(
                 )
             }
 
+            composable(
+                route = "${Routes.BulkUpdateScreen.route}/{description}/{category}/{subCategory}",
+                arguments = listOf(
+                    navArgument("description") { type = NavType.StringType },
+                    navArgument("category") { type = NavType.StringType },
+                    navArgument("subCategory") { type = NavType.StringType }
+                )
+            ) { backStackEntry ->
+                val description = backStackEntry.arguments?.getString("description")?.let {
+                    java.net.URLDecoder.decode(it, java.nio.charset.StandardCharsets.UTF_8.toString())
+                } ?: ""
+                val category = backStackEntry.arguments?.getString("category") ?: "Others"
+                val subCategory = backStackEntry.arguments?.getString("subCategory").takeIf { it?.isNotEmpty() == true }
+
+                BulkUpdateScreen(
+                    viewModel = moneyViewModel, // or pass your AddScreenViewModel
+                    navController = navController1,
+                    description = description,
+                    category = category,
+                    subCategory = subCategory
+                )
+            }
+
+
+
         }
     }
 }

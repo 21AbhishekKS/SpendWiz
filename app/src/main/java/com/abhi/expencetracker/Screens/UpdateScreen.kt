@@ -35,6 +35,7 @@ import java.util.Locale
 import com.abhi.expencetracker.Database.money.CategoryData.*
 import com.abhi.expencetracker.Database.money.Money
 import com.abhi.expencetracker.ViewModels.CategoryViewModel
+import com.abhi.expencetracker.navigation.Routes
 import com.abhi.expencetracker.utils.TimePickerField
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
@@ -65,7 +66,7 @@ fun UpdateScreen(
     val initialTypeEnum = try {
         TransactionType.valueOf(type.uppercase())   // works for "INCOME", "EXPENSE"
     } catch (e: Exception) {
-        TransactionType.EXPENSE                     // fallback
+        TransactionType.EXPENSE
     }
 
     var selectedType by rememberSaveable {
@@ -91,6 +92,12 @@ fun UpdateScreen(
     val dateFormatter = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
     var currentDate by rememberSaveable { mutableStateOf(date.ifEmpty { dateFormatter.format(Date()) }) }
     val calendar = Calendar.getInstance()
+
+    // Dialog state
+    var showBulkDialog by remember { mutableStateOf(false) }
+    var pendingUncategorized by remember { mutableStateOf<List<Money>>(emptyList()) }
+    var finalCategory by remember { mutableStateOf("") }
+    var finalSubCategory by remember { mutableStateOf("") }
 
     // Try parsing the incoming date into the calendar
     LaunchedEffect(Unit) {
@@ -146,37 +153,103 @@ fun UpdateScreen(
             return
         }
 
-        if (amountDouble > 99_99_999) {
-            Toast.makeText(context, "Amount cannot exceed 1 crore", Toast.LENGTH_SHORT).show()
-            return
-        }
         val typeEnum = when (selectedType) {
             "Income" -> TransactionType.INCOME
             "Expense" -> TransactionType.EXPENSE
             else -> TransactionType.TRANSFER
         }
 
-
-        val finalCategory = when {
+        finalCategory = when {
             selectedCategory == "Others" && customCategory.isNotBlank() -> customCategory
             selectedCategory.isNotBlank() -> selectedCategory
             else -> "Others"
         }
+        finalSubCategory = selectedSubCategory.ifBlank { "General" }
 
-        viewModel.updateMoney(
-            id = id,
-            amount = amountDouble,
-            description = description.ifBlank { "No description" },
-            type = typeEnum,
-            category = finalCategory,
-            time = selectedTime,
-            subCategory = selectedSubCategory.ifBlank { "General" },
-            date = currentDate
-        )
+        viewModel.getUncategorizedByNameOnceExceptCurrent(description, id) { list ->
+            viewModel.updateMoney(
+                id = id,
+                amount = amountDouble,
+                description = description.ifBlank { "No description" },
+                type = typeEnum,
+                category = finalCategory,
+                time = selectedTime,
+                subCategory = finalSubCategory,
+                date = currentDate
+            )
 
-        Toast.makeText(context, "Transaction updated!", Toast.LENGTH_SHORT).show()
-        navController.popBackStack()
+            if (list.isNotEmpty()) {
+                pendingUncategorized = list
+                showBulkDialog = true
+            } else {
+                Toast.makeText(context, "Transaction updated!", Toast.LENGTH_SHORT).show()
+                navController.popBackStack()
+            }
+        }
     }
+
+    if (showBulkDialog) {
+        AlertDialog(
+            onDismissRequest = { showBulkDialog = false },
+            title = {
+                Text(
+                    text = "Update Similar Transactions?",
+                    style = MaterialTheme.typography.titleLarge
+                )
+            },
+            text = {
+                Text(
+                    text = buildString {
+                        val count = pendingUncategorized.size
+                        val verb = if (count == 1) "is" else "are"
+                        val plural = if (count == 1) "transaction" else "transactions"
+
+                        append("We found $count other $plural with the same name that $verb not categorized.\n\n")
+                        append("Would you like to update ${if (count == 1) "it" else "them"} as well?")
+                    },
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Justify
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showBulkDialog = false
+                        navController.navigate(
+                            Routes.BulkUpdateScreen.createRoute(
+                                description = description,
+                                category = finalCategory,
+                                subCategory = finalSubCategory
+                            )
+                        )
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF42A5F5), // light blue
+                        contentColor = Color.White
+                    ),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.padding(horizontal = 8.dp)
+                ) {
+                    Text("Yes")
+                }
+            },
+            dismissButton = {
+                OutlinedButton(
+                    onClick = {
+                        showBulkDialog = false
+                        Toast.makeText(context, "Transaction updated!", Toast.LENGTH_SHORT).show()
+                        navController.popBackStack()
+                    },
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.padding(horizontal = 8.dp)
+                ) {
+                    Text("No")
+                }
+            },
+            shape = RoundedCornerShape(16.dp)
+        )
+    }
+
 
     Column(
         modifier = Modifier

@@ -12,7 +12,7 @@ import androidx.room.Update
 interface MoneyDao {
 
     @Query("select * from MONEY order by date asc")
-    fun getAllMoney() : LiveData<List<Money>>
+    fun getAllMoney(): LiveData<List<Money>>
 
     @Delete
     suspend fun deleteMoney(money: Money)
@@ -22,7 +22,7 @@ interface MoneyDao {
 
     //function to get today's transaction
     @Query("SELECT * from money where date = :date")
-    fun getTodayTransactionByDate(date: String) : LiveData<List<Money>>
+    fun getTodayTransactionByDate(date: String): LiveData<List<Money>>
 
     //get today's transaction without live data
     @Query("SELECT * FROM money WHERE date = :date")
@@ -46,14 +46,16 @@ interface MoneyDao {
     suspend fun getMoneyById(id: Int): Money?
 
     //for category donut chart
-    @Query("""
+    @Query(
+        """
     SELECT category, SUM(amount) as total 
     FROM money 
     WHERE type = :transactionType 
       AND substr(date, 4, 2) = :month 
       AND substr(date, 7, 4) = :year
     GROUP BY category
-""")
+"""
+    )
     fun getCategoryExpensesByMonthAndYear(
         month: String,
         year: String,
@@ -61,7 +63,8 @@ interface MoneyDao {
     ): LiveData<List<CategoryExpense>>
 
     //for subcategory donut chart
-    @Query("""
+    @Query(
+        """
     SELECT subCategory, SUM(amount) as total 
     FROM money 
     WHERE type = :transactionType 
@@ -69,7 +72,8 @@ interface MoneyDao {
       AND substr(date, 4, 2) = :month 
       AND substr(date, 7, 4) = :year
     GROUP BY subCategory
-""")
+"""
+    )
     fun getSubCategoryExpensesByMonthAndYear(
         category: String,
         month: String,
@@ -102,14 +106,16 @@ interface MoneyDao {
     fun getTransactionById(id: Int): Money?
 
     //To check weather the transaction with same amount and description already present
-    @Query("""
+    @Query(
+        """
     SELECT * FROM money
     WHERE description = :name 
       AND amount = :amount 
       AND type = :type
     ORDER BY id DESC 
     LIMIT :limit
-""")
+"""
+    )
     suspend fun findRecentByNameAmountAndType(
         name: String,
         amount: Double,
@@ -118,7 +124,8 @@ interface MoneyDao {
     ): List<Money>
 
     //For yearly graph
-    @Query("""
+    @Query(
+        """
     SELECT substr(date, 4, 2) as month,
            SUM(CASE WHEN type = 'INCOME' THEN amount ELSE 0 END) as totalIncome,
            SUM(CASE WHEN type = 'EXPENSE' THEN amount ELSE 0 END) as totalExpense
@@ -126,7 +133,8 @@ interface MoneyDao {
     WHERE substr(date, 7, 4) = :year
     GROUP BY month
     ORDER BY month
-""")
+"""
+    )
     fun getMonthlyIncomeExpense(year: String): LiveData<List<MonthlySummary>>
 
     data class MonthlySummary(
@@ -138,6 +146,16 @@ interface MoneyDao {
     @Query("SELECT id, date, category, subCategory FROM money WHERE date LIKE :yearPrefix")
     suspend fun getTransactionsForYear(yearPrefix: String): List<MoneyMinimal>
 
+    // Get transactions with same name but uncategorized for bulk update feature
+    @Query("SELECT * FROM money WHERE description = :name AND category = 'Others'")
+    suspend fun getUncategorizedByNameOnce(name: String): List<Money>
+
+    @Query("SELECT * FROM money WHERE description = :name AND category = 'Others' AND id != :excludeId")
+    suspend fun getUncategorizedByNameOnceExceptCurrent(name: String, excludeId: Int): List<Money>
+
+    // Bulk update category + subCategory for multiple transactions
+    @Query("UPDATE money SET category = :newCategory, subCategory = :newSubCategory WHERE id IN (:ids)")
+    suspend fun bulkUpdateCategory(ids: List<Int>, newCategory: String, newSubCategory: String?)
 }
 
 data class MoneyMinimal(
