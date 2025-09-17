@@ -99,7 +99,7 @@ fun BottomNav(
                 InsightsScreen(moneyViewModel, categoryViewModel, navController1)
             }
             composable(Routes.SpentScreen.route) {
-                Annual(moneyViewModel)
+                Annual(moneyViewModel , navController1)
             }
             composable(Routes.More.route) {
                 MoreOptionsScreen(moneyViewModel, navController1)
@@ -110,6 +110,30 @@ fun BottomNav(
             composable(Routes.SmartSettings.route) {
                 SmartSettings(preferencesManager = PreferencesManager(context))
             }
+            composable(
+                route = Routes.IncomeDetailsScreen.route,
+                arguments = listOf(navArgument("year") { type = NavType.StringType })
+            ) { backStackEntry ->
+                val year = backStackEntry.arguments?.getString("year") ?: ""
+                YearlyCategoryScreen(
+                    year = year,
+                    type = TransactionType.INCOME,
+                    vm = moneyViewModel
+                )
+            }
+
+            composable(
+                route = Routes.ExpenseDetailsScreen.route,
+                arguments = listOf(navArgument("year") { type = NavType.StringType })
+            ) { backStackEntry ->
+                val year = backStackEntry.arguments?.getString("year") ?: ""
+                YearlyCategoryScreen(
+                    year = year,
+                    type = TransactionType.EXPENSE,
+                    vm = moneyViewModel
+                )
+            }
+
         }
     }
 }

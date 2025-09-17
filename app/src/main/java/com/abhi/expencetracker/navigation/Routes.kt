@@ -25,6 +25,13 @@ sealed class Routes( val route : String) {
         }
     }
 
+    object IncomeDetailsScreen : Routes("incomeDetails/{year}") {
+        fun createRoute(year: String) = "incomeDetails/$year"
+    }
+    object ExpenseDetailsScreen : Routes("expenseDetails/{year}") {
+        fun createRoute(year: String) = "expenseDetails/$year"
+    }
+
 
     object SmartSettings : Routes("SmartSettings")
 

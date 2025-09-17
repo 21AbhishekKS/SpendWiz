@@ -73,7 +73,7 @@ fun MoreOptionsScreen(
                         when (item.title) {
                             "Backup" -> { /* call backup function */ }
                             "Share" -> { shareAppLink(navController.context)  }
-                            "Settings" -> { navController.navigate(Routes.ManageCategoriesScreen.route) }
+                            "Category" -> { navController.navigate(Routes.ManageCategoriesScreen.route) }
                             "Notifications" -> { navController.navigate(Routes.NotificationSettingsScreen.route) }
                             "Smart settings" -> { navController.navigate(Routes.SmartSettings.route)
                             }

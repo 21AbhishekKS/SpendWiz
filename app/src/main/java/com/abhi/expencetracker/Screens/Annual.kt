@@ -46,13 +46,15 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
+import com.abhi.expencetracker.navigation.Routes
 import java.time.DayOfWeek
 import java.time.Year
 import java.util.Locale
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun Annual(viewModel: AddScreenViewModel) {
+fun Annual(viewModel: AddScreenViewModel , navController: NavController) {
     var selectedYear by remember { mutableStateOf(LocalDate.now().year.toString()) }
 
     // Data
@@ -140,6 +142,20 @@ fun Annual(viewModel: AddScreenViewModel) {
 
                 Spacer(modifier = Modifier.height(16.dp))
 
+                val totalIncome = incomeList.sum()
+                val totalExpense = expenseList.sum()
+
+                // Bottom Summary Buttons
+                TotalSummaryButtons(
+                    totalIncome = totalIncome,
+                    totalExpense = totalExpense,
+                    onIncomeClick = {
+                        navController.navigate(Routes.IncomeDetailsScreen.createRoute(selectedYear.toString()))
+                    },
+                    onExpenseClick = {
+                        navController.navigate(Routes.ExpenseDetailsScreen.createRoute(selectedYear.toString()))
+                    }
+                )
                 // Summary table
                 MonthlySummaryTable(months, incomeList, expenseList)
 
@@ -436,6 +452,58 @@ fun YearSelector(
         )
     }
 }
+
+@Composable
+fun TotalSummaryButtons(
+    totalIncome: Double,
+    totalExpense: Double,
+    onIncomeClick: () -> Unit,
+    onExpenseClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        horizontalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        // Income Button (Green)
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .height(40.dp)
+                .background(Color(0xFF4CAF50), RoundedCornerShape(10.dp))
+                .border(1.dp, Color(0xFF2E7D32), RoundedCornerShape(10.dp))
+                .clickable { onIncomeClick() },   // ✅ Navigate on click
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = "Earned: ₹${"%.0f".format(totalIncome)}",
+                color = Color.White,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold
+            )
+        }
+
+        // Expense Button (Red)
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .height(40.dp)
+                .background(Color(0xFFF44336), RoundedCornerShape(10.dp))
+                .border(1.dp, Color(0xFFD32F2F), RoundedCornerShape(10.dp))
+                .clickable { onExpenseClick() },   // ✅ Navigate on click
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = "Spent: ₹${"%.0f".format(totalExpense)}",
+                color = Color.White,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold
+            )
+        }
+    }
+}
+
 
 
 

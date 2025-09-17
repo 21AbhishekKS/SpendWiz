@@ -457,5 +457,52 @@ class AddScreenViewModel : ViewModel() {
         return result
     }
 
+    // For yearly income and expense screen form Annual screen
+    fun getYearlyCategoryData(year: String, type: TransactionType): LiveData<List<CategoryData>> {
+        val result = MutableLiveData<List<CategoryData>>()
+
+        viewModelScope.launch(Dispatchers.IO) {
+            val yearPrefix = "%/$year" // matches dd/MM/yyyy format
+            val transactions = moneyDao.getTransactionsForYear(yearPrefix)
+
+            val filtered = transactions.filter { money ->
+                // check type
+                val full = moneyDao.getMoneyById(money.id)
+                full?.type == type
+            }
+
+            val grouped = filtered.groupBy { it.category ?: "Others" }.map { (category, list) ->
+                val subGrouped = list.groupBy { it.subCategory ?: "Others" }.map { (sub, subList) ->
+                    SubCategoryData(
+                        name = sub,
+                        amount = subList.sumOf { full ->
+                            moneyDao.getMoneyById(full.id)?.amount ?: 0.0
+                        }
+                    )
+                }
+
+                CategoryData(
+                    name = category,
+                    total = subGrouped.sumOf { it.amount },
+                    subCategories = subGrouped
+                )
+            }
+
+            result.postValue(grouped)
+        }
+
+        return result
+    }
 
 }
+// Inside AddScreenViewModel.kt
+data class SubCategoryData(
+    val name: String,
+    val amount: Double
+)
+
+data class CategoryData(
+    val name: String,
+    val total: Double,
+    val subCategories: List<SubCategoryData>
+)
