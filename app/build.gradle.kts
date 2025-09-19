@@ -5,15 +5,15 @@ plugins {
 }
 
 android {
-    namespace = "com.abhi.expencetracker"
+    namespace = "com.spendwiz.app"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.abhi.expencetracker"
+        applicationId = "com.spendwiz.app"
         minSdk = 23
         targetSdk = 35
-        versionCode = 14
-        versionName = "1.5.94"
+        versionCode = 1
+        versionName = "1.0.0"
 
 
 
