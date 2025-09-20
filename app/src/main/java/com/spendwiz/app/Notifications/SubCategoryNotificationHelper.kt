@@ -1,8 +1,11 @@
 package com.spendwiz.app.Notifications
 
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.RemoteInput
@@ -17,6 +20,23 @@ object SubCategoryNotificationHelper {
 
     private const val KEY_SUBCATEGORY_REPLY = "transaction_subcategory"
     private const val PAGE_SIZE = 3
+    private const val CHANNEL_ID = "transaction_channel"
+
+    // ✅ Ensure proper channel with IMPORTANCE_HIGH
+    private fun createChannel(context: Context) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                CHANNEL_ID,
+                "Transactions",
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = "Transaction notifications"
+            }
+            val manager =
+                context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            manager.createNotificationChannel(channel)
+        }
+    }
 
     fun showSubCategoryNotification(
         context: Context,
@@ -24,12 +44,13 @@ object SubCategoryNotificationHelper {
         chosenCategory: String,
         page: Int = 0
     ) {
+        createChannel(context)
+
         val database = MoneyDatabase.getDatabase(context)
         val categoryDao = database.getCategoryDao()
 
-        // Fetch subcategories from DB synchronously
+        // Fetch subcategories synchronously
         val subCategories: List<String> = runBlocking {
-            // Get categoryId first
             val category = categoryDao.getCategoriesByTypeOnce(
                 when (money.type) {
                     TransactionType.INCOME -> "Income"
@@ -38,7 +59,6 @@ object SubCategoryNotificationHelper {
                 }
             ).firstOrNull { it.name == chosenCategory }
 
-            // Fetch subcategories using categoryId
             if (category != null) {
                 categoryDao.getSubCategories(category.id).first().map { it.name }
             } else {
@@ -52,8 +72,15 @@ object SubCategoryNotificationHelper {
 
         val remoteInput = RemoteInput.Builder(KEY_SUBCATEGORY_REPLY)
             .setLabel("Choose subcategory")
-            .setChoices(currentPageSubCategories.toTypedArray())
+            .setChoices(currentPageSubCategories.toTypedArray()) // some OEMs ignore choices
             .build()
+
+        // ✅ Correct PendingIntent flags
+        val replyFlags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
+        } else {
+            PendingIntent.FLAG_UPDATE_CURRENT
+        }
 
         val replyIntent = Intent(context, SubCategoryReceiver::class.java).apply {
             putExtra("transaction_id", money.id)
@@ -64,16 +91,20 @@ object SubCategoryNotificationHelper {
             context,
             money.id + 5000,
             replyIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
+            replyFlags
         )
 
+        // ✅ Add setAllowGeneratedReplies(true)
         val selectAction = NotificationCompat.Action.Builder(
             R.drawable.notification_icon,
-            "",
+            "Select Subcategory",
             replyPendingIntent
-        ).addRemoteInput(remoteInput).build()
+        )
+            .addRemoteInput(remoteInput)
+            .setAllowGeneratedReplies(true)
+            .build()
 
-        val builder = NotificationCompat.Builder(context, "transaction_channel")
+        val builder = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.notification_icon)
             .setContentTitle("Select Subcategory")
             .setContentText("Category: $chosenCategory")
@@ -95,7 +126,7 @@ object SubCategoryNotificationHelper {
                 context,
                 money.id + 6000 + page,
                 moreIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
+                replyFlags
             )
             builder.addAction(R.drawable.notification_icon, "Show More", morePendingIntent)
 
@@ -110,7 +141,7 @@ object SubCategoryNotificationHelper {
                 context,
                 money.id + 7000,
                 restartIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
+                replyFlags
             )
             builder.addAction(R.drawable.notification_icon, "Start Over", restartPendingIntent)
         }

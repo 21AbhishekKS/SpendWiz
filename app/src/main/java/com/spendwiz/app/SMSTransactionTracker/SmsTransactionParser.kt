@@ -47,17 +47,27 @@ object SmsTransactionParser {
         }
 
         // Name
-        val name = when (type) {
+        // Name
+        val rawName = when (type) {
             TransactionType.EXPENSE ->
-                Regex("""to\s+([A-Z0-9.&\-\s]+?)(?=,|\s+(?:on|for|at|via|UPI)|$)""", RegexOption.IGNORE_CASE)
-                    .find(body)?.groups?.get(1)?.value?.trim() ?: "Enter name manually"
+                Regex("""to\s+([A-Z0-9.&\-\s]+?)(?=,|\s+(?:on|for|at|via|UPI|XXXX)|$)""", RegexOption.IGNORE_CASE)
+                    .find(body)?.groups?.get(1)?.value?.trim()
 
             TransactionType.INCOME ->
-                Regex("""from\s+([A-Z0-9.&\-\s]+?)(?=,|\s+(?:on|for|at|via|UPI)|$)""", RegexOption.IGNORE_CASE)
-                    .find(body)?.groups?.get(1)?.value?.trim() ?: "Enter name manually"
+                Regex("""from\s+([A-Z0-9.&\-\s]+?)(?=,|\s+(?:on|for|at|via|UPI|XXXX)|$)""", RegexOption.IGNORE_CASE)
+                    .find(body)?.groups?.get(1)?.value?.trim()
 
-            else -> "Enter name manually"
+            else -> null
         }
+
+        // Filter out useless names like "your account XXXXX61406"
+        val name = if (rawName.isNullOrBlank() ||
+            rawName.contains("your account", true) ||
+            rawName.contains("XXXX", true)
+        ) {
+            "Enter name manually"
+        } else rawName
+
 
         // Bank
         val bankName = body.split("\\s+".toRegex()).let { words ->
