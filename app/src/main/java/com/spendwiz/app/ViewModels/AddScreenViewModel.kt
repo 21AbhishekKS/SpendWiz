@@ -28,6 +28,7 @@ import com.spendwiz.app.Database.money.TransactionType
 import com.spendwiz.app.MainActivity
 import com.spendwiz.app.Notifications.NotificationHelper
 import com.spendwiz.app.R
+import com.spendwiz.app.SMSTransactionTracker.SmsTransactionParser
 import com.spendwiz.app.Screens.DayStatus
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -143,115 +144,30 @@ class AddScreenViewModel : ViewModel() {
     suspend fun insertTransactionsFromSms(context: Context): Int {
         if (ActivityCompat.checkSelfPermission(context, android.Manifest.permission.READ_SMS)
             != PackageManager.PERMISSION_GRANTED
-        ) {
-            Log.e("SMS_IMPORT", "❌ READ_SMS permission not granted!")
-            return 0
-        }
+        ) return 0
 
         var insertedCount = 0
-
-        val uri = Uri.parse("content://sms/inbox")
-
         val cursor = context.contentResolver.query(
-            uri, null, null, null, "date DESC"
+            Uri.parse("content://sms/inbox"), null, null, null, "date DESC"
         )
 
         cursor?.use {
-            Log.d("SMS_IMPORT", "📩 Found ${cursor.count} SMS in inbox")
+            val bodyIdx = it.getColumnIndex(Telephony.Sms.BODY)
+            val dateIdx = it.getColumnIndex(Telephony.Sms.DATE)
 
-            val bodyIndex = cursor.getColumnIndex(Telephony.Sms.BODY)
-            val dateIndex = cursor.getColumnIndex(Telephony.Sms.DATE)
+            while (it.moveToNext()) {
+                val body = it.getString(bodyIdx)
+                val ts = it.getLong(dateIdx)
+                val parsed = SmsTransactionParser.parse(body, ts) ?: continue
 
-            while (cursor.moveToNext()) {
-                val body = cursor.getString(bodyIndex)
-                val timestamp = cursor.getLong(dateIndex)
+                // use fallback for duplicate check
+                val upiRefForCheck = parsed.money.upiRefNo ?: "AUTO_${ts}_${parsed.money.amount.toInt()}"
+                if (moneyDao.existsByUpiRefNo(upiRefForCheck) > 0) continue
 
-                if (body.contains("debited", true) || body.contains("credited", true) || body.contains("UPI", true)) {
-                    val amountRegex = Regex("""(?:INR|Rs\.?)\s?([\d,]+\.?\d{0,2})""", RegexOption.IGNORE_CASE)
-                    val match = amountRegex.find(body)
-                    val amountStr = match?.groups?.get(1)?.value?.replace(",", "") ?: continue
-                    val amount = amountStr.toDoubleOrNull() ?: continue
-
-                    val upiRefRegex = Regex("""(?:UPI:?|UPI Ref no)\s*[:#]?\s*(\d{6,})""", RegexOption.IGNORE_CASE)
-                    val upiMatch = upiRefRegex.find(body)
-                    val upiRefNo = upiMatch?.groups?.get(1)?.value ?: continue
-
-                    // Check if UPI Ref No already exists
-                    val exists = moneyDao.existsByUpiRefNo(upiRefNo)
-                    if (exists > 0) continue  // Duplicate, skip
-
-                    val type = when {
-                        body.contains("debited", true) -> TransactionType.EXPENSE
-                        body.contains("credited", true) -> TransactionType.INCOME
-                        else -> continue
-                    }
-
-                    val name = when (type) {
-                        TransactionType.EXPENSE -> {
-                            val regex = Regex("""trf to ([A-Z\s]+)""", RegexOption.IGNORE_CASE)
-                            regex.find(body)?.groups?.get(1)?.value?.trim()
-                        }
-                        TransactionType.INCOME -> {
-                            val regex = Regex("""from ([A-Z\s]+)""", RegexOption.IGNORE_CASE)
-                            regex.find(body)?.groups?.get(1)?.value?.trim()
-                        }
-                        TransactionType.TRANSFER -> {
-                            val regex = Regex("""transfer (?:to|from) ([A-Z\s]+)""", RegexOption.IGNORE_CASE)
-                            regex.find(body)?.groups?.get(1)?.value?.trim()
-                        }
-                    } ?: "Unknown"
-
-
-                    val date = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
-                        .format(Date(timestamp))
-
-                    // ---------------- BANK NAME EXTRACTION ----------------
-                    var bankName: String? = null
-                    val words = body.split(" ", "\n", "\t")
-
-                    for (i in words.indices) {
-                        val word = words[i]
-
-                        // Case 1: word is exactly "bank" → take previous word + " Bank"
-                        if (word.equals("bank", ignoreCase = true) && i > 0) {
-                            bankName = words[i - 1].replace("[^A-Za-z]".toRegex(), "") + " Bank"
-                            break
-                        }
-
-                        // Case 2: word ends with "bank"
-                        if (word.lowercase().endsWith("bank")) {
-                            bankName = word.replace("[^A-Za-z]".toRegex(), "")
-                                .replaceFirstChar { it.uppercase() }
-                            break
-                        }
-                    }
-
-                    // Fallback if not found
-                    if (bankName.isNullOrBlank()) bankName = "Unknown Bank"
-
-                    // ------------------------------------------------------
-                    // Format timestamp into time (HH:mm:ss)
-                    val time = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
-                        .format(Date(timestamp))
-
-                    val money = Money(
-                        id = 0,
-                        amount = amount,
-                        description = name,
-                        type = type,
-                        date = date,         // still your formatted "dd/MM/yyyy"
-                        time = time,         // <-- pass SMS time instead of default current time
-                        upiRefNo = upiRefNo,
-                        bankName = bankName
-                    )
-
-
-                    moneyDao.addMoney(money)
-                    insertedCount++
-                }
+                moneyDao.addMoney(parsed.money)
+                insertedCount++
             }
         }
-
         return insertedCount
     }
 
@@ -276,8 +192,6 @@ class AddScreenViewModel : ViewModel() {
             Log.i("SMS_IMPORT", "ℹ️ SMS import already done once, skipping")
         }
     }
-
-
 
     fun getCategoryExpensesForMonth(month: String, year: String): LiveData<List<PieChartData>> {
         return moneyDao.getCategoryExpensesByMonthAndYear(month, year).map { categoryList ->
