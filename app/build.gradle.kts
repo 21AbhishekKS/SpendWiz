@@ -106,6 +106,8 @@ dependencies {
     //work manager for daily notifcaion
     implementation ("androidx.work:work-runtime-ktx:2.9.0")
 
+    //material for dark theme
+    implementation("com.google.android.material:material:1.11.0")
 
 }
 

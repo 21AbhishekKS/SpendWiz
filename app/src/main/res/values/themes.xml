@@ -2,12 +2,12 @@
 <resources>
 
     <style name="Theme.MySplashScreen" parent="Theme.SplashScreen">
-        <item name="windowSplashScreenBackground">@color/white</item>
+        <item name="windowSplashScreenBackground">@color/splash_background</item>
         <item name="windowSplashScreenAnimatedIcon">@drawable/splash</item>
         <item name="postSplashScreenTheme">@style/Theme.ExpenceTracker</item>
     </style>
 
-    <style name="Theme.ExpenceTracker" parent="android:Theme.Material.Light.NoActionBar" />
+    <style name="Theme.ExpenceTracker" parent="Theme.Material3.DayNight.NoActionBar" />
 
 
 

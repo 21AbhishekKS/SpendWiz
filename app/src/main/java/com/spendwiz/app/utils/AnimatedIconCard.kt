@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -30,13 +31,13 @@ fun AnimatedIconCard(){
         .fillMaxWidth()
         .wrapContentHeight()
         .clip(RoundedCornerShape(16.dp))
-        .border(1.dp ,color = Color.Black , shape = RoundedCornerShape(16.dp))
+        .border(1.dp ,color = MaterialTheme.colorScheme.onBackground , shape = RoundedCornerShape(16.dp))
         .padding(start = 15.dp)
         , horizontalArrangement = Arrangement.SpaceBetween
         , verticalAlignment = Alignment.CenterVertically
 ){
 
-        Text(text = "Ready to Manage \n Your Money!" , color = Color.DarkGray)
+        Text(text = "Ready to Manage \n Your Money!" , color = MaterialTheme.colorScheme.onBackground)
 
         LoaderIntro(modifier = Modifier
             .fillMaxWidth()

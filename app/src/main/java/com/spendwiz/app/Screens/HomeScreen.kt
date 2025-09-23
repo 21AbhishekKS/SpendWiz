@@ -63,11 +63,10 @@ fun HomeScreen(
         }
     }
 
-
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White),
+            .background(MaterialTheme.colorScheme.background),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         CardItemHome(
@@ -81,12 +80,12 @@ fun HomeScreen(
             text = "Today's Transactions",
             style = MaterialTheme.typography.bodyLarge,
             fontWeight = FontWeight.Bold,
-            color = Color.DarkGray
+            color = MaterialTheme.colorScheme.onBackground
         )
         Text(
             text = "Need to update a transaction? Just click on it!",
             style = MaterialTheme.typography.bodySmall,
-            color = Color.DarkGray
+            color = MaterialTheme.colorScheme.onBackground
         )
 
         TransactionList(
@@ -104,7 +103,7 @@ fun CardItemHome(
     modifier: Modifier = Modifier
 ) {
     Column(
-        modifier = Modifier
+        modifier = modifier
             .padding(15.dp)
             .fillMaxWidth()
             .wrapContentHeight()
@@ -118,11 +117,11 @@ fun CardItemHome(
             .padding(15.dp),
         verticalArrangement = Arrangement.SpaceEvenly
     ) {
-        Column(modifier = Modifier) {
+        Column {
             Text(
                 text = "Today's Financial Snapshot",
                 style = MaterialTheme.typography.headlineMedium,
-                color = Color.White
+                color = Color.White // stays white because gradient is dark
             )
             Row(
                 horizontalArrangement = Arrangement.SpaceBetween,

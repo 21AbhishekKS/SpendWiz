@@ -10,12 +10,13 @@ import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
+import androidx.compose.ui.graphics.Color
 
+// keep your Purple80 / PurpleGrey80 / Pink80 / Purple40 / PurpleGrey40 / Pink40 definitions in Color.kt
 private val DarkColorScheme = darkColorScheme(
     primary = Purple80,
     secondary = PurpleGrey80,
@@ -31,7 +32,7 @@ private val LightColorScheme = lightColorScheme(
 @Composable
 fun ExpenceTrackerTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = true,
+    dynamicColor: Boolean = true, // Android 12+ dynamic color if available
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {
@@ -47,18 +48,20 @@ fun ExpenceTrackerTheme(
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
-            // Allow edge-to-edge content
+
+            // If you want *edge-to-edge* layouts (draw behind system bars)
+            // keep this false and use systemBarsPadding() / WindowInsets as needed in your screens.
             WindowCompat.setDecorFitsSystemWindows(window, false)
 
-            // Transparent status bar
-            window.statusBarColor = Color.Transparent.toArgb()
+            // Set system bar colors to match the Material colorScheme.
+            // Using colorScheme.background keeps status/navigation bars consistent with the theme.
+            window.statusBarColor = colorScheme.background.toArgb()
+            window.navigationBarColor = colorScheme.background.toArgb()
 
-            // Transparent navigation bar
-            window.navigationBarColor = Color.Transparent.toArgb()
-
+            // Configure light/dark icons on system bars depending on the current theme.
             val insetsController = WindowCompat.getInsetsController(window, view)
-            insetsController.isAppearanceLightStatusBars = !darkTheme
-            insetsController.isAppearanceLightNavigationBars = !darkTheme
+            insetsController?.isAppearanceLightStatusBars = !darkTheme
+            insetsController?.isAppearanceLightNavigationBars = !darkTheme
         }
     }
 

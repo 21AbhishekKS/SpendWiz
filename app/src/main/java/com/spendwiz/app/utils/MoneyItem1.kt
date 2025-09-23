@@ -1,15 +1,16 @@
 package com.spendwiz.app.utils
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Card
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -20,6 +21,7 @@ import com.spendwiz.app.Database.money.TransactionType
 import java.text.SimpleDateFormat
 import java.util.Locale
 import com.spendwiz.app.R
+
 fun formatTimeTo12Hr(time24: String): String {
     val possibleFormats = listOf("HH:mm:ss", "HH:mm")
     for (pattern in possibleFormats) {
@@ -37,21 +39,19 @@ fun formatTimeTo12Hr(time24: String): String {
     return time24 // fallback if nothing works
 }
 
-
 @Composable
 fun MoneyItem1(
     item: Money,
     onClick: () -> Unit
 ) {
     Card(
-        Modifier
+        modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 6.dp, vertical = 4.dp)
             .clickable { onClick() }
     ) {
         Row(
-            Modifier
-                .background(Color.White)
+            modifier = Modifier
                 .padding(8.dp)
                 .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
@@ -80,7 +80,7 @@ fun MoneyItem1(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     fontSize = 14.sp,
-                    color = Color.Black
+                    color = MaterialTheme.colorScheme.onSurface
                 )
 
                 // Bank name + Date
@@ -91,7 +91,7 @@ fun MoneyItem1(
                     Text(
                         text = item.date,
                         fontSize = 12.sp,
-                        color = Color.DarkGray,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -99,7 +99,7 @@ fun MoneyItem1(
                     Text(
                         text = if (item.bankName != null) "(${item.bankName})" else "(Cash Payment)",
                         fontSize = 12.sp,
-                        color = Color.DarkGray,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -112,7 +112,7 @@ fun MoneyItem1(
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         fontSize = 12.sp,
-                        color = Color.DarkGray
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -129,17 +129,17 @@ fun MoneyItem1(
                         else -> "${item.amount}"
                     },
                     color = when (item.type) {
-                        TransactionType.INCOME -> Color(0xFF4CAF50)
-                        TransactionType.EXPENSE -> Color(0xFFF44336)
-                        else -> Color(0xFF3F51B5)
+                        TransactionType.INCOME -> colorResource(id = R.color.income) // Green
+                        TransactionType.EXPENSE -> colorResource(id = R.color.expense) // Red
+                        else -> colorResource(id = R.color.transfer) // Blue
                     },
                     fontSize = 14.sp,
                     textAlign = TextAlign.End
                 )
 
                 Text(
-                    text = formatTimeTo12Hr(item.time), // 🔹 formatted here
-                    color = Color.Black,
+                    text = formatTimeTo12Hr(item.time),
+                    color = MaterialTheme.colorScheme.onSurface,
                     fontSize = 12.sp,
                     textAlign = TextAlign.End
                 )
