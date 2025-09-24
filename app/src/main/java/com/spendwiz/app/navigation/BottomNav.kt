@@ -209,7 +209,12 @@ fun MyBottomBar(navController1: NavHostController) {
                     shape = RectangleShape
                 )
         ) {
-            items.forEach { item ->
+            items.forEachIndexed { index, item ->
+                // Insert spacer in the center (before the middle item)
+                if (index == items.size / 2) {
+                    Spacer(modifier = Modifier.weight(1f)) // leave space for FAB
+                }
+
                 val selected = item.title == backStackEntry?.destination?.route
                 NavigationBarItem(
                     colors = NavigationBarItemDefaults.colors(
@@ -269,5 +274,6 @@ fun MyBottomBar(navController1: NavHostController) {
             }
         }
     }
+
 }
 
