@@ -2,23 +2,14 @@ package com.spendwiz.app.Screens
 
 import android.os.Build
 import androidx.annotation.RequiresApi
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.Text
-import androidx.compose.runtime.*
-import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
-import com.aay.compose.barChart.BarChart
-import com.aay.compose.barChart.model.BarParameters
-import com.spendwiz.app.ViewModels.AddScreenViewModel
-import java.time.LocalDate
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -26,27 +17,45 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.KeyboardArrowLeft
 import androidx.compose.material.icons.rounded.KeyboardArrowRight
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.aay.compose.barChart.BarChart
+import com.aay.compose.barChart.model.BarParameters
+import com.spendwiz.app.ViewModels.AddScreenViewModel
 import com.spendwiz.app.navigation.Routes
 import java.time.DayOfWeek
-import java.util.Locale
+import java.time.LocalDate
+import java.time.format.TextStyle as JTextStyle // Alias to avoid conflict
+import java.util.*
+
+// --- Theme-Aware Colors ---
+val incomeColor = Color(0xFF4CAF50)
+val expenseColor = Color(0xFFF44336)
+val incomeColorSubtle = Color(0xFF388E3C)
+val expenseColorSubtle = Color(0xFFD32F2F)
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun Annual(viewModel: AddScreenViewModel , navController: NavController) {
+fun Annual(viewModel: AddScreenViewModel, navController: NavController) {
     var selectedYear by remember { mutableStateOf(LocalDate.now().year.toString()) }
 
     // Data
@@ -61,10 +70,8 @@ fun Annual(viewModel: AddScreenViewModel , navController: NavController) {
         isLoading = false
     }
 
-    val context = LocalContext.current
     val months = remember {
-        listOf("Jan","Feb","Mar","Apr","May","Jun",
-            "Jul","Aug","Sep","Oct","Nov","Dec")
+        listOf("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
     }
 
     // Pre-compute lists only after data loads
@@ -90,7 +97,7 @@ fun Annual(viewModel: AddScreenViewModel , navController: NavController) {
                     .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.4f)),
                 contentAlignment = Alignment.Center
             ) {
-                androidx.compose.material3.CircularProgressIndicator()
+                CircularProgressIndicator()
             }
         } else {
             // Actual UI
@@ -103,7 +110,7 @@ fun Annual(viewModel: AddScreenViewModel , navController: NavController) {
                 // Year selector
                 YearSelector(
                     year = selectedYear.toInt(),
-                    onMonthChange = { newMonthIndex, newYear ->
+                    onMonthChange = { _, newYear ->
                         selectedYear = newYear.toString()
                     }
                 )
@@ -116,17 +123,25 @@ fun Annual(viewModel: AddScreenViewModel , navController: NavController) {
                 ) {
                     BarChart(
                         chartParameters = listOf(
-                            BarParameters("Income", incomeList, Color(0xFF4CAF50)),
-                            BarParameters("Expense", expenseList, Color(0xFFF44336))
+                            BarParameters("Income", incomeList, incomeColor),
+                            BarParameters("Expense", expenseList, expenseColor)
                         ),
-                        gridColor = Color.DarkGray,
+                        gridColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
                         xAxisData = months,
                         isShowGrid = true,
                         animateChart = true,
                         yAxisRange = 10,
                         barWidth = 14.dp,
-                        xAxisStyle = TextStyle(fontSize = 12.sp, fontWeight = FontWeight.W400),
-                        yAxisStyle = TextStyle(fontSize = 12.sp, fontWeight = FontWeight.W400),
+                        xAxisStyle = TextStyle(
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.W400,
+                            color = MaterialTheme.colorScheme.onSurface
+                        ),
+                        yAxisStyle = TextStyle(
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.W400,
+                            color = MaterialTheme.colorScheme.onSurface
+                        ),
                         spaceBetweenBars = 0.dp,
                         spaceBetweenGroups = 8.dp,
                     )
@@ -142,10 +157,10 @@ fun Annual(viewModel: AddScreenViewModel , navController: NavController) {
                     totalIncome = totalIncome,
                     totalExpense = totalExpense,
                     onIncomeClick = {
-                        navController.navigate(Routes.IncomeDetailsScreen.createRoute(selectedYear.toString()))
+                        navController.navigate(Routes.IncomeDetailsScreen.createRoute(selectedYear))
                     },
                     onExpenseClick = {
-                        navController.navigate(Routes.ExpenseDetailsScreen.createRoute(selectedYear.toString()))
+                        navController.navigate(Routes.ExpenseDetailsScreen.createRoute(selectedYear))
                     }
                 )
                 // Summary table
@@ -180,16 +195,16 @@ fun MonthlySummaryTable(
         // Fixed left column
         Column(
             modifier = Modifier
-                .background(Color(0xFFFAFAFA), RoundedCornerShape(16.dp))
-                .border(BorderStroke(1.dp, Color(0xFFE0E0E0)), RoundedCornerShape(16.dp))
+                .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(16.dp))
+                .border(BorderStroke(1.dp, MaterialTheme.colorScheme.outline), RoundedCornerShape(16.dp))
                 .width(100.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            TableCell("Month", Color.Black, isHeader = true)
-            Divider(color = Color(0xFFE0E0E0), thickness = 1.dp)
-            TableCell("Income", Color(0xFF388E3C), isHeader = true)
-            Divider(color = Color(0xFFE0E0E0), thickness = 1.dp)
-            TableCell("Expense", Color(0xFFD32F2F), isHeader = true)
+            TableCell("Month", MaterialTheme.colorScheme.onSurfaceVariant, isHeader = true)
+            Divider(color = MaterialTheme.colorScheme.outline, thickness = 1.dp)
+            TableCell("Income", incomeColorSubtle, isHeader = true)
+            Divider(color = MaterialTheme.colorScheme.outline, thickness = 1.dp)
+            TableCell("Expense", expenseColorSubtle, isHeader = true)
         }
 
         Spacer(modifier = Modifier.width(12.dp))
@@ -202,23 +217,22 @@ fun MonthlySummaryTable(
             items(months.size) { index ->
                 Column(
                     modifier = Modifier
-                        .background(Color.White, RoundedCornerShape(16.dp))
-                        .border(BorderStroke(1.dp, Color(0xFFE0E0E0)), RoundedCornerShape(16.dp))
+                        .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(16.dp))
+                        .border(BorderStroke(1.dp, MaterialTheme.colorScheme.outline), RoundedCornerShape(16.dp))
                         .width(90.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    TableCell(months[index], Color(0xFF455A64), isHeader = true)
-                    Divider(color = Color(0xFFE0E0E0), thickness = 1.dp)
-                    TableCell("₹${"%.0f".format(incomeList[index])}", Color(0xFF388E3C))
-                    Divider(color = Color(0xFFE0E0E0), thickness = 1.dp)
-                    TableCell("₹${"%.0f".format(expenseList[index])}", Color(0xFFD32F2F))
+                    TableCell(months[index], MaterialTheme.colorScheme.onSurface, isHeader = true)
+                    Divider(color = MaterialTheme.colorScheme.outline, thickness = 1.dp)
+                    TableCell("₹${"%.0f".format(incomeList[index])}", incomeColorSubtle)
+                    Divider(color = MaterialTheme.colorScheme.outline, thickness = 1.dp)
+                    TableCell("₹${"%.0f".format(expenseList[index])}", expenseColorSubtle)
                 }
                 Spacer(modifier = Modifier.width(12.dp))
             }
         }
     }
 }
-
 
 @Composable
 fun TableCell(
@@ -234,7 +248,7 @@ fun TableCell(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 12.dp),
-        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+        textAlign = TextAlign.Center
     )
 }
 
@@ -255,6 +269,12 @@ fun YearlyHeatmapCanvas(
     val squarePx = with(density) { squareSize.toPx() }
     val spacingPx = with(density) { spacing.toPx() }
 
+    // --- THEME-AWARE COLOR SWAP ---
+    val isDarkTheme = isSystemInDarkTheme()
+    val categorizedColor = if (isDarkTheme) Color(0xFF81C784) else Color(0xFF145418) // LightGreen in Dark, DarkGreen in Light
+    val notCategorizedColor = if (isDarkTheme) Color(0xFF145418) else Color(0xFF81C784) // DarkGreen in Dark, LightGreen in Light
+    val noTransactionColor = MaterialTheme.colorScheme.surfaceVariant
+
     val weeks: List<List<LocalDate>> = remember(year) {
         val start = LocalDate.of(year, 1, 1)
         val end = LocalDate.of(year, 12, 31)
@@ -266,7 +286,7 @@ fun YearlyHeatmapCanvas(
             .values.toList()
     }
 
-    val colorMatrix: List<List<Color>> = remember(data, weeks) {
+    val colorMatrix: List<List<Color>> = remember(data, weeks, isDarkTheme) {
         val today = LocalDate.now()
         weeks.map { week ->
             DayOfWeek.values().map { dow ->
@@ -277,10 +297,10 @@ fun YearlyHeatmapCanvas(
                     else -> data[date] ?: DayStatus.NoTransaction
                 }
                 when (status) {
-                    DayStatus.Categorized -> Color(0xFF298C31)    // Dark Green
-                    DayStatus.NotCategorized -> Color(0xFF81C784) // Red
-                    DayStatus.NoTransaction -> Color.LightGray
-                    DayStatus.Future -> Color.LightGray       // Gray for future
+                    DayStatus.Categorized -> categorizedColor
+                    DayStatus.NotCategorized -> notCategorizedColor
+                    DayStatus.NoTransaction -> noTransactionColor
+                    DayStatus.Future -> noTransactionColor
                 }
             }
         }
@@ -304,11 +324,9 @@ fun YearlyHeatmapCanvas(
         ) {
             DayOfWeek.values().forEach { dow ->
                 Text(
-                    text = dow.getDisplayName(
-                        java.time.format.TextStyle.NARROW, // first letter only
-                        Locale.getDefault()
-                    ),
-                    style = androidx.compose.material3.MaterialTheme.typography.labelSmall,
+                    text = dow.getDisplayName(JTextStyle.NARROW, Locale.getDefault()),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.height(squareSize)
                 )
             }
@@ -333,14 +351,12 @@ fun YearlyHeatmapCanvas(
                     val xPx = weekIndex * (squarePx + spacingPx)
 
                     Text(
-                        text = monthStart.month.getDisplayName(
-                            java.time.format.TextStyle.SHORT,
-                            Locale.getDefault()
-                        ),
+                        text = monthStart.month.getDisplayName(JTextStyle.SHORT, Locale.getDefault()),
                         modifier = Modifier
                             .offset(x = with(density) { xPx.toDp() }, y = 0.dp)
                             .padding(horizontal = 2.dp),
-                        style = androidx.compose.material3.MaterialTheme.typography.labelSmall
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 }
             }
@@ -375,9 +391,9 @@ fun YearlyHeatmapCanvas(
                 modifier = Modifier.width(widthDp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                LegendItem(color = Color(0xFF298C31), label = "Categorized")
-                LegendItem(color = Color(0xFF81C784), label = "Not Categorized")
-                LegendItem(color = Color.LightGray, label = "No Transaction")
+                LegendItem(color = categorizedColor, label = "Categorized")
+                LegendItem(color = notCategorizedColor, label = "Not Categorized")
+                LegendItem(color = noTransactionColor, label = "No Transaction")
             }
         }
     }
@@ -394,7 +410,8 @@ fun LegendItem(color: Color, label: String) {
         Spacer(modifier = Modifier.width(4.dp))
         Text(
             text = label,
-            style = androidx.compose.material3.MaterialTheme.typography.labelSmall
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurface
         )
     }
 }
@@ -414,7 +431,7 @@ fun YearSelector(
         Icon(
             Icons.Rounded.KeyboardArrowLeft,
             contentDescription = "Previous Year",
-            tint = Color.Black,
+            tint = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier
                 .size(20.dp)
                 .clickable {
@@ -427,14 +444,14 @@ fun YearSelector(
             text = selectedYear.toString(),
             fontSize = 16.sp,
             fontWeight = FontWeight.SemiBold,
-            color = Color.Black,
+            color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.padding(horizontal = 8.dp)
         )
 
         Icon(
             Icons.Rounded.KeyboardArrowRight,
             contentDescription = "Next Year",
-            tint = Color.Black,
+            tint = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier
                 .size(20.dp)
                 .clickable {
@@ -463,9 +480,9 @@ fun TotalSummaryButtons(
             modifier = Modifier
                 .weight(1f)
                 .height(40.dp)
-                .background(Color(0xFF4CAF50), RoundedCornerShape(10.dp))
+                .background(incomeColor, RoundedCornerShape(10.dp))
                 .border(1.dp, Color(0xFF2E7D32), RoundedCornerShape(10.dp))
-                .clickable { onIncomeClick() },   // ✅ Navigate on click
+                .clickable { onIncomeClick() },
             contentAlignment = Alignment.Center
         ) {
             Text(
@@ -481,9 +498,9 @@ fun TotalSummaryButtons(
             modifier = Modifier
                 .weight(1f)
                 .height(40.dp)
-                .background(Color(0xFFF44336), RoundedCornerShape(10.dp))
+                .background(expenseColor, RoundedCornerShape(10.dp))
                 .border(1.dp, Color(0xFFD32F2F), RoundedCornerShape(10.dp))
-                .clickable { onExpenseClick() },   // ✅ Navigate on click
+                .clickable { onExpenseClick() },
             contentAlignment = Alignment.Center
         ) {
             Text(
@@ -495,7 +512,3 @@ fun TotalSummaryButtons(
         }
     }
 }
-
-
-
-
