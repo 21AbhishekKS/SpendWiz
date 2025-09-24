@@ -10,7 +10,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -34,31 +33,37 @@ fun YearlyCategoryScreen(
 ) {
     val categories = vm.getYearlyCategoryData(year, type).observeAsState(emptyList()).value
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
+    // Use Surface to ensure the background color is from the theme
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = MaterialTheme.colorScheme.background // Sets the background for the whole screen
     ) {
-        // Heading
-        Text(
-            text = "$type by Category ($year)",
-            style = MaterialTheme.typography.headlineSmall.copy(
-                fontWeight = FontWeight.Bold,
-                fontSize = 22.sp
-            ),
-            modifier = Modifier.padding(bottom = 16.dp)
-        )
-
-        // Staggered Grid (like Google Keep / Pinterest)
-        LazyVerticalStaggeredGrid(
-            columns = StaggeredGridCells.Fixed(2), // 2 columns (auto stagger)
-            modifier = Modifier.fillMaxSize(),
-            verticalItemSpacing = 12.dp,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            contentPadding = PaddingValues(bottom = 80.dp)
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp)
         ) {
-            items(categories) { category ->
-                CategoryCard(category)
+            // Heading - uses onBackground color from the theme by default
+            Text(
+                text = "$type by Category ($year)",
+                style = MaterialTheme.typography.headlineSmall.copy(
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 22.sp
+                ),
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
+
+            // Staggered Grid
+            LazyVerticalStaggeredGrid(
+                columns = StaggeredGridCells.Fixed(2),
+                modifier = Modifier.fillMaxSize(),
+                verticalItemSpacing = 12.dp,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                contentPadding = PaddingValues(bottom = 80.dp)
+            ) {
+                items(categories) { category ->
+                    CategoryCard(category)
+                }
             }
         }
     }
@@ -74,7 +79,7 @@ fun CategoryCard(category: CategoryData) {
     )
     val amountStyle = MaterialTheme.typography.titleMedium.copy(
         fontWeight = FontWeight.Bold,
-        color = MaterialTheme.colorScheme.primary
+        color = MaterialTheme.colorScheme.primary // This is already theme-aware
     )
 
     val textMeasurer = rememberTextMeasurer()
@@ -84,9 +89,11 @@ fun CategoryCard(category: CategoryData) {
         modifier = Modifier
             .fillMaxWidth()
             .wrapContentHeight()
-            .border(1.dp, Color(0xFFBBDEFB), MaterialTheme.shapes.medium), // light blue border
+            // Use a theme-aware color for the border
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, MaterialTheme.shapes.medium),
         elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        // Use a theme-aware color for the container
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
         shape = MaterialTheme.shapes.medium
     ) {
         Column(
@@ -153,12 +160,16 @@ fun CategoryCard(category: CategoryData) {
 @Composable
 fun SubCategoryRow(sub: SubCategoryData) {
     val name = sub.name
-    val amount = formatAmount(sub.amount) // your previously added formatter
+    val amount = formatAmount(sub.amount)
 
+    // Text colors now use onSurfaceVariant to match the card's container color
     val nameStyle = MaterialTheme.typography.bodyMedium.copy(
-        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.85f)
+        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.85f)
     )
-    val amountStyle = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium)
+    val amountStyle = MaterialTheme.typography.bodyMedium.copy(
+        fontWeight = FontWeight.Medium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant
+    )
 
     val textMeasurer = rememberTextMeasurer()
     val density = LocalDensity.current
@@ -168,20 +179,14 @@ fun SubCategoryRow(sub: SubCategoryData) {
             .fillMaxWidth()
             .padding(vertical = 4.dp)
     ) {
-        // available width in pixels
         val availablePx = with(density) { maxWidth.toPx() }
-
-        // measure name and amount widths (in pixels)
         val nameLayout = textMeasurer.measure(AnnotatedString(name), style = nameStyle)
         val amountLayout = textMeasurer.measure(AnnotatedString(amount), style = amountStyle)
-
-        // some spacing between name and amount (px)
         val spacingPx = with(density) { 8.dp.toPx() }
 
         val fitsOnOneLine = nameLayout.size.width + amountLayout.size.width + spacingPx <= availablePx
 
         if (fitsOnOneLine) {
-            // single-line style: name takes remaining space, amount on same row
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
@@ -192,7 +197,6 @@ fun SubCategoryRow(sub: SubCategoryData) {
                     modifier = Modifier.weight(1f),
                     maxLines = 1
                 )
-
                 Text(
                     text = amount,
                     style = amountStyle,
@@ -200,15 +204,13 @@ fun SubCategoryRow(sub: SubCategoryData) {
                 )
             }
         } else {
-            // fallback: name on top (can wrap), amount on the next line right aligned
             Column(modifier = Modifier.fillMaxWidth()) {
                 Text(
                     text = name,
                     style = nameStyle,
                     modifier = Modifier.fillMaxWidth(),
-                    maxLines = 2 // cap lines so cards don't get too tall; adjust if needed
+                    maxLines = 2
                 )
-
                 Text(
                     text = amount,
                     style = amountStyle,
