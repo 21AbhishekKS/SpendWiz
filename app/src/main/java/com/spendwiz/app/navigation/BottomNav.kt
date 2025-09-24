@@ -3,6 +3,7 @@ package com.spendwiz.app.navigation
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.border
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -29,6 +30,15 @@ import com.spendwiz.app.Screens.*
 import com.spendwiz.app.ViewModels.AddScreenViewModel
 import com.spendwiz.app.ViewModels.CategoryViewModel
 import com.spendwiz.app.helper.BottomNavigationItem
+import com.spendwiz.app.ui.theme.BluePrimary
+import com.spendwiz.app.ui.theme.BluePrimaryDark
+import com.spendwiz.app.ui.theme.BluePrimaryLight
+import com.spendwiz.app.ui.theme.BottomBarBorderDark
+import com.spendwiz.app.ui.theme.BottomBarBorderLight
+import com.spendwiz.app.ui.theme.BottomIconSelectedDark
+import com.spendwiz.app.ui.theme.BottomIconSelectedLight
+import com.spendwiz.app.ui.theme.BottomLabelSelectedDark
+import com.spendwiz.app.ui.theme.BottomLabelSelectedLight
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -163,9 +173,12 @@ fun BottomNav(
     }
 }
 
+
 @Composable
 fun MyBottomBar(navController1: NavHostController) {
-    val backStackEntry = navController1.currentBackStackEntryAsState()
+    val backStackEntry by navController1.currentBackStackEntryAsState()
+    val darkTheme = isSystemInDarkTheme()
+    val colorScheme = MaterialTheme.colorScheme
 
     val items = listOf(
         BottomNavigationItem(Routes.HomeScreen.route, Icons.Filled.Home, Icons.Outlined.Home, false, null),
@@ -174,22 +187,34 @@ fun MyBottomBar(navController1: NavHostController) {
         BottomNavigationItem(Routes.More.route, Icons.Filled.MoreVert, Icons.Outlined.MoreVert, false, null),
     )
 
+    // Theme-aware colors
+    val indicatorColor = if (darkTheme) BluePrimaryDark else BluePrimaryLight
+    val fabColor = if (darkTheme) BluePrimaryDark else BluePrimaryLight
+
+    val selectedIconColor = if (darkTheme) BottomIconSelectedDark else BottomIconSelectedLight
+    val unselectedIconColor = colorScheme.onBackground
+
+    val selectedLabelColor = if (darkTheme) BottomLabelSelectedDark else BottomLabelSelectedLight
+    val unselectedLabelColor = colorScheme.onSurface
+
     Box {
         BottomAppBar(
-            containerColor = Color.White,
+            containerColor = colorScheme.surface,
             modifier = Modifier
                 .fillMaxWidth()
                 .windowInsetsPadding(WindowInsets.navigationBars)
                 .border(
                     width = 1.dp,
-                    color = Color(0xFFDDDDDD), // light gray border
+                    color = if (darkTheme) BottomBarBorderDark else BottomBarBorderLight,
                     shape = RectangleShape
                 )
         ) {
-            items.take(2).forEach { item ->
-                val selected = item.title == backStackEntry.value?.destination?.route
+            items.forEach { item ->
+                val selected = item.title == backStackEntry?.destination?.route
                 NavigationBarItem(
-                    colors = NavigationBarItemDefaults.colors(indicatorColor = Color(0xFF3B6AD3)),
+                    colors = NavigationBarItemDefaults.colors(
+                        indicatorColor = indicatorColor
+                    ),
                     selected = selected,
                     onClick = {
                         navController1.navigate(item.title) {
@@ -201,51 +226,24 @@ fun MyBottomBar(navController1: NavHostController) {
                         Icon(
                             imageVector = if (selected) item.selectedIcon else item.unSelectedIcon,
                             contentDescription = item.title,
-                            tint = if (selected) Color.White else Color.Black
+                            tint = if (selected) selectedIconColor else unselectedIconColor
                         )
                     },
                     label = {
                         Text(
                             text = item.title,
-                            color = if (selected) Color(0xFF3B6AD3) else Color.Black
-                        )
-                    }
-                )
-            }
-            Spacer(modifier = Modifier.weight(1f))
-            items.drop(2).forEach { item ->
-                val selected = item.title == backStackEntry.value?.destination?.route
-                NavigationBarItem(
-                    colors = NavigationBarItemDefaults.colors(indicatorColor = Color(0xFF3B6AD3)),
-                    selected = selected,
-                    onClick = {
-                        navController1.navigate(item.title) {
-                            popUpTo(navController1.graph.findStartDestination().id) { saveState = true }
-                            launchSingleTop = true
-                        }
-                    },
-                    icon = {
-                        Icon(
-                            imageVector = if (selected) item.selectedIcon else item.unSelectedIcon,
-                            contentDescription = item.title,
-                            tint = if (selected) Color.White else Color.Black
-                        )
-                    },
-                    label = {
-                        Text(
-                            text = item.title,
-                            color = if (selected) Color(0xFF3B6AD3) else Color.Black
+                            color = if (selected) selectedLabelColor else unselectedLabelColor
                         )
                     }
                 )
             }
         }
 
-        // FAB + label in the center
+        // FAB in center
         Column(
             modifier = Modifier
                 .align(Alignment.TopCenter)
-                .offset(y = (-28).dp), // lift up half
+                .offset(y = (-28).dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             FloatingActionButton(
@@ -255,7 +253,7 @@ fun MyBottomBar(navController1: NavHostController) {
                         launchSingleTop = true
                     }
                 },
-                containerColor = Color(0xFF3B6AD3),
+                containerColor = fabColor,
                 modifier = Modifier
                     .size(64.dp)
                     .shadow(8.dp, CircleShape),
@@ -269,7 +267,7 @@ fun MyBottomBar(navController1: NavHostController) {
                     modifier = Modifier.size(32.dp)
                 )
             }
-
         }
     }
 }
+
