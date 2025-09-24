@@ -51,20 +51,18 @@ fun UpdateScreen(
     category: String = "",
     subCategory: String = "",
     date: String = "",
-    time : String
+    time: String
 ) {
-
+    val colorScheme = MaterialTheme.colorScheme
     val context = LocalContext.current
     val focusRequester = remember { FocusRequester() }
 
-    LaunchedEffect(Unit) {
-        focusRequester.requestFocus()
-    }
+    LaunchedEffect(Unit) { focusRequester.requestFocus() }
 
     val transactionTypes = listOf("Income", "Expense", "Transfer")
     val initialTypeEnum = try {
-        TransactionType.valueOf(type.uppercase())   // works for "INCOME", "EXPENSE"
-    } catch (e: Exception) {
+        TransactionType.valueOf(type.uppercase())
+    } catch (_: Exception) {
         TransactionType.EXPENSE
     }
 
@@ -84,10 +82,9 @@ fun UpdateScreen(
     var amount by rememberSaveable { mutableStateOf(amount.toString()) }
     var description by rememberSaveable { mutableStateOf(description) }
     var selectedTime by rememberSaveable {
-        mutableStateOf(
-            if (time.isNotEmpty()) time else Money.getCurrentTime()
-        )
+        mutableStateOf(if (time.isNotEmpty()) time else Money.getCurrentTime())
     }
+
     val dateFormatter = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
     var currentDate by rememberSaveable { mutableStateOf(date.ifEmpty { dateFormatter.format(Date()) }) }
     val calendar = Calendar.getInstance()
@@ -98,7 +95,7 @@ fun UpdateScreen(
     var finalCategory by remember { mutableStateOf("") }
     var finalSubCategory by remember { mutableStateOf("") }
 
-    // Try parsing the incoming date into the calendar
+    // Parse incoming date
     LaunchedEffect(Unit) {
         try {
             val parsed = dateFormatter.parse(currentDate)
@@ -106,15 +103,10 @@ fun UpdateScreen(
         } catch (_: Exception) {}
     }
 
-// collect categories
-    val incomeCategories by categoryViewModel.getCategories("Income")
-        .collectAsState(initial = emptyList())
-
-    val expenseCategories by categoryViewModel.getCategories("Expense")
-        .collectAsState(initial = emptyList())
-
-    val transferCategories by categoryViewModel.getCategories("Transfer")
-        .collectAsState(initial = emptyList())
+    // collect categories
+    val incomeCategories by categoryViewModel.getCategories("Income").collectAsState(initial = emptyList())
+    val expenseCategories by categoryViewModel.getCategories("Expense").collectAsState(initial = emptyList())
+    val transferCategories by categoryViewModel.getCategories("Transfer").collectAsState(initial = emptyList())
 
     val categories: List<String> = when (selectedType) {
         "Income" -> incomeCategories.map { it.name }
@@ -122,14 +114,14 @@ fun UpdateScreen(
         else -> transferCategories.map { it.name }
     }
 
-// ✅ find the Category object by selected name
+    // selected category obj
     val selectedCategoryObj = when (selectedType) {
         "Income" -> incomeCategories.find { it.name == selectedCategory }
         "Expense" -> expenseCategories.find { it.name == selectedCategory }
         else -> transferCategories.find { it.name == selectedCategory }
     }
 
-// ✅ collect subcategories dynamically
+    // sub categories
     val subCategories by remember(selectedCategoryObj?.id) {
         selectedCategoryObj?.id?.let { categoryId ->
             categoryViewModel.getSubCategories(categoryId)
@@ -137,7 +129,6 @@ fun UpdateScreen(
     }.collectAsState(initial = emptyList())
 
     val subCategoryNames = subCategories.map { it.name }
-
 
     val typeColor = when (selectedType) {
         "Income" -> Color(0xFF4CAF50)
@@ -151,7 +142,6 @@ fun UpdateScreen(
             Toast.makeText(context, "Invalid amount", Toast.LENGTH_SHORT).show()
             return
         }
-
         val typeEnum = when (selectedType) {
             "Income" -> TransactionType.INCOME
             "Expense" -> TransactionType.EXPENSE
@@ -190,19 +180,13 @@ fun UpdateScreen(
     if (showBulkDialog) {
         AlertDialog(
             onDismissRequest = { showBulkDialog = false },
-            title = {
-                Text(
-                    text = "Update Similar Transactions?",
-                    style = MaterialTheme.typography.titleLarge
-                )
-            },
+            title = { Text("Update Similar Transactions?", style = MaterialTheme.typography.titleLarge) },
             text = {
                 Text(
                     text = buildString {
                         val count = pendingUncategorized.size
                         val verb = if (count == 1) "is" else "are"
                         val plural = if (count == 1) "transaction" else "transactions"
-
                         append("We found $count other $plural with the same name that $verb not categorized.\n\n")
                         append("Would you like to update ${if (count == 1) "it" else "them"} as well?")
                     },
@@ -223,14 +207,12 @@ fun UpdateScreen(
                         )
                     },
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF42A5F5), // light blue
-                        contentColor = Color.White
+                        containerColor = colorScheme.primary,
+                        contentColor = colorScheme.onPrimary
                     ),
                     shape = RoundedCornerShape(12.dp),
                     modifier = Modifier.padding(horizontal = 8.dp)
-                ) {
-                    Text("Yes")
-                }
+                ) { Text("Yes") }
             },
             dismissButton = {
                 OutlinedButton(
@@ -241,23 +223,20 @@ fun UpdateScreen(
                     },
                     shape = RoundedCornerShape(12.dp),
                     modifier = Modifier.padding(horizontal = 8.dp)
-                ) {
-                    Text("No")
-                }
+                ) { Text("No") }
             },
             shape = RoundedCornerShape(16.dp)
         )
     }
 
-
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(colorScheme.background)
             .padding(12.dp)
             .verticalScroll(rememberScrollState())
     ) {
-        // transaction type buttons
+        // type buttons
         Row(
             modifier = Modifier.fillMaxWidth().padding(bottom = 6.dp),
             horizontalArrangement = Arrangement.spacedBy(10.dp)
@@ -271,8 +250,8 @@ fun UpdateScreen(
                 Surface(
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(8.dp),
-                    color = Color.White,
-                    border = BorderStroke(1.dp, if (selectedType == t) selectedColor else Color.Gray),
+                    color = colorScheme.surface,
+                    border = BorderStroke(1.dp, if (selectedType == t) selectedColor else colorScheme.outline),
                     onClick = {
                         selectedType = t
                         selectedCategory = ""
@@ -284,35 +263,24 @@ fun UpdateScreen(
                         text = t,
                         modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
                         textAlign = TextAlign.Center,
-                        color = if (selectedType == t) selectedColor else Color.DarkGray
+                        color = if (selectedType == t) selectedColor else colorScheme.onSurface
                     )
                 }
             }
         }
 
+        // Date row
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 4.dp),
+            modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = "Date:",
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Medium,
-                modifier = Modifier.width(90.dp)
-            )
+            Text("Date:", fontSize = 14.sp, fontWeight = FontWeight.Medium, modifier = Modifier.width(90.dp))
 
             Box(
                 modifier = Modifier
                     .weight(1f)
                     .clickable {
-                        // Parse the currently selected date into calendar
-                        val parsedDate = try {
-                            dateFormatter.parse(currentDate)
-                        } catch (_: Exception) {
-                            null
-                        }
+                        val parsedDate = try { dateFormatter.parse(currentDate) } catch (_: Exception) { null }
                         val cal = Calendar.getInstance()
                         if (parsedDate != null) cal.time = parsedDate
 
@@ -337,52 +305,36 @@ fun UpdateScreen(
                     label = { Text("Select Date") },
                     modifier = Modifier.fillMaxWidth(),
                     colors = TextFieldDefaults.colors(
-                        disabledTextColor = Color.Black,
-                        disabledIndicatorColor = Color.Gray, // underline color
-                        disabledLabelColor = Color.Gray,
+                        disabledTextColor = colorScheme.onSurface,
+                        disabledIndicatorColor = colorScheme.outline,
+                        disabledLabelColor = colorScheme.outline,
                         disabledContainerColor = Color.Transparent
                     )
                 )
             }
         }
-
-        // Time Row with TimePicker
+        // Time row
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 4.dp),
+            modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = "Time:",
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Medium,
-                modifier = Modifier.width(90.dp)
-            )
-
-            Box(
-                modifier = Modifier.weight(1f)
-            ) {
+            Text("Time:", fontSize = 14.sp, fontWeight = FontWeight.Medium, modifier = Modifier.width(90.dp))
+            Box(modifier = Modifier.weight(1f)) {
                 TimePickerField(
                     selectedTime = selectedTime,
-                    onTimeSelected = { newTime ->
-                        selectedTime = newTime
-                    }
+                    onTimeSelected = { newTime -> selectedTime = newTime }
                 )
             }
         }
 
-
-        // amount row
+        // amount
         FieldRow(
             label = "Amount",
             value = amount,
             onValueChange = {
                 if (it.isEmpty() || it.matches(Regex("^[0-9]*\\.?[0-9]*$"))) {
                     val parsed = it.toDoubleOrNull()
-                    if (parsed == null || parsed <= 99_99_999) {
-                        amount = it
-                    }
+                    if (parsed == null || parsed <= 99_99_999) amount = it
                 }
             },
             keyboardType = KeyboardType.Number,
@@ -391,7 +343,7 @@ fun UpdateScreen(
         )
 
         // description
-        FieldRow(label = "Note", value = description, onValueChange = { description = it }, borderColor = typeColor)
+        FieldRow("Note", description, { description = it }, borderColor = typeColor)
 
         // category dropdown
         var expanded by remember { mutableStateOf(false) }
@@ -414,7 +366,7 @@ fun UpdateScreen(
                     colors = TextFieldDefaults.textFieldColors(
                         containerColor = Color.Transparent,
                         focusedIndicatorColor = typeColor,
-                        unfocusedIndicatorColor = Color.Gray,
+                        unfocusedIndicatorColor = colorScheme.outline,
                         focusedTrailingIconColor = typeColor
                     )
                 )
@@ -435,12 +387,10 @@ fun UpdateScreen(
         }
 
         if (selectedCategory == "Others") {
-            FieldRow(label = "Custom", value = customCategory, onValueChange = { customCategory = it })
+            FieldRow("Custom", customCategory, { customCategory = it })
         } else if (selectedCategory.isNotEmpty()) {
             FlowRow(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 4.dp),
+                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 subCategoryNames.forEach { sub ->
@@ -449,27 +399,23 @@ fun UpdateScreen(
                         onClick = { selectedSubCategory = sub },
                         label = { Text(sub, fontSize = 12.sp) },
                         colors = FilterChipDefaults.filterChipColors(
-                            containerColor = Color(0xFFE0E0E0),
+                            containerColor = colorScheme.surfaceVariant,
                             selectedContainerColor = typeColor,
-                            labelColor = Color.Black,
-                            selectedLabelColor = Color.White
+                            labelColor = colorScheme.onSurface,
+                            selectedLabelColor = colorScheme.onPrimary
                         )
                     )
                 }
             }
         }
 
-
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(Modifier.height(8.dp))
 
         Button(
             onClick = { saveTransaction() },
             modifier = Modifier.fillMaxWidth(),
             colors = ButtonDefaults.buttonColors(containerColor = typeColor),
             shape = RoundedCornerShape(8.dp)
-        ) {
-            Text("Update", color = Color.White, fontWeight = FontWeight.ExtraBold)
-        }
+        ) { Text("Update", color = Color.White, fontWeight = FontWeight.ExtraBold) }
     }
 }
-

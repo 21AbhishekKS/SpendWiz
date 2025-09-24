@@ -4,6 +4,7 @@ import android.app.TimePickerDialog
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
@@ -30,8 +31,12 @@ fun TimePickerField(
                 if (selectedTime.isNotEmpty()) {
                     val parts = selectedTime.split(":")
                     if (parts.size == 2) {
-                        calendar.set(Calendar.HOUR_OF_DAY, parts[0].toInt())
-                        calendar.set(Calendar.MINUTE, parts[1].toInt())
+                        try {
+                            calendar.set(Calendar.HOUR_OF_DAY, parts[0].toInt())
+                            calendar.set(Calendar.MINUTE, parts[1].toInt())
+                        } catch (e: NumberFormatException) {
+                            // Handle cases where the selectedTime is not a valid time format
+                        }
                     }
                 }
 
@@ -47,6 +52,7 @@ fun TimePickerField(
                     },
                     hour,
                     minute,
+                    // Use true for 24-hour format, false for 12-hour format with AM/PM
                     false
                 ).show()
             }
@@ -55,13 +61,16 @@ fun TimePickerField(
             value = selectedTime,
             onValueChange = {},
             readOnly = true,
-            enabled = false, // disable manual typing
+            // We use readOnly=true, so enabled=false is not strictly necessary
+            // but can be kept for clarity and to prevent focus.
+            enabled = false,
             label = { Text("Select Time") },
             modifier = Modifier.fillMaxWidth(),
             colors = TextFieldDefaults.colors(
-                disabledTextColor = Color.Black,
-                disabledIndicatorColor = Color.Gray, // underline color
-                disabledLabelColor = Color.Gray,
+                // Use theme-aware colors instead of hardcoded values
+                disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                disabledIndicatorColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
                 disabledContainerColor = Color.Transparent
             )
         )

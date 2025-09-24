@@ -19,7 +19,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -35,6 +34,8 @@ import java.util.*
 import com.spendwiz.app.Database.money.Money
 import com.spendwiz.app.ViewModels.CategoryViewModel
 import com.spendwiz.app.utils.TimePickerField
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.ui.graphics.Color
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @RequiresApi(Build.VERSION_CODES.O)
@@ -60,23 +61,16 @@ fun AddScreen(
     var amount by rememberSaveable { mutableStateOf("") }
     var description by rememberSaveable { mutableStateOf("") }
     var selectedTime by rememberSaveable {
-        mutableStateOf(
-             Money.getCurrentTime()  // only default if no incoming time
-        )
+        mutableStateOf(Money.getCurrentTime())
     }
     val dateFormatter = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
     var currentDate by rememberSaveable { mutableStateOf(dateFormatter.format(Date())) }
     val calendar = Calendar.getInstance()
 
     // collect categories
-    val incomeCategories by categoryViewModel.getCategories("Income")
-        .collectAsState(initial = emptyList())
-
-    val expenseCategories by categoryViewModel.getCategories("Expense")
-        .collectAsState(initial = emptyList())
-
-    val transferCategories by categoryViewModel.getCategories("Transfer")
-        .collectAsState(initial = emptyList())
+    val incomeCategories by categoryViewModel.getCategories("Income").collectAsState(initial = emptyList())
+    val expenseCategories by categoryViewModel.getCategories("Expense").collectAsState(initial = emptyList())
+    val transferCategories by categoryViewModel.getCategories("Transfer").collectAsState(initial = emptyList())
 
     val categories: List<String> = when (selectedType) {
         "Income" -> incomeCategories.map { it.name }
@@ -84,14 +78,12 @@ fun AddScreen(
         else -> transferCategories.map { it.name }
     }
 
-// ✅ find the Category object by selected name
     val selectedCategoryObj = when (selectedType) {
         "Income" -> incomeCategories.find { it.name == selectedCategory }
         "Expense" -> expenseCategories.find { it.name == selectedCategory }
         else -> transferCategories.find { it.name == selectedCategory }
     }
 
-// ✅ collect subcategories dynamically
     val subCategories by remember(selectedCategoryObj?.id) {
         selectedCategoryObj?.id?.let { categoryId ->
             categoryViewModel.getSubCategories(categoryId)
@@ -100,13 +92,13 @@ fun AddScreen(
 
     val subCategoryNames = subCategories.map { it.name }
 
-
-
     val typeColor = when (selectedType) {
         "Income" -> Color(0xFF4CAF50)
         "Expense" -> Color(0xFFF44336)
         else -> Color(0xFF2196F3)
     }
+
+    val colorScheme = MaterialTheme.colorScheme
 
     fun saveTransaction() {
         if (amount.isBlank()) {
@@ -150,15 +142,13 @@ fun AddScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(colorScheme.background)
             .padding(12.dp)
             .verticalScroll(rememberScrollState())
     ) {
         // transaction type buttons
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 6.dp),
+            modifier = Modifier.fillMaxWidth().padding(bottom = 6.dp),
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             transactionTypes.forEach { t ->
@@ -170,8 +160,8 @@ fun AddScreen(
                 Surface(
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(8.dp),
-                    color = Color.White,
-                    border = BorderStroke(1.dp, if (selectedType == t) selectedColor else Color.Gray),
+                    color = colorScheme.surface,
+                    border = BorderStroke(1.dp, if (selectedType == t) selectedColor else colorScheme.outline),
                     onClick = {
                         selectedType = t
                         selectedCategory = ""
@@ -181,29 +171,20 @@ fun AddScreen(
                 ) {
                     Text(
                         text = t,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 6.dp),
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
                         textAlign = TextAlign.Center,
-                        color = if (selectedType == t) selectedColor else Color.DarkGray
+                        color = if (selectedType == t) selectedColor else colorScheme.onSurface
                     )
                 }
             }
         }
 
-        // Date Row with DatePicker
+        // Date Row
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 4.dp),
+            modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = "Date:",
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Medium,
-                modifier = Modifier.width(90.dp)
-            )
+            Text("Date:", fontSize = 14.sp, fontWeight = FontWeight.Medium, modifier = Modifier.width(90.dp))
 
             Box(
                 modifier = Modifier
@@ -234,50 +215,37 @@ fun AddScreen(
                     label = { Text("Select Date") },
                     modifier = Modifier.fillMaxWidth(),
                     colors = TextFieldDefaults.colors(
-                        disabledTextColor = Color.Black,
-                        disabledIndicatorColor = Color.Gray, // underline color
-                        disabledLabelColor = Color.Gray,
+                        disabledTextColor = colorScheme.onSurface,
+                        disabledIndicatorColor = colorScheme.outline,
+                        disabledLabelColor = colorScheme.outline,
                         disabledContainerColor = Color.Transparent
                     )
                 )
             }
         }
-        // Time Row with TimePicker
+
+        // Time Row
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 4.dp),
+            modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = "Time:",
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Medium,
-                modifier = Modifier.width(90.dp)
-            )
-
-            Box(
-                modifier = Modifier.weight(1f)
-            ) {
+            Text("Time:", fontSize = 14.sp, fontWeight = FontWeight.Medium, modifier = Modifier.width(90.dp))
+            Box(modifier = Modifier.weight(1f)) {
                 TimePickerField(
                     selectedTime = selectedTime,
-                    onTimeSelected = { newTime ->
-                        selectedTime = newTime
-                    }
+                    onTimeSelected = { newTime -> selectedTime = newTime }
                 )
             }
         }
 
-        // Amount & Note
+        // Amount
         FieldRow(
             label = "Amount",
             value = amount,
             onValueChange = {
                 if (it.isEmpty() || it.matches(Regex("^[0-9]*\\.?[0-9]*$"))) {
                     val parsed = it.toDoubleOrNull()
-                    if (parsed == null || parsed <= 99_99_999) { // 1 crore limit
-                        amount = it
-                    }
+                    if (parsed == null || parsed <= 99_99_999) amount = it
                 }
             },
             keyboardType = KeyboardType.Number,
@@ -285,29 +253,16 @@ fun AddScreen(
             modifier = Modifier.focusRequester(focusRequester)
         )
 
+        // Note
+        FieldRow(label = "Note", value = description, onValueChange = { description = it }, borderColor = typeColor)
 
-        FieldRow(
-            label = "Note",
-            value = description,
-            onValueChange = { description = it },
-            borderColor = typeColor
-        )
-
-        // Category + Subcategory
+        // Category
         var expanded by remember { mutableStateOf(false) }
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 4.dp),
+            modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
             verticalAlignment = Alignment.Bottom
         ) {
-            Text(
-                text = "Category:",
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Medium,
-                modifier = Modifier.width(90.dp)
-            )
-
+            Text("Category:", fontSize = 14.sp, fontWeight = FontWeight.Medium, modifier = Modifier.width(90.dp))
             ExposedDropdownMenuBox(
                 expanded = expanded,
                 onExpandedChange = { expanded = !expanded },
@@ -346,9 +301,7 @@ fun AddScreen(
             FieldRow(label = "Custom", value = customCategory, onValueChange = { customCategory = it })
         } else if (selectedCategory.isNotEmpty()) {
             FlowRow(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 4.dp),
+                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 subCategoryNames.forEach { sub ->
@@ -357,9 +310,9 @@ fun AddScreen(
                         onClick = { selectedSubCategory = sub },
                         label = { Text(sub, fontSize = 12.sp) },
                         colors = FilterChipDefaults.filterChipColors(
-                            containerColor = Color(0xFFE0E0E0),
+                            containerColor = colorScheme.surfaceVariant,
                             selectedContainerColor = typeColor,
-                            labelColor = Color.Black,
+                            labelColor = colorScheme.onSurface,
                             selectedLabelColor = Color.White
                         )
                     )
