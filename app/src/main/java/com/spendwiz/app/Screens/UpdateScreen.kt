@@ -363,10 +363,11 @@ fun UpdateScreen(
                     readOnly = true,
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
                     modifier = Modifier.menuAnchor(),
-                    colors = TextFieldDefaults.textFieldColors(
-                        containerColor = Color.Transparent,
+                    colors = TextFieldDefaults.colors( 
+                        focusedContainerColor = Color.Transparent,
+                        unfocusedContainerColor = Color.Transparent,
                         focusedIndicatorColor = typeColor,
-                        unfocusedIndicatorColor = colorScheme.outline,
+                        unfocusedIndicatorColor = Color.Gray,
                         focusedTrailingIconColor = typeColor
                     )
                 )

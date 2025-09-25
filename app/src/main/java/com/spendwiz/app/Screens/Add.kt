@@ -274,8 +274,9 @@ fun AddScreen(
                     readOnly = true,
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
                     modifier = Modifier.menuAnchor(),
-                    colors = TextFieldDefaults.textFieldColors(
-                        containerColor = Color.Transparent,
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color.Transparent,
+                        unfocusedContainerColor = Color.Transparent,
                         focusedIndicatorColor = typeColor,
                         unfocusedIndicatorColor = Color.Gray,
                         focusedTrailingIconColor = typeColor
@@ -370,10 +371,13 @@ fun FieldRow(
                 onValueChange = onValueChange,
                 singleLine = true,
                 modifier = modifier.weight(1f),
-                colors = TextFieldDefaults.textFieldColors(
-                    containerColor = fieldBackgroundColor,
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = fieldBackgroundColor,
+                    unfocusedContainerColor = fieldBackgroundColor,
                     cursorColor = borderColor,
-                    focusedIndicatorColor = borderColor
+                    focusedIndicatorColor = borderColor,
+                    unfocusedIndicatorColor = MaterialTheme.colorScheme.outline
+
                 ),
                 keyboardOptions = KeyboardOptions(
                     imeAction = ImeAction.Next,
