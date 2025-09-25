@@ -6,11 +6,11 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -18,6 +18,9 @@ import androidx.compose.ui.unit.sp
 import com.spendwiz.app.Database.money.Money
 import com.spendwiz.app.Database.money.TransactionType
 import com.spendwiz.app.R
+
+val IncomeColor @Composable get() = MaterialTheme.colorScheme.primary // Or a custom green
+val ExpenseColor @Composable get() = MaterialTheme.colorScheme.error // Standard for negative/errors
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -36,7 +39,8 @@ fun MoneyItemWithLongPress(
                 onLongClick = onLongClick
             ),
         colors = CardDefaults.cardColors(
-            containerColor = if (selected) Color(0xFFE3F2FD) else Color.White
+            containerColor = if (selected) MaterialTheme.colorScheme.primaryContainer
+            else MaterialTheme.colorScheme.surfaceVariant
         )
     ) {
         Row(
@@ -45,7 +49,6 @@ fun MoneyItemWithLongPress(
                 .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // 🔹 Left side icon
             Image(
                 painter = painterResource(
                     id = when (item.type) {
@@ -59,24 +62,20 @@ fun MoneyItemWithLongPress(
                     .padding(end = 8.dp)
                     .size(32.dp)
             )
-
-            // 🔹 Middle details
             Column(
                 modifier = Modifier.weight(1f)
             ) {
-                Text(item.description, fontSize = 14.sp, color = Color.Black)
+                Text(item.description, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface)
                 Row {
-                    Text(item.date, fontSize = 12.sp, color = Color.DarkGray)
+                    Text(item.date, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Spacer(Modifier.width(6.dp))
                     Text(
                         text = item.bankName?.let { "(${it})" } ?: "(Cash Payment)",
                         fontSize = 12.sp,
-                        color = Color.DarkGray
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
-
-            // 🔹 Right side amount + time stacked
             Column(
                 horizontalAlignment = Alignment.End,
                 modifier = Modifier.widthIn(min = 70.dp)
@@ -88,17 +87,17 @@ fun MoneyItemWithLongPress(
                         else -> "${item.amount}"
                     },
                     color = when (item.type) {
-                        TransactionType.INCOME -> Color(0xFF4CAF50)
-                        TransactionType.EXPENSE -> Color(0xFFF44336)
-                        else -> Color(0xFF3F51B5)
+                        TransactionType.INCOME -> IncomeColor
+                        TransactionType.EXPENSE -> ExpenseColor
+                        else -> MaterialTheme.colorScheme.tertiary
                     },
                     fontSize = 14.sp,
                     textAlign = TextAlign.End
                 )
 
                 Text(
-                    text = formatTimeTo12Hr(item.time), // ✅ shows in 12hr format with AM/PM
-                    color = Color.Black,
+                    text = formatTimeTo12Hr(item.time),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontSize = 12.sp,
                     textAlign = TextAlign.End
                 )

@@ -22,35 +22,37 @@ fun PieChart(
     earned: Double,
     modifier: Modifier = Modifier
 ) {
-        val testPieChartData: List<PieChartData> = listOf(
-            PieChartData(
-                partName = "Spent: $spent",
-                data = spent,
-                color = Color(0xFFF24C3D),
-            ),
-            PieChartData(
-                partName = "Earned: $earned",
-                data = earned,
-                color = Color(0xFF22A699),
-            )
+    val testPieChartData: List<PieChartData> = listOf(
+        PieChartData(
+            partName = "Spent: $spent",
+            data = spent,
+            color = Color(0xFFF24C3D),
+        ),
+        PieChartData(
+            partName = "Earned: $earned",
+            data = earned,
+            color = Color(0xFF22A699),
         )
-        Column(Modifier.padding(top = 10.dp),
-            horizontalAlignment = Alignment.CenterHorizontally ,
-            verticalArrangement = Arrangement.Center) {
-            Text(
-                modifier = Modifier.padding(horizontal = 12.dp),
-                text = "Income vs Spending",
-                color = Color.Black, // ensure visible
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Bold
-            )
+    )
 
-            PieChart(
-                modifier = Modifier.fillMaxSize(),
-                pieChartData = testPieChartData,
-                ratioLineColor = Color.Gray,
-                textRatioStyle = TextStyle(color = Color.Black),
-            )
-        }
+    Column(
+        modifier = modifier.padding(top = 10.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(
+            modifier = Modifier.padding(bottom = 16.dp, start = 12.dp, end = 12.dp),
+            text = "Income vs Spending",
+            color = MaterialTheme.colorScheme.onSurface,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold
+        )
 
+        PieChart(
+            modifier = Modifier.fillMaxSize(),
+            pieChartData = testPieChartData,
+            ratioLineColor = MaterialTheme.colorScheme.outline,
+            textRatioStyle = TextStyle(color = MaterialTheme.colorScheme.onSurface),
+        )
+    }
 }

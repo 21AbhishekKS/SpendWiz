@@ -123,193 +123,197 @@ fun InsightsScreen(
 
     val pagerState = rememberPagerState(initialPage = 0, pageCount = { 3 })
     val scope = rememberCoroutineScope()
-            Column(
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            // 🔥 Changed: Use theme background color
+            .background(MaterialTheme.colorScheme.background)
+    ) {
+
+        CustomTopBar(
+            selectedMonth = selectedMonth,
+            selectedYear = selectedYear,
+            selectedMonthIndex = selectedMonthIndex,
+            selectedItems = selectedItems,
+            moneyList = moneyList,
+            datePickerDialog = datePickerDialog,
+            viewModel = viewModel,
+            categoryViewModel = categoryViewModel,
+            onMonthChange = { newMonthIndex, newYear ->
+                selectedMonthIndex = newMonthIndex
+                selectedYear = newYear
+            }
+        )
+
+        // 🔥 Changed: Use theme-aware divider color
+        Divider(color = MaterialTheme.colorScheme.outlineVariant)
+
+        // Show Pager only if there is some data (income or expense > 0)
+        if (monthlyReceived != 0.0 || monthlySpent != 0.0) {
+            Box(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.White)
+                    .fillMaxWidth()
+                    .heightIn(min = 220.dp, max = 280.dp)
+                    .padding(horizontal = 10.dp)
             ) {
-
-                CustomTopBar(
-                    selectedMonth = selectedMonth,
-                    selectedYear = selectedYear,
-                    selectedMonthIndex = selectedMonthIndex,
-                    selectedItems = selectedItems,
-                    moneyList = moneyList,
-                    datePickerDialog = datePickerDialog,
-                    viewModel = viewModel,
-                    categoryViewModel = categoryViewModel,
-                    onMonthChange = { newMonthIndex, newYear ->
-                        selectedMonthIndex = newMonthIndex
-                        selectedYear = newYear
+                val pages = buildList {
+                    if (monthlyReceived != 0.0 && monthlySpent != 0.0) {
+                        add("Pie")
                     }
-                )
+                    add("ByMonth")
+                    add("BySubCategory")
+                }
 
-                Divider(color = Color.LightGray)
+                val pagerState = rememberPagerState(initialPage = 0, pageCount = { pages.size })
 
-// Show Pager only if there is some data (income or expense > 0)
-                if (monthlyReceived != 0.0 || monthlySpent != 0.0) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(min = 220.dp, max = 280.dp)
-                            .padding(horizontal = 10.dp)
-                    ) {
-                        val pages = buildList {
-                            // Only add PieChart if both values are > 0
-                            if (monthlyReceived != 0.0 && monthlySpent != 0.0) {
-                                add("Pie")
-                            }
-                            add("ByMonth")
-                            add("BySubCategory")
-                        }
-
-                        val pagerState = rememberPagerState(initialPage = 0, pageCount = { pages.size })
-
-                        HorizontalPager(
-                            state = pagerState,
+                HorizontalPager(
+                    state = pagerState,
+                    modifier = Modifier.fillMaxSize()
+                ) { page ->
+                    when (pages[page]) {
+                        "Pie" -> PieChart(
+                            spent = monthlySpent,
+                            earned = monthlyReceived,
                             modifier = Modifier.fillMaxSize()
-                        ) { page ->
-                            when (pages[page]) {
-                                "Pie" -> PieChart(
-                                    spent = monthlySpent,
-                                    earned = monthlyReceived,
-                                    modifier = Modifier.fillMaxSize()
-                                )
-                                "ByMonth" -> ExpenseDonutChartByMonth(
-                                    viewModel = viewModel,
-                                    month = selectedMonthInNum,
-                                    year = selectedYear.toString(),
-                                    modifier = Modifier.fillMaxSize()
-                                )
-                                "BySubCategory" -> ExpenseDonutChartBySubCategory(
-                                    viewModel = viewModel,
-                                    month = selectedMonthInNum,
-                                    year = selectedYear.toString(),
-                                    modifier = Modifier.fillMaxSize()
-                                )
-                            }
-                        }
-
-                        if (pagerState.currentPage > 0) {
-                            IconButton(
-                                onClick = { scope.launch { pagerState.animateScrollToPage(pagerState.currentPage - 1) } },
-                                modifier = Modifier
-                                    .align(Alignment.BottomStart)
-                                    .padding(8.dp)
-                            ) {
-                                Icon(
-                                    painter = painterResource(id = R.drawable.right_arrow),
-                                    contentDescription = "Previous Chart",
-                                    modifier = Modifier
-                                        .size(28.dp)
-                                        .rotate(180f)
-                                )
-                            }
-                        }
-
-                        if (pagerState.currentPage < pagerState.pageCount - 1) {
-                            IconButton(
-                                onClick = { scope.launch { pagerState.animateScrollToPage(pagerState.currentPage + 1) } },
-                                modifier = Modifier
-                                    .align(Alignment.BottomEnd)
-                                    .padding(8.dp)
-                            ) {
-                                Icon(
-                                    painter = painterResource(id = R.drawable.right_arrow),
-                                    contentDescription = "Next Chart",
-                                    modifier = Modifier.size(28.dp)
-                                )
-                            }
-                        }
+                        )
+                        "ByMonth" -> ExpenseDonutChartByMonth(
+                            viewModel = viewModel,
+                            month = selectedMonthInNum,
+                            year = selectedYear.toString(),
+                            modifier = Modifier.fillMaxSize()
+                        )
+                        "BySubCategory" -> ExpenseDonutChartBySubCategory(
+                            viewModel = viewModel,
+                            month = selectedMonthInNum,
+                            year = selectedYear.toString(),
+                            modifier = Modifier.fillMaxSize()
+                        )
                     }
                 }
 
-                when {
-                    moneyListLive.value.isEmpty() && monthlySpent == 0.0 && monthlyReceived == 0.0 -> {
-                        BlueCircularLoader(Modifier)
+                if (pagerState.currentPage > 0) {
+                    IconButton(
+                        onClick = { scope.launch { pagerState.animateScrollToPage(pagerState.currentPage - 1) } },
+                        modifier = Modifier
+                            .align(Alignment.BottomStart)
+                            .padding(8.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.right_arrow),
+                            contentDescription = "Previous Chart",
+                            modifier = Modifier
+                                .size(28.dp)
+                                .rotate(180f)
+                        )
                     }
+                }
 
-                    moneyList.isEmpty() -> {
-                        Column(
-                            modifier = Modifier.fillMaxSize(),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
-                        ) {
+                if (pagerState.currentPage < pagerState.pageCount - 1) {
+                    IconButton(
+                        onClick = { scope.launch { pagerState.animateScrollToPage(pagerState.currentPage + 1) } },
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .padding(8.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.right_arrow),
+                            contentDescription = "Next Chart",
+                            modifier = Modifier.size(28.dp)
+                        )
+                    }
+                }
+            }
+        }
+
+        when {
+            moneyListLive.value.isEmpty() && monthlySpent == 0.0 && monthlyReceived == 0.0 -> {
+                BlueCircularLoader(Modifier)
+            }
+
+            moneyList.isEmpty() -> {
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        "No transactions found",
+                        modifier = Modifier
+                            // 🔥 Changed: Use theme-aware container color
+                            .background(MaterialTheme.colorScheme.secondaryContainer)
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp, vertical = 8.dp),
+                        // 🔥 Changed: Use theme-aware text color for the container
+                        color = MaterialTheme.colorScheme.onSecondaryContainer
+                    )
+
+                }
+            }
+
+            else -> {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(bottom = 16.dp)
+                ) {
+                    groupedByDate.forEach { (date, itemsForDate) ->
+                        item(key = "header_$date") {
                             Text(
-                                "No transactions found",
+                                text = date,
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                // 🔥 Changed: Use theme-aware text color
+                                color = MaterialTheme.colorScheme.onBackground,
                                 modifier = Modifier
-                                    .background(Color(0xFF424242))
                                     .fillMaxWidth()
-                                    .padding(horizontal = 20.dp, vertical = 8.dp),
-                                color = Color.White
+                                    // 🔥 Removed unnecessary background to inherit from LazyColumn
+                                    .padding(horizontal = 16.dp, vertical = 10.dp)
                             )
-
                         }
-                    }
+                        items(
+                            items = itemsForDate,
+                            key = { it.id }
+                        ) { item ->
+                            val itemId: String = (item.id.toString())
 
-                    else -> {
-                        LazyColumn(
-                            modifier = Modifier.fillMaxSize().background(Color.White),
-                            contentPadding = PaddingValues(bottom = 16.dp)
-                        ) {
-                            groupedByDate.forEach { (date, itemsForDate) ->
-                                item(key = "header_$date") {
-                                    Text(
-                                        text = date,
-                                        fontSize = 18.sp,
-                                        fontWeight = FontWeight.SemiBold,
-                                        color = Color.Black,
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .background(Color.White)
-                                            .padding(horizontal = 16.dp, vertical = 10.dp)
-                                    )
-                                }
-                                items(
-                                    items = itemsForDate,
-                                    key = { it.id }
-                                ) { item ->
-                                    val itemId: String = (item.id.toString())
-
-                                    MoneyItemWithLongPress(
-                                        item = item,
-                                        selected = selectedItems.contains(itemId),
-                                        onClick = {
-                                            if (selectedItems.isEmpty()) {
-                                                navController1.navigate(
-                                                    Routes.UpdateScreen.route +
-                                                            "?description=${enc(item.description)}" +
-                                                            "&amount=${item.amount}" +
-                                                            "&id=${item.id}" +
-                                                            "&type=${enc(item.type.toString())}" +
-                                                            "&category=${enc(item.category ?: "")}" +
-                                                            "&subCategory=${enc(item.subCategory ?: "")}" +
-                                                            "&date=${enc(item.date ?: "")}" +
-                                                            "&time=${item.time}"
-                                                )
-                                            } else {
-                                                if (selectedItems.contains(itemId)) {
-                                                    selectedItems.remove(itemId)
-                                                } else {
-                                                    selectedItems.add(itemId)
-                                                }
-                                            }
-                                        },
-                                        onLongClick = {
-                                            if (selectedItems.contains(itemId)) {
-                                                selectedItems.remove(itemId)
-                                            } else {
-                                                selectedItems.add(itemId)
-                                            }
+                            MoneyItemWithLongPress(
+                                item = item,
+                                selected = selectedItems.contains(itemId),
+                                onClick = {
+                                    if (selectedItems.isEmpty()) {
+                                        navController1.navigate(
+                                            Routes.UpdateScreen.route +
+                                                    "?description=${enc(item.description)}" +
+                                                    "&amount=${item.amount}" +
+                                                    "&id=${item.id}" +
+                                                    "&type=${enc(item.type.toString())}" +
+                                                    "&category=${enc(item.category ?: "")}" +
+                                                    "&subCategory=${enc(item.subCategory ?: "")}" +
+                                                    "&date=${enc(item.date ?: "")}" +
+                                                    "&time=${item.time}"
+                                        )
+                                    } else {
+                                        if (selectedItems.contains(itemId)) {
+                                            selectedItems.remove(itemId)
+                                        } else {
+                                            selectedItems.add(itemId)
                                         }
-                                    )
+                                    }
+                                },
+                                onLongClick = {
+                                    if (selectedItems.contains(itemId)) {
+                                        selectedItems.remove(itemId)
+                                    } else {
+                                        selectedItems.add(itemId)
+                                    }
                                 }
-                            }
+                            )
                         }
                     }
                 }
             }
         }
+    }
+}
 
 // Helpers
 private fun enc(s: String): String =
@@ -379,7 +383,8 @@ fun CustomTopBar(
             Icon(
                 Icons.Rounded.KeyboardArrowLeft,
                 contentDescription = "Previous",
-                tint = Color.Black,
+                // 🔥 Changed: Use theme-aware icon tint
+                tint = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier
                     .size(20.dp)
                     .clickable {
@@ -397,7 +402,8 @@ fun CustomTopBar(
                 text = "${selectedMonth.take(3)} ${year % 100}",
                 fontSize = 16.sp,
                 fontWeight = FontWeight.SemiBold,
-                color = Color.Black,
+                // 🔥 Changed: Use theme-aware text color
+                color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier
                     .clickable { datePickerDialog.show() }
                     .padding(horizontal = 4.dp)
@@ -406,7 +412,8 @@ fun CustomTopBar(
             Icon(
                 Icons.Rounded.KeyboardArrowRight,
                 contentDescription = "Next",
-                tint = Color.Black,
+                // 🔥 Changed: Use theme-aware icon tint
+                tint = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier
                     .size(20.dp)
                     .clickable {
@@ -437,7 +444,7 @@ fun CustomTopBar(
                     "Deselect All"
                 else
                     "Select All",
-                tint = Color.Unspecified, // keep original PNG colors
+                tint = Color.Unspecified, // This is correct, keeps original PNG colors
                 modifier = Modifier
                     .size(24.dp)
                     .clickable {
@@ -457,7 +464,8 @@ fun CustomTopBar(
             Icon(
                 Icons.Default.MoreVert,
                 contentDescription = "More",
-                tint = Color.Black,
+                // 🔥 Changed: Use theme-aware icon tint
+                tint = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier
                     .size(22.dp)
                     .clickable { expanded = true }
@@ -628,4 +636,3 @@ fun CustomTopBar(
         )
     }
 }
-
