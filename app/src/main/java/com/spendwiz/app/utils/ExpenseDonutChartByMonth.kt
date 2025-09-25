@@ -23,7 +23,7 @@ fun ExpenseDonutChartByMonth(viewModel: AddScreenViewModel, month: String, year:
 
     if (pieData.isNotEmpty()) {
         Column(
-            Modifier.padding(top = 10.dp),
+            Modifier.padding(top = 5.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
@@ -43,7 +43,11 @@ fun ExpenseDonutChartByMonth(viewModel: AddScreenViewModel, month: String, year:
                 outerCircularColor = MaterialTheme.colorScheme.surfaceVariant,
                 innerCircularColor = MaterialTheme.colorScheme.outline,
                 ratioLineColor = MaterialTheme.colorScheme.outlineVariant,
-            )
+                descriptionStyle = MaterialTheme.typography.bodyMedium.copy(
+                    color = MaterialTheme.colorScheme.onSurface
+                ),
+                textRatioStyle = TextStyle(color = MaterialTheme.colorScheme.onSurface),
+                )
 
         }
     } else {

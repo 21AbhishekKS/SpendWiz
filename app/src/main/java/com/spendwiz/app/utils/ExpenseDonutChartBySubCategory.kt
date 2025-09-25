@@ -53,7 +53,6 @@ fun ExpenseDonutChartBySubCategory(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .clickable { expanded = true }
-                    .padding(top = 8.dp)
             ) {
                 val displayText: AnnotatedString = if (selectedCategory == null) {
                     buildAnnotatedString {
@@ -130,7 +129,11 @@ fun ExpenseDonutChartBySubCategory(
                         outerCircularColor = MaterialTheme.colorScheme.surfaceVariant,
                         innerCircularColor = MaterialTheme.colorScheme.outline,
                         ratioLineColor = MaterialTheme.colorScheme.surfaceVariant,
-                    )
+                        descriptionStyle = MaterialTheme.typography.bodyMedium.copy(
+                            color = MaterialTheme.colorScheme.onSurface
+                        ),
+                        textRatioStyle = TextStyle(color = MaterialTheme.colorScheme.onSurface),
+                        )
                 }
             } else {
                 Text(

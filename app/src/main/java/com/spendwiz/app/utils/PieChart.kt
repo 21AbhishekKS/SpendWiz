@@ -36,12 +36,10 @@ fun PieChart(
     )
 
     Column(
-        modifier = modifier.padding(top = 10.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            modifier = Modifier.padding(bottom = 16.dp, start = 12.dp, end = 12.dp),
             text = "Income vs Spending",
             color = MaterialTheme.colorScheme.onSurface,
             style = MaterialTheme.typography.titleMedium,
@@ -53,6 +51,9 @@ fun PieChart(
             pieChartData = testPieChartData,
             ratioLineColor = MaterialTheme.colorScheme.outline,
             textRatioStyle = TextStyle(color = MaterialTheme.colorScheme.onSurface),
+            descriptionStyle = MaterialTheme.typography.bodyMedium.copy(
+                color = MaterialTheme.colorScheme.onSurface
+            )
         )
     }
 }
