@@ -57,4 +57,20 @@ class PreferencesManager(private val context: Context) {
     suspend fun setAutoCategorization(enabled: Boolean) {
         context.dataStore.edit { it[AUTO_CATEGORIZATION] = enabled }
     }
+
+    // 1. Define a key for storing the first launch flag.
+    private val IS_FIRST_LAUNCH = booleanPreferencesKey("is_first_launch")
+
+    // 2. Create the Flow that MainActivity will read from.
+    //    The '?: true' part is crucial: if the value has never been set, it defaults to 'true'.
+    val isFirstLaunchFlow: Flow<Boolean> = context.dataStore.data.map { preferences ->
+        preferences[IS_FIRST_LAUNCH] ?: true
+    }
+
+    // 3. Create the function to update the flag after the setup is done.
+    suspend fun setFirstLaunchCompleted() {
+        context.dataStore.edit { preferences ->
+            preferences[IS_FIRST_LAUNCH] = false
+        }
+    }
 }

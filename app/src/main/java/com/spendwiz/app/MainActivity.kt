@@ -21,8 +21,11 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.rememberNavController
 import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.ExistingWorkPolicy
+import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
+import androidx.work.workDataOf
 import com.spendwiz.app.Database.money.MoneyDatabase
 import com.spendwiz.app.Notifications.DailyNotificationWorker
 import com.spendwiz.app.Notifications.PreferencesManager
@@ -31,6 +34,7 @@ import com.spendwiz.app.ViewModels.CategoryViewModel
 import com.spendwiz.app.ViewModels.CategoryViewModelFactory
 import com.spendwiz.app.navigation.BottomNav
 import com.spendwiz.app.ui.theme.ExpenceTrackerTheme
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.util.Calendar
 import java.util.concurrent.TimeUnit
@@ -84,7 +88,8 @@ class MainActivity : ComponentActivity() {
 
         requestAllPermissions()
         createNotificationChannels()
-
+        // Schedule notification automatically on the app's first launch
+        scheduleNotificationOnFirstLaunch()
         setContent {
             ExpenceTrackerTheme {
                 Surface(
@@ -188,20 +193,44 @@ class MainActivity : ComponentActivity() {
 
         val delay = targetTime.timeInMillis - currentTime.timeInMillis
 
-        val dailyWork = PeriodicWorkRequestBuilder<DailyNotificationWorker>(24, TimeUnit.HOURS)
+        // Create a Data object to pass the time to the worker
+        val workData = workDataOf(
+            "hour" to hour,
+            "minute" to minute
+        )
+
+        // Use OneTimeWorkRequestBuilder instead of PeriodicWorkRequestBuilder
+        val dailyWorkRequest = OneTimeWorkRequestBuilder<DailyNotificationWorker>()
             .setInitialDelay(delay, TimeUnit.MILLISECONDS)
+            .setInputData(workData) // Pass the time data
             .build()
 
-        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+        // Use enqueueUniqueWork with ExistingWorkPolicy.REPLACE
+        WorkManager.getInstance(this).enqueueUniqueWork(
             "daily_notification",
-            ExistingPeriodicWorkPolicy.REPLACE,
-            dailyWork
+            ExistingWorkPolicy.REPLACE,
+            dailyWorkRequest
         )
     }
-
     fun cancelDailyNotification() {
         WorkManager.getInstance(this).cancelUniqueWork("daily_notification")
     }
+    private fun scheduleNotificationOnFirstLaunch() {
+        lifecycleScope.launch {
+            // Assumes 'isFirstLaunchFlow' exists in your PreferencesManager.
+            // We use .first() to get the current value from the Flow.
+            if (prefs.isFirstLaunchFlow.first()) {
+                // 1. Schedule notification with the default time (22:05)
+                scheduleDailyNotification(22, 5)
 
+                // 2. Explicitly save the notification's "enabled" state
+                prefs.setDailyNotification(true)
+
+                // 3. Update the flag so this block never runs again
+                // Assumes 'setFirstLaunchCompleted' exists in your PreferencesManager.
+                prefs.setFirstLaunchCompleted()
+            }
+        }
+    }
 
 }
