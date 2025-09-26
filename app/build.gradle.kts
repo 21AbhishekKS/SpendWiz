@@ -14,8 +14,8 @@ android {
         applicationId = "com.spendwiz.app"
         minSdk = 23
         targetSdk = 35
-        versionCode = 2
-        versionName = "1.1.0"
+        versionCode = 3
+        versionName = "1.1.2"
 
 
 
@@ -131,12 +131,6 @@ dependencies {
 
     // Coroutines for async operations
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
-    // OkHttp for networking
-    implementation("com.squareup.okhttp3:okhttp:4.11.0")
-    implementation("com.squareup.okio:okio:3.4.0")
-
-    // Gson for JSON parsing
-    implementation("com.google.code.gson:gson:2.10.1")
 
     // kotlinx serialization
     implementation ("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")

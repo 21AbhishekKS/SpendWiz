@@ -2,6 +2,7 @@ package com.spendwiz.app.BackUp
 
 import android.app.Application
 import android.content.ContentResolver
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.util.Log
@@ -9,7 +10,10 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
+import com.google.android.gms.common.api.Scope
+import com.google.api.services.drive.DriveScopes
 import com.spendwiz.app.BackUp.Drive.GoogleDriveService
 import com.spendwiz.app.Database.money.MoneyDatabase
 import kotlinx.coroutines.Dispatchers
@@ -69,13 +73,23 @@ class BackupRestoreViewModel(application: Application) : AndroidViewModel(applic
         }
     }
 
-    fun signOut() {
+    fun signOut(context: Context) {
         viewModelScope.launch {
-            val googleSignInClient = GoogleSignIn.getClient(getApplication(), com.google.android.gms.auth.api.signin.GoogleSignInOptions.DEFAULT_SIGN_IN)
+            val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestIdToken("903991082659-uauv6af5179j70ijr2sn42ufop96ibi2.apps.googleusercontent.com")
+                .requestEmail()
+                .requestScopes(Scope(DriveScopes.DRIVE_APPDATA))
+                .build()
+
+            val googleSignInClient = GoogleSignIn.getClient(context, gso)
+
             googleSignInClient.signOut().await()
             _googleUser.value = null
+            _state.value = BackupRestoreState.Success("Signed out successfully.")
         }
     }
+
+
 
     // --- Google Drive Backup/Restore ---
 

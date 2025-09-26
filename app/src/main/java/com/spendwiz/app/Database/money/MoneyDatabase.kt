@@ -11,7 +11,7 @@ import kotlinx.coroutines.launch
 
 @Database(
     entities = [Money::class, Category::class, SubCategory::class],
-    version = 8
+    version = 9
 )
 @TypeConverters(Converters::class)
 abstract class MoneyDatabase : RoomDatabase() {
