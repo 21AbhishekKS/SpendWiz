@@ -53,6 +53,7 @@ android {
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            excludes += "META-INF/DEPENDENCIES"
         }
     }
 }
@@ -118,8 +119,18 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.1")
 
     // Google Sign-In
-    implementation("com.google.android.gms:play-services-auth:20.7.0")
+    implementation("com.google.android.gms:play-services-auth:21.2.0")
 
+    // Google Drive API
+    implementation("com.google.api-client:google-api-client-android:2.2.0")
+    // FIX: Corrected the group ID from 'com.google.api.client' to 'com.google.http-client'
+    implementation("com.google.http-client:google-http-client-android:1.42.3")
+    implementation("com.google.apis:google-api-services-drive:v3-rev20220815-2.0.0") {
+        exclude("org.apache.httpcomponents")
+    }
+
+    // Coroutines for async operations
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
     // OkHttp for networking
     implementation("com.squareup.okhttp3:okhttp:4.11.0")
     implementation("com.squareup.okio:okio:3.4.0")
@@ -129,9 +140,5 @@ dependencies {
 
     // kotlinx serialization
     implementation ("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
-
-
 }
-
-
 

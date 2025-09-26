@@ -2,14 +2,22 @@ package com.spendwiz.app.BackUp
 
 import android.app.Application
 import android.content.ContentResolver
+import android.content.Intent
 import android.net.Uri
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount
+import com.google.android.gms.common.api.ApiException
+import com.spendwiz.app.BackUp.Drive.GoogleDriveService
 import com.spendwiz.app.Database.money.MoneyDatabase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.decodeFromString
@@ -17,6 +25,12 @@ import kotlinx.serialization.encodeToString
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.io.OutputStreamWriter
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+
+// Keep your existing DatabaseBackup data class and BackupRestoreState sealed class
+// (Assuming DatabaseBackup is a @Serializable data class you have defined)
 
 sealed class BackupRestoreState {
     object Idle : BackupRestoreState()
@@ -28,7 +42,10 @@ sealed class BackupRestoreState {
 class BackupRestoreViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _state = MutableStateFlow<BackupRestoreState>(BackupRestoreState.Idle)
-    val state: StateFlow<BackupRestoreState> = _state
+    val state: StateFlow<BackupRestoreState> = _state.asStateFlow()
+
+    private val _googleUser = MutableStateFlow<GoogleSignInAccount?>(null)
+    val googleUser: StateFlow<GoogleSignInAccount?> = _googleUser.asStateFlow()
 
     private val database = MoneyDatabase.getDatabase(application)
     private val moneyDao = database.getMoneyDao()
@@ -37,70 +54,150 @@ class BackupRestoreViewModel(application: Application) : AndroidViewModel(applic
 
     private val json = Json { prettyPrint = true; encodeDefaults = true; ignoreUnknownKeys = true }
 
-    /**
-     * Backup data to the provided Uri (Storage Access Framework).
-     */
+    init {
+        // Check for an existing signed-in user
+        _googleUser.value = GoogleSignIn.getLastSignedInAccount(application)
+    }
+
+    fun handleSignInResult(intent: Intent?) {
+        try {
+            val task = GoogleSignIn.getSignedInAccountFromIntent(intent)
+            _googleUser.value = task.getResult(ApiException::class.java)
+        } catch (e: ApiException) {
+            Log.w("SignIn", "signInResult:failed code=" + e.statusCode)
+            _state.value = BackupRestoreState.Error("Sign-in failed. Please try again.")
+        }
+    }
+
+    fun signOut() {
+        viewModelScope.launch {
+            val googleSignInClient = GoogleSignIn.getClient(getApplication(), com.google.android.gms.auth.api.signin.GoogleSignInOptions.DEFAULT_SIGN_IN)
+            googleSignInClient.signOut().await()
+            _googleUser.value = null
+        }
+    }
+
+    // --- Google Drive Backup/Restore ---
+
+    fun backupToDrive() {
+        val user = _googleUser.value ?: return
+        viewModelScope.launch {
+            _state.value = BackupRestoreState.InProgress
+            try {
+                val driveService = GoogleDriveService(getApplication(), user)
+                val jsonString = withContext(Dispatchers.IO) {
+                    val backup = DatabaseBackup(
+                        money = moneyDao.getAllMoneyOnce(),
+                        categories = categoryDao.getAllCategoriesOnce(),
+                        subCategories = categoryDao.getAllSubCategoriesOnce()
+                    )
+                    json.encodeToString(backup)
+                }
+
+                val dateStr = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+                val fileName = "spendwiz_backup_$dateStr.json"
+
+                val newFileId = withContext(Dispatchers.IO) {
+                    driveService.uploadFile(fileName, jsonString)
+                }
+
+                if (newFileId != null) {
+                    // Cleanup old backups
+                    withContext(Dispatchers.IO) {
+                        val allFiles = driveService.queryFiles()
+                        for (file in allFiles) {
+                            if (file.id != newFileId) {
+                                driveService.deleteFile(file.id)
+                            }
+                        }
+                    }
+                    _state.value = BackupRestoreState.Success("Backup to Google Drive successful.")
+                } else {
+                    _state.value = BackupRestoreState.Error("Failed to upload backup to Google Drive.")
+                }
+
+            } catch (e: Exception) {
+                e.printStackTrace()
+                _state.value = BackupRestoreState.Error("Drive Backup failed: ${e.localizedMessage}")
+            }
+        }
+    }
+
+    fun restoreFromDrive() {
+        val user = _googleUser.value ?: return
+        viewModelScope.launch {
+            _state.value = BackupRestoreState.InProgress
+            try {
+                val driveService = GoogleDriveService(getApplication(), user)
+
+                val latestFile = withContext(Dispatchers.IO) {
+                    driveService.queryFiles().maxByOrNull { it.modifiedTime.value }
+                }
+
+                if (latestFile == null) {
+                    _state.value = BackupRestoreState.Error("No backup file found in Google Drive.")
+                    return@launch
+                }
+
+                val jsonContent = withContext(Dispatchers.IO) {
+                    driveService.readFile(latestFile.id)
+                }
+
+                if (jsonContent != null) {
+                    val backup = json.decodeFromString<DatabaseBackup>(jsonContent)
+                    database.replaceAllData(backup) // Assuming you have this transaction method
+                    _state.value = BackupRestoreState.Success("Restore from Google Drive successful.")
+                } else {
+                    _state.value = BackupRestoreState.Error("Failed to read backup file from Drive.")
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                _state.value = BackupRestoreState.Error("Drive Restore failed: ${e.localizedMessage}")
+            }
+        }
+    }
+
+
+    // --- Local Backup/Restore --- (Your existing functions)
+
     fun backupData(targetUri: Uri) {
         viewModelScope.launch {
             _state.value = BackupRestoreState.InProgress
             try {
                 withContext(Dispatchers.IO) {
-                    val moneyList = moneyDao.getAllMoneyOnce()
-                    val categories = categoryDao.getAllCategoriesOnce()
-                    val subCategories = categoryDao.getAllSubCategoriesOnce()
-
                     val backup = DatabaseBackup(
-                        money = moneyList,
-                        categories = categories,
-                        subCategories = subCategories
+                        money = moneyDao.getAllMoneyOnce(),
+                        categories = categoryDao.getAllCategoriesOnce(),
+                        subCategories = categoryDao.getAllSubCategoriesOnce()
                     )
-
                     val jsonString = json.encodeToString(backup)
-
                     contentResolver.openOutputStream(targetUri)?.use { outStream ->
-                        OutputStreamWriter(outStream, Charsets.UTF_8).use { writer ->
-                            writer.write(jsonString)
-                            writer.flush()
-                        }
+                        OutputStreamWriter(outStream, Charsets.UTF_8).use { it.write(jsonString) }
                     } ?: throw IllegalStateException("Unable to open output stream for URI")
                 }
-                _state.value = BackupRestoreState.Success("Backup completed successfully.")
+                _state.value = BackupRestoreState.Success("Local backup completed successfully.")
             } catch (e: Exception) {
                 e.printStackTrace()
-                _state.value = BackupRestoreState.Error("Backup failed: ${e.localizedMessage ?: e.message}")
+                _state.value = BackupRestoreState.Error("Local Backup failed: ${e.message}")
             }
         }
     }
 
-    /**
-     * Read JSON from the Uri and replace the database contents atomically.
-     */
     fun restoreData(sourceUri: Uri) {
         viewModelScope.launch {
             _state.value = BackupRestoreState.InProgress
             try {
-                val backup = withContext(Dispatchers.IO) {
-                    val sb = StringBuilder()
+                val jsonString = withContext(Dispatchers.IO) {
                     contentResolver.openInputStream(sourceUri)?.use { input ->
-                        BufferedReader(InputStreamReader(input, Charsets.UTF_8)).use { reader ->
-                            var line = reader.readLine()
-                            while (line != null) {
-                                sb.append(line)
-                                line = reader.readLine()
-                            }
-                        }
+                        BufferedReader(InputStreamReader(input, Charsets.UTF_8)).use { it.readText() }
                     } ?: throw IllegalStateException("Unable to open input stream for URI")
-
-                    json.decodeFromString<DatabaseBackup>(sb.toString())
                 }
-
-                // Replace data atomically
+                val backup = json.decodeFromString<DatabaseBackup>(jsonString)
                 database.replaceAllData(backup)
-
-                _state.value = BackupRestoreState.Success("Restore completed successfully.")
+                _state.value = BackupRestoreState.Success("Local restore completed successfully.")
             } catch (e: Exception) {
                 e.printStackTrace()
-                _state.value = BackupRestoreState.Error("Restore failed: ${e.localizedMessage ?: e.message}")
+                _state.value = BackupRestoreState.Error("Local Restore failed: ${e.message}")
             }
         }
     }
