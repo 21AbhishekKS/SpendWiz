@@ -98,7 +98,7 @@ class BackupRestoreViewModel(application: Application) : AndroidViewModel(applic
                 val fileName = "spendwiz_backup_$dateStr.json"
 
                 val newFileId = withContext(Dispatchers.IO) {
-                    driveService.uploadFile(fileName, jsonString)
+                    driveService.uploadOrUpdateFile (fileName, jsonString)
                 }
 
                 if (newFileId != null) {
