@@ -35,5 +35,27 @@ interface CategoryDao {
 
     @Query("DELETE FROM categories")
     suspend fun clearAllCategories()
+
+    //For backup feature
+    @Query("DELETE FROM categories")
+    fun clearCategoriesTableSync()
+
+    @Query("DELETE FROM subcategories")
+    fun clearSubCategoriesTableSync()
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    fun insertAllCategoriesSync(categories: List<Category>)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    fun insertAllSubCategoriesSync(subCategories: List<SubCategory>)
+
+    // Fetch all categories once
+    @Query("SELECT * FROM categories")
+    suspend fun getAllCategoriesOnce(): List<Category>
+
+    // Fetch all subcategories once
+    @Query("SELECT * FROM subcategories")
+    suspend fun getAllSubCategoriesOnce(): List<SubCategory>
+
 }
 

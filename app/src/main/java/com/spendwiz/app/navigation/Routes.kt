@@ -12,6 +12,7 @@ sealed class Routes( val route : String) {
     object BottomNav : Routes("BottomNav")
 
     object InsightsScreen : Routes("Insights")
+    object BackupRestoreScreen : Routes("BackupRestoreScreen")
     object More : Routes("More")
     object SpentScreen : Routes("History")
     object AddScreen : Routes("Add")

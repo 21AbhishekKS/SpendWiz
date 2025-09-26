@@ -120,6 +120,9 @@ fun BottomNav(
             composable(Routes.SmartSettings.route) {
                 SmartSettings(preferencesManager = PreferencesManager(context))
             }
+            composable(Routes.BackupRestoreScreen.route) {
+                BackupRestoreScreen()
+            }
             composable(
                 route = Routes.IncomeDetailsScreen.route,
                 arguments = listOf(navArgument("year") { type = NavType.StringType })

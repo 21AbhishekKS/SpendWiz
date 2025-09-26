@@ -47,7 +47,8 @@ fun MoreOptionsScreen(
         OptionItem("Category", Icons.Filled.Settings),
         OptionItem("Notifications", Icons.Filled.Notifications),
         OptionItem("Smart settings", Icons.Filled.Settings),
-        OptionItem("Feedback", Icons.Filled.Warning)
+        OptionItem("Feedback", Icons.Filled.Warning),
+        OptionItem("BackupRestoreScreen", Icons.Filled.Warning)
     )
 
     Box(
@@ -81,6 +82,7 @@ fun MoreOptionsScreen(
                             "Category" -> navController.navigate(Routes.ManageCategoriesScreen.route)
                             "Notifications" -> navController.navigate(Routes.NotificationSettingsScreen.route)
                             "Smart settings" -> navController.navigate(Routes.SmartSettings.route)
+                            "BackupRestoreScreen" -> navController.navigate(Routes.BackupRestoreScreen.route)
                             "Feedback" -> showFeedback = true
                         }
                     })

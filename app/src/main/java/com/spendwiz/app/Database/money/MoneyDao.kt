@@ -156,6 +156,19 @@ interface MoneyDao {
     // Bulk update category + subCategory for multiple transactions
     @Query("UPDATE money SET category = :newCategory, subCategory = :newSubCategory WHERE id IN (:ids)")
     suspend fun bulkUpdateCategory(ids: List<Int>, newCategory: String, newSubCategory: String?)
+
+    //for backup feature
+    @Query("DELETE FROM money")
+    fun clearMoneyTableSync()
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    fun insertAllMoneySync(moneyList: List<Money>)
+
+    // Fetch all money records once (suspend)
+    @Query("SELECT * FROM money")
+    suspend fun getAllMoneyOnce(): List<Money>
+
+
 }
 
 data class MoneyMinimal(

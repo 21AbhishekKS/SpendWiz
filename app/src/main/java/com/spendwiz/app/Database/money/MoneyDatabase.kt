@@ -3,6 +3,7 @@ package com.spendwiz.app.Database.money
 import android.content.Context
 import android.util.Log
 import androidx.room.*
+import com.spendwiz.app.BackUp.DatabaseBackup
 import com.spendwiz.app.Database.money.CategoryData.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -124,4 +125,23 @@ abstract class MoneyDatabase : RoomDatabase() {
             }
         }
     }
+
+    suspend fun replaceAllData(backup: DatabaseBackup) {
+        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            runInTransaction {
+                // clear old data
+                getCategoryDao().clearSubCategoriesTableSync()
+                getCategoryDao().clearCategoriesTableSync()
+                getMoneyDao().clearMoneyTableSync()
+
+                // insert new data
+                getCategoryDao().insertAllCategoriesSync(backup.categories)
+                getCategoryDao().insertAllSubCategoriesSync(backup.subCategories)
+                getMoneyDao().insertAllMoneySync(backup.money)
+            }
+        }
+    }
+
+
+
 }
