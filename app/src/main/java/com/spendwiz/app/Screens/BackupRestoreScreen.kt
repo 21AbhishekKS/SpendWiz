@@ -5,6 +5,7 @@ import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -26,7 +27,6 @@ import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BackupRestoreScreen(
     addScreenViewModel: AddScreenViewModel,
@@ -42,20 +42,17 @@ fun BackupRestoreScreen(
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
-    // State for restore confirmation dialog
+    var showLogoutDialog by remember { mutableStateOf(false) }
     var showRestoreDialog by remember { mutableStateOf<(() -> Unit)?>(null) }
-
-    var importedCount by remember { mutableStateOf<Int?>(null) } // To show result
+    var importedCount by remember { mutableStateOf<Int?>(null) }
     var isImporting by remember { mutableStateOf(false) }
 
-    // --- GOOGLE SIGN-IN LAUNCHER ---
     val authResultLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
         viewModel.handleSignInResult(result.data)
     }
 
-    // --- LOCAL BACKUP/RESTORE LAUNCHERS ---
     val suggestedFileName = remember {
         val dateStr = SimpleDateFormat("yyyyMMdd", Locale.getDefault()).format(Date())
         "spendwiz_backup_$dateStr.json"
@@ -68,133 +65,163 @@ fun BackupRestoreScreen(
 
     val openDocumentLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument(),
-        onResult = { uri: Uri? ->
-            uri?.let {
-                showRestoreDialog = { viewModel.restoreData(it) }
-            }
-        }
+        onResult = { uri: Uri? -> uri?.let { showRestoreDialog = { viewModel.restoreData(it) } } }
     )
 
-    // Show Snackbar on state changes
     LaunchedEffect(state) {
         when (val currentState = state) {
             is BackupRestoreState.Success -> snackbarHostState.showSnackbar(currentState.message)
             is BackupRestoreState.Error -> snackbarHostState.showSnackbar(currentState.error)
-            else -> Unit // Do nothing for Idle or InProgress
+            else -> Unit
         }
         if (state !is BackupRestoreState.InProgress) {
-            viewModel.resetState() // Reset state after showing snackbar
+            viewModel.resetState()
         }
     }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Backup & Restore") }) },
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
     ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .padding(20.dp),
+            horizontalAlignment = Alignment.Start,
+            verticalArrangement = Arrangement.Top
         ) {
+            // Screen Title
+            Text(
+                text = "Backup & Restore",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(bottom = 12.dp)
+            )
 
             // --- Google Drive Section ---
-            if (googleUser == null) {
+            Row(Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween){
                 Text(
-                    text = "Sign in to back up your data to Google Drive. Your backup file will be stored privately and will not be visible in your main Drive folder.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    textAlign = TextAlign.Center
+                    text = "Google Drive Backup",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold
                 )
-                Spacer(Modifier.height(16.dp))
-                Button(onClick = {
-                    val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                        .requestIdToken("903991082659-uauv6af5179j70ijr2sn42ufop96ibi2.apps.googleusercontent.com")
-                        .requestEmail()
-                        .requestScopes(Scope(DriveScopes.DRIVE_APPDATA))
-                        .build()
-                    val googleSignInClient = GoogleSignIn.getClient(context, gso)
-                    authResultLauncher.launch(googleSignInClient.signInIntent)
-                }) {
+                if (googleUser != null) {
+                    TextButton(
+                        onClick = { showLogoutDialog = true }
+                    ) {
+                        Text("Sign Out")
+                    }
+                }
+            }
+            Text(
+                text = "Sync your data securely with your Google Drive. This ensures your data is safe and accessible across devices.",
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(bottom = 12.dp)
+            )
+
+            if (googleUser == null) {
+                Button(
+                    onClick = {
+                        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                            .requestIdToken("903991082659-uauv6af5179j70ijr2sn42ufop96ibi2.apps.googleusercontent.com")
+                            .requestEmail()
+                            .requestScopes(Scope(DriveScopes.DRIVE_APPDATA))
+                            .build()
+                        val googleSignInClient = GoogleSignIn.getClient(context, gso)
+                        authResultLauncher.launch(googleSignInClient.signInIntent)
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(8.dp) // less rounded
+                ) {
                     Text("Sign in with Google")
                 }
             } else {
                 Text("Signed in as: ${googleUser?.displayName}", fontWeight = FontWeight.Bold)
-                Text(googleUser?.email ?: "", fontSize = 14.sp)
-                Spacer(Modifier.height(16.dp))
+                Text(googleUser?.email ?: "", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Spacer(Modifier.height(12.dp))
 
-                Button(
-                    onClick = { showRestoreDialog = { viewModel.backupToDrive() } },
+                // Backup + Restore in row
+                Row(
                     modifier = Modifier.fillMaxWidth(),
-                    enabled = state !is BackupRestoreState.InProgress
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    Text("Backup to Google Drive")
-                }
-                Spacer(Modifier.height(12.dp))
-                Button(
-                    onClick = { showRestoreDialog = { viewModel.restoreFromDrive() } },
-                    modifier = Modifier.fillMaxWidth(),
-                    enabled = state !is BackupRestoreState.InProgress
-                ) {
-                    Text("Restore from Google Drive")
-                }
-                Spacer(Modifier.height(12.dp))
-                OutlinedButton(
-                    onClick = { viewModel.signOut(context) },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Sign Out")
+                    Button(
+                        onClick = { showRestoreDialog = { viewModel.backupToDrive() } },
+                        modifier = Modifier.weight(1f),
+                        enabled = state !is BackupRestoreState.InProgress,
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text("Backup")
+                    }
+                    OutlinedButton(
+                        onClick = { showRestoreDialog = { viewModel.restoreFromDrive() } },
+                        modifier = Modifier.weight(1f),
+                        enabled = state !is BackupRestoreState.InProgress,
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text("Restore")
+                    }
                 }
             }
 
             if (state is BackupRestoreState.InProgress) {
-                Spacer(Modifier.height(24.dp))
-                CircularProgressIndicator()
-                Spacer(Modifier.height(8.dp))
-                Text("Processing… Please wait.")
+                Spacer(Modifier.height(12.dp))
+                CircularProgressIndicator(modifier = Modifier.size(28.dp))
+                Text("Processing… Please wait.", fontSize = 13.sp)
             }
 
             // --- Local Backup Section ---
-            Divider(modifier = Modifier.padding(vertical = 24.dp))
+            Divider(modifier = Modifier.padding(vertical = 20.dp))
 
             Text(
                 "Local Backup",
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.SemiBold
             )
             Text(
-                "Save a backup file to your device's storage.",
-                style = MaterialTheme.typography.bodyMedium,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(top = 4.dp, bottom = 12.dp)
+                "Save a backup file on your device storage and restore it anytime manually.",
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(bottom = 12.dp)
             )
 
-            Button(
-                onClick = { createDocumentLauncher.launch(suggestedFileName) },
+            Row(
                 modifier = Modifier.fillMaxWidth(),
-                enabled = state !is BackupRestoreState.InProgress
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                Text("Backup to Device")
-            }
-            Spacer(Modifier.height(12.dp))
-            Button(
-                onClick = { openDocumentLauncher.launch(arrayOf("application/json")) },
-                modifier = Modifier.fillMaxWidth(),
-                enabled = state !is BackupRestoreState.InProgress
-            ) {
-                Text("Restore from Device")
+                Button(
+                    onClick = { createDocumentLauncher.launch(suggestedFileName) },
+                    modifier = Modifier.weight(1f),
+                    enabled = state !is BackupRestoreState.InProgress,
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text("Backup")
+                }
+                OutlinedButton(
+                    onClick = { openDocumentLauncher.launch(arrayOf("application/json")) },
+                    modifier = Modifier.weight(1f),
+                    enabled = state !is BackupRestoreState.InProgress,
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text("Restore")
+                }
             }
 
-            // --- Import Transactions from SMS ---
-            Divider(modifier = Modifier.padding(vertical = 24.dp))
+            // --- Import from SMS ---
+            Divider(modifier = Modifier.padding(vertical = 20.dp))
+
             Text(
-                text = "Import Transactions from SMS",
+                text = "Import Transactions",
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.Center
+                fontWeight = FontWeight.SemiBold
             )
-            Spacer(Modifier.height(12.dp))
+            Text(
+                text = "Quickly fetch transactions from your SMS inbox.",
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(bottom = 12.dp)
+            )
+
             Button(
                 onClick = {
                     isImporting = true
@@ -207,45 +234,43 @@ fun BackupRestoreScreen(
                         isImporting = false
                     }
                 },
-                enabled = !isImporting
+                enabled = !isImporting,
+                shape = RoundedCornerShape(8.dp)
             ) {
                 Text("Import from SMS")
             }
-            Spacer(Modifier.height(8.dp))
-
             when {
                 isImporting -> {
-                    CircularProgressIndicator(modifier = Modifier.padding(top = 8.dp))
-                    Text("Importing SMS…", fontSize = 14.sp)
+                    CircularProgressIndicator(modifier = Modifier.size(28.dp))
+                    Text("Importing SMS…", fontSize = 13.sp)
                 }
                 importedCount != null -> {
                     Text(
                         "Imported $importedCount transactions.",
                         fontWeight = FontWeight.Medium,
-                        fontSize = 16.sp,
-                        modifier = Modifier.padding(top = 8.dp)
+                        fontSize = 14.sp,
+                        modifier = Modifier.padding(top = 6.dp)
                     )
                 }
             }
+            Divider(modifier = Modifier.padding(vertical = 20.dp))
+
         }
     }
 
+    // Restore Confirmation Dialog
     if (showRestoreDialog != null) {
         AlertDialog(
             onDismissRequest = { showRestoreDialog = null },
             title = { Text("Confirm Action") },
-            text = {
-                Text("This action may overwrite your current data. This cannot be undone. Are you sure you want to continue?")
-            },
+            text = { Text("This action may overwrite your current data. Are you sure?") },
             confirmButton = {
                 TextButton(
                     onClick = {
                         showRestoreDialog?.invoke()
                         showRestoreDialog = null
                     }
-                ) {
-                    Text("Yes, Continue")
-                }
+                ) { Text("Yes, Continue") }
             },
             dismissButton = {
                 TextButton(onClick = { showRestoreDialog = null }) {
@@ -254,4 +279,26 @@ fun BackupRestoreScreen(
             }
         )
     }
+
+    if (showLogoutDialog) {
+        AlertDialog(
+            onDismissRequest = { showLogoutDialog = false },
+            title = { Text("Confirm Logout") },
+            text = { Text("Are you sure you want to sign out?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.signOut(context)
+                        showLogoutDialog = false
+                    }
+                ) { Text("Yes, Sign Out") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showLogoutDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
 }
+
