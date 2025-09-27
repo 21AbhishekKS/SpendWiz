@@ -121,7 +121,7 @@ fun BottomNav(
                 SmartSettings(preferencesManager = PreferencesManager(context))
             }
             composable(Routes.BackupRestoreScreen.route) {
-                BackupRestoreScreen()
+                BackupRestoreScreen(addScreenViewModel = moneyViewModel)
             }
             composable(
                 route = Routes.IncomeDetailsScreen.route,

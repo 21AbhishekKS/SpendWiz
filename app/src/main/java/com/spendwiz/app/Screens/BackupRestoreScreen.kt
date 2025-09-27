@@ -21,22 +21,32 @@ import com.google.android.gms.common.api.Scope
 import com.google.api.services.drive.DriveScopes
 import com.spendwiz.app.BackUp.BackupRestoreState
 import com.spendwiz.app.BackUp.BackupRestoreViewModel
+import com.spendwiz.app.ViewModels.AddScreenViewModel
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BackupRestoreScreen(
-    viewModel: BackupRestoreViewModel = viewModel(factory = androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory(LocalContext.current.applicationContext as android.app.Application))
+    addScreenViewModel: AddScreenViewModel,
+    viewModel: BackupRestoreViewModel = viewModel(
+        factory = androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory(
+            LocalContext.current.applicationContext as android.app.Application
+        )
+    )
 ) {
     val state by viewModel.state.collectAsState()
     val googleUser by viewModel.googleUser.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
 
     // State for restore confirmation dialog
     var showRestoreDialog by remember { mutableStateOf<(() -> Unit)?>(null) }
 
+    var importedCount by remember { mutableStateOf<Int?>(null) } // To show result
+    var isImporting by remember { mutableStateOf(false) }
 
     // --- GOOGLE SIGN-IN LAUNCHER ---
     val authResultLauncher = rememberLauncherForActivityResult(
@@ -91,7 +101,6 @@ fun BackupRestoreScreen(
 
             // --- Google Drive Section ---
             if (googleUser == null) {
-                // Not Signed In View
                 Text(
                     text = "Sign in to back up your data to Google Drive. Your backup file will be stored privately and will not be visible in your main Drive folder.",
                     style = MaterialTheme.typography.bodyMedium,
@@ -99,7 +108,6 @@ fun BackupRestoreScreen(
                 )
                 Spacer(Modifier.height(16.dp))
                 Button(onClick = {
-                    // **IMPORTANT**: Replace with your Web Client ID from Google Cloud Console
                     val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                         .requestIdToken("903991082659-uauv6af5179j70ijr2sn42ufop96ibi2.apps.googleusercontent.com")
                         .requestEmail()
@@ -111,7 +119,6 @@ fun BackupRestoreScreen(
                     Text("Sign in with Google")
                 }
             } else {
-                // Signed In View
                 Text("Signed in as: ${googleUser?.displayName}", fontWeight = FontWeight.Bold)
                 Text(googleUser?.email ?: "", fontSize = 14.sp)
                 Spacer(Modifier.height(16.dp))
@@ -140,14 +147,12 @@ fun BackupRestoreScreen(
                 }
             }
 
-            // --- Processing Indicator ---
             if (state is BackupRestoreState.InProgress) {
                 Spacer(Modifier.height(24.dp))
                 CircularProgressIndicator()
                 Spacer(Modifier.height(8.dp))
                 Text("Processing… Please wait.")
             }
-
 
             // --- Local Backup Section ---
             Divider(modifier = Modifier.padding(vertical = 24.dp))
@@ -179,18 +184,58 @@ fun BackupRestoreScreen(
             ) {
                 Text("Restore from Device")
             }
+
+            // --- Import Transactions from SMS ---
+            Divider(modifier = Modifier.padding(vertical = 24.dp))
+            Text(
+                text = "Import Transactions from SMS",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Center
+            )
+            Spacer(Modifier.height(12.dp))
+            Button(
+                onClick = {
+                    isImporting = true
+                    importedCount = null
+                    coroutineScope.launch {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                            val count = addScreenViewModel.insertTransactionsFromSms(context)
+                            importedCount = count
+                        }
+                        isImporting = false
+                    }
+                },
+                enabled = !isImporting
+            ) {
+                Text("Import from SMS")
+            }
+            Spacer(Modifier.height(8.dp))
+
+            when {
+                isImporting -> {
+                    CircularProgressIndicator(modifier = Modifier.padding(top = 8.dp))
+                    Text("Importing SMS…", fontSize = 14.sp)
+                }
+                importedCount != null -> {
+                    Text(
+                        "Imported $importedCount transactions.",
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 16.sp,
+                        modifier = Modifier.padding(top = 8.dp)
+                    )
+                }
+            }
         }
     }
 
-    // Restore confirmation dialog
     if (showRestoreDialog != null) {
         AlertDialog(
             onDismissRequest = { showRestoreDialog = null },
             title = { Text("Confirm Action") },
             text = {
-                Text(
-                    "This action may overwrite your current data. This cannot be undone. Are you sure you want to continue?"
-                )
+                Text("This action may overwrite your current data. This cannot be undone. Are you sure you want to continue?")
             },
             confirmButton = {
                 TextButton(
