@@ -123,6 +123,9 @@ fun BottomNav(
             composable(Routes.BackupRestoreScreen.route) {
                 BackupRestoreScreen(addScreenViewModel = moneyViewModel)
             }
+            composable(Routes.ReceiptScanScreen.route) {
+                ReceiptScanScreen(viewModel = moneyViewModel , navController)
+            }
             composable(
                 route = Routes.IncomeDetailsScreen.route,
                 arguments = listOf(navArgument("year") { type = NavType.StringType })

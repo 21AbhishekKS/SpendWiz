@@ -135,7 +135,18 @@ dependencies {
     // kotlinx serialization
     implementation ("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
 
-    implementation("com.google.mlkit:entity-extraction:16.0.0-beta5")
+    // Add the ML Kit Text Recognition dependency
+    implementation("com.google.mlkit:text-recognition:16.0.0")
 
+// For CameraX integration
+    val cameraxVersion = "1.3.1"
+    implementation("androidx.camera:camera-core:${cameraxVersion}")
+    implementation("androidx.camera:camera-camera2:${cameraxVersion}")
+    implementation("androidx.camera:camera-lifecycle:${cameraxVersion}")
+    implementation("androidx.camera:camera-view:${cameraxVersion}")
+    implementation("com.google.accompanist:accompanist-permissions:0.32.0")
+
+// For Coil to display images from a URI
+    implementation("io.coil-kt:coil-compose:2.5.0")
 }
 
