@@ -383,7 +383,6 @@ fun CustomTopBar(
             Icon(
                 Icons.Rounded.KeyboardArrowLeft,
                 contentDescription = "Previous",
-                // 🔥 Changed: Use theme-aware icon tint
                 tint = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier
                     .size(20.dp)
@@ -444,7 +443,7 @@ fun CustomTopBar(
                     "Deselect All"
                 else
                     "Select All",
-                tint = Color.Unspecified, // This is correct, keeps original PNG colors
+                tint = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier
                     .size(24.dp)
                     .clickable {
@@ -464,7 +463,6 @@ fun CustomTopBar(
             Icon(
                 Icons.Default.MoreVert,
                 contentDescription = "More",
-                // 🔥 Changed: Use theme-aware icon tint
                 tint = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier
                     .size(22.dp)

@@ -134,5 +134,8 @@ dependencies {
 
     // kotlinx serialization
     implementation ("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
+
+    implementation("com.google.mlkit:entity-extraction:16.0.0-beta5")
+
 }
 
