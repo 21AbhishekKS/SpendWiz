@@ -41,7 +41,9 @@ fun TransactionList(
         } else {
             LazyColumn {
                 itemsIndexed(moneyList!!) { index, item ->
-                    MoneyItem1(item = item, onClick = {
+                    MoneyItemWithLongPress(item = item,
+                        false,
+                        onClick = {
                         val description = Uri.encode(item.description ?: "")
                         val amount = item.amount
                         val id = item.id
@@ -62,7 +64,7 @@ fun TransactionList(
                                     "&date=$date" +
                                     "&time=$time"
                         )
-                    })
+                    }, {})
                 }
             }
         }
