@@ -49,7 +49,8 @@ fun MoreOptionsScreen(
         OptionItem("Smart settings", Icons.Filled.Settings),
         OptionItem("Feedback", Icons.Filled.Warning),
         OptionItem("BackupRestoreScreen", Icons.Filled.Warning),
-        OptionItem("cam", Icons.Filled.Warning)
+        OptionItem("cam", Icons.Filled.Warning),
+        OptionItem("assist", Icons.Filled.Warning)
     )
 
     Box(
@@ -86,6 +87,7 @@ fun MoreOptionsScreen(
                             "BackupRestoreScreen" -> navController.navigate(Routes.BackupRestoreScreen.route)
                             "Feedback" -> showFeedback = true
                             "cam" -> navController.navigate(Routes.ReceiptScanScreen.route)
+                            "assist" -> navController.navigate(Routes.VoiceAssistantSettingsScreen.route)
                         }
                     })
                 }

@@ -11,6 +11,7 @@ sealed class Routes( val route : String) {
     object ManageCategoriesScreen : Routes("ManageCategoriesScreen")
     object BottomNav : Routes("BottomNav")
     object ReceiptScanScreen : Routes("ReceiptScanScreen")
+    object VoiceAssistantSettingsScreen : Routes("VoiceAssistantSettingsScreen")
 
     object InsightsScreen : Routes("Insights")
     object BackupRestoreScreen : Routes("BackupRestoreScreen")

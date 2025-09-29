@@ -168,7 +168,44 @@ interface MoneyDao {
     @Query("SELECT * FROM money")
     suspend fun getAllMoneyOnce(): List<Money>
 
+    // For voice assistant
 
+    @Query("SELECT * FROM money ORDER BY id DESC LIMIT 1")
+    suspend fun getLastTransaction(): Money?
+
+    @Query("SELECT SUM(amount) FROM money WHERE date = :date AND type = :type")
+    suspend fun getTotalForDate(date: String, type: String): Double?
+
+    // For updating the last transaction
+    @Query("UPDATE money SET amount = :newAmount WHERE id = (SELECT id FROM money ORDER BY id DESC LIMIT 1)")
+    suspend fun updateLastTransactionAmount(newAmount: Double)
+
+    @Query("UPDATE money SET category = :newCategory WHERE id = (SELECT id FROM money ORDER BY id DESC LIMIT 1)")
+    suspend fun updateLastTransactionCategory(newCategory: String)
+
+    // For deleting all of today's transactions
+    @Query("DELETE FROM money WHERE date = :date")
+    suspend fun deleteTransactionsByDate(date: String)
+
+    // For getting a monthly summary (non-live data version for the service)
+    @Query("""
+    SELECT substr(date, 4, 2) as month,
+           SUM(CASE WHEN type = 'INCOME' THEN amount ELSE 0 END) as totalIncome,
+           SUM(CASE WHEN type = 'EXPENSE' THEN amount ELSE 0 END) as totalExpense
+    FROM money
+    WHERE substr(date, 4, 2) = :month AND substr(date, 7, 4) = :year
+    GROUP BY month
+""")
+    suspend fun getMonthlySummary(month: String, year: String): MonthlySummary?
+
+    // For finding the biggest expense in a month
+    @Query("""
+    SELECT * FROM money
+    WHERE type = 'EXPENSE' AND substr(date, 4, 2) = :month AND substr(date, 7, 4) = :year
+    ORDER BY amount DESC
+    LIMIT 1
+""")
+    suspend fun getBiggestExpenseForMonth(month: String, year: String): Money?
 }
 
 data class MoneyMinimal(

@@ -126,6 +126,9 @@ fun BottomNav(
             composable(Routes.ReceiptScanScreen.route) {
                 ReceiptScanScreen(viewModel = moneyViewModel , navController)
             }
+            composable(Routes.VoiceAssistantSettingsScreen.route) {
+                VoiceAssistantSettingsScreen()
+            }
             composable(
                 route = Routes.IncomeDetailsScreen.route,
                 arguments = listOf(navArgument("year") { type = NavType.StringType })
