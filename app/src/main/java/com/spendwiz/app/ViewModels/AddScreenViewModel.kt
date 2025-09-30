@@ -54,6 +54,14 @@ class AddScreenViewModel : ViewModel() {
     @RequiresApi(Build.VERSION_CODES.O)
     val todayMoneyList: LiveData<List<Money>> = moneyDao.getTodayTransactionByDate(formattedDateCustom)
 
+    @RequiresApi(Build.VERSION_CODES.O)
+    val currentMonthSummary: LiveData<MoneyDao.MonthlySummary?> =
+        moneyDao.getMonthlyIncomeExpense(LocalDate.now().year.toString()).map { yearlySummaries ->
+            val currentMonthNumber = LocalDate.now().month.value
+            yearlySummaries.find { summary -> summary.month.toIntOrNull() == currentMonthNumber }
+        }
+
+    
     fun updateMoney(
         id: Int,
         amount: Double,
