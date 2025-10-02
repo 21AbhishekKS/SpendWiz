@@ -15,8 +15,25 @@
     <color name="expense">#FFF44336</color>  <!-- Red -->
     <color name="transfer">#FF3F51B5</color> <!-- Blue -->
 
-    <!-- Transaction colors -->
+    <!-- Button colors -->
     <color name="button_color">#0055bb</color> <!-- Blue -->
+    <color name="button_text_color">#EEEEEE</color> <!-- Blue -->
+
+    <!-- Card colors -->
+    <color name="my_card_container">#CBC7C7C7</color>
+    <color name="my_card_content">#212121</color>
+    <color name="my_disabled_card_container">#EEEEEE</color>
+    <color name="my_disabled_card_content">#BDBDBD</color>
+
+    <!-- Chip colors -->
+    <color name="chip_color">#E1E7F5</color>
+
+    <!-- Toggle button colors -->
+    <color name="toggle_track">#0D65C4</color>
+    <color name="toggle_thumb">#FFFFFF</color>
+    <color name="unchecked_thumb">#E5838383</color>
+
+
 
 
 </resources>

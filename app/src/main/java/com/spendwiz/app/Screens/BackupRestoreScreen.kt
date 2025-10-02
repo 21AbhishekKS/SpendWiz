@@ -111,7 +111,7 @@ fun BackupRestoreScreen(
                     TextButton(
                         onClick = { showLogoutDialog = true }
                     ) {
-                        Text("Sign Out")
+                        Text("Sign Out" , color = colorResource(id = R.color.button_text_color),)
                     }
                 }
             }
@@ -136,7 +136,7 @@ fun BackupRestoreScreen(
                     shape = RoundedCornerShape(8.dp), // less rounded
                     colors = ButtonDefaults.buttonColors(containerColor = myStableButtonColor)
                 ) {
-                    Text("Sign in with Google")
+                    Text("Sign in with Google", color = colorResource(id = R.color.button_text_color))
                 }
             } else {
                 Text("Signed in as: ${googleUser?.displayName}", fontWeight = FontWeight.Bold)
@@ -155,7 +155,8 @@ fun BackupRestoreScreen(
                         // --- THE FIX: Apply the stable color here as well ---
                         colors = ButtonDefaults.buttonColors(containerColor = myStableButtonColor)
                     ) {
-                        Text("Backup")
+                        Text("Backup",
+                            color =colorResource(id = R.color.button_text_color))
                     }
                     OutlinedButton(
                         onClick = { showRestoreDialog = { viewModel.restoreFromDrive() } },
@@ -202,7 +203,7 @@ fun BackupRestoreScreen(
                     shape = RoundedCornerShape(8.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = myStableButtonColor)
                 ) {
-                    Text("Backup")
+                    Text("Backup", color = colorResource(id = R.color.button_text_color))
                 }
                 OutlinedButton(
                     onClick = { openDocumentLauncher.launch(arrayOf("application/json")) },
@@ -247,7 +248,7 @@ fun BackupRestoreScreen(
                 shape = RoundedCornerShape(8.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = myStableButtonColor)
             ) {
-                Text("Import from SMS")
+                Text("Import from SMS", color = colorResource(id = R.color.button_text_color))
             }
             when {
                 isImporting -> {

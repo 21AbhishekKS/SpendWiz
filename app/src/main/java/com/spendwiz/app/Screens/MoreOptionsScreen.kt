@@ -23,11 +23,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavHostController
+import com.spendwiz.app.AppStyle.AppColors.customCardColors
 import com.spendwiz.app.R // Make sure to import your R file
 import com.spendwiz.app.ViewModels.AddScreenViewModel
 import com.spendwiz.app.navigation.Routes
@@ -125,11 +128,12 @@ fun MoreOptionsScreen(
  */
 @Composable
 fun OptionCard(item: OptionItem, onClick: () -> Unit) {
+    val customCardColors = customCardColors()
     Card(
         modifier = Modifier
             .size(100.dp)
             .clickable { onClick() },
-        elevation = CardDefaults.cardElevation(6.dp)
+        colors = customCardColors
     ) {
         Column(
             modifier = Modifier
@@ -154,11 +158,14 @@ fun OptionCard(item: OptionItem, onClick: () -> Unit) {
                 )
             }
             Spacer(modifier = Modifier.height(6.dp))
-            Text(text = item.title, style = MaterialTheme.typography.bodyMedium)
+            Text(
+                text = item.title,
+                style = MaterialTheme.typography.bodyMedium,
+                textAlign = TextAlign.Center
+            )
         }
     }
 }
-
 @Composable
 private fun FeedbackDialog(onClose: () -> Unit) {
     Dialog(

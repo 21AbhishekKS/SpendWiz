@@ -9,7 +9,22 @@
 
     <color name="splash_background">#000000</color> <!-- dark splash -->
 
-    <!-- Transaction colors -->
+    <!-- Button colors -->
     <color name="button_color">#6cace4</color> <!-- Blue -->
+    <color name="button_text_color">#000000</color> <!-- Blue -->
+
+    <!-- Card colors -->
+    <color name="my_card_container">#2A2C30</color>
+    <color name="my_card_content">#E3E3E3</color>
+    <color name="my_disabled_card_container">#2A2C30</color>
+    <color name="my_disabled_card_content">#757575</color>
+
+    <!-- Chip colors -->
+    <color name="chip_color">#404753</color>
+
+    <!-- Toggle button colors -->
+    <color name="toggle_track">#89B3D5</color>
+    <color name="toggle_thumb">#1E3A5F</color>
+    <color name="unchecked_thumb">#E3E3E3</color>
 
 </resources>

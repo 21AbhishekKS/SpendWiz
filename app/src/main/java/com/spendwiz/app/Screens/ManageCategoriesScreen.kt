@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
@@ -20,6 +21,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.spendwiz.app.AppStyle.AppColors.customCardColors
 import com.spendwiz.app.Database.money.Category
 import com.spendwiz.app.R
 import com.spendwiz.app.ViewModels.CategoryViewModel
@@ -85,8 +87,8 @@ fun ManageCategoriesScreen(viewModel: CategoryViewModel) {
 
                 Card(
                     shape = MaterialTheme.shapes.large,
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = customCardColors()
                 ) {
                     Column {
                         // Category header
@@ -128,14 +130,11 @@ fun ManageCategoriesScreen(viewModel: CategoryViewModel) {
                         if (expanded) {
                             val subcategories by viewModel.getSubCategories(category.id).collectAsState(emptyList())
 
-                            Divider(modifier = Modifier.padding(horizontal = 16.dp))
-
                             FlowRow(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 12.dp),
                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                verticalArrangement = Arrangement.spacedBy(8.dp),
                             ) {
                                 subcategories.forEach { sub ->
                                     SubCategoryChip(
@@ -270,7 +269,7 @@ fun SubCategoryChip(text: String, onDelete: () -> Unit) {
         selected = false,
         onClick = { /* Chips are for display/delete only */ },
         label = { Text(text) },
-        shape = CircleShape,
+        shape = RoundedCornerShape(5.dp),
         trailingIcon = {
             Icon(
                 imageVector = Icons.Default.Close,
@@ -285,7 +284,7 @@ fun SubCategoryChip(text: String, onDelete: () -> Unit) {
             )
         },
         colors = InputChipDefaults.inputChipColors(
-            containerColor = MaterialTheme.colorScheme.secondaryContainer
+            containerColor = colorResource(id = R.color.chip_color),
         )
     )
 }
