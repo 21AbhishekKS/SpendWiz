@@ -8,4 +8,8 @@
     <color name="white">#FF000000</color>
 
     <color name="splash_background">#000000</color> <!-- dark splash -->
+
+    <!-- Transaction colors -->
+    <color name="button_color">#6cace4</color> <!-- Blue -->
+
 </resources>

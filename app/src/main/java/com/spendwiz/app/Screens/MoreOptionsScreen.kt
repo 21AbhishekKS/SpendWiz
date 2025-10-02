@@ -1,8 +1,8 @@
 package com.spendwiz.app.Screens
 
 import android.content.Intent
-import android.net.Uri
 import android.os.Build
+import androidx.annotation.DrawableRes
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -22,17 +22,31 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavHostController
+import com.spendwiz.app.R // Make sure to import your R file
 import com.spendwiz.app.ViewModels.AddScreenViewModel
 import com.spendwiz.app.navigation.Routes
 
+/**
+ * Updated data class to hold either an ImageVector or a Drawable resource ID.
+ * A check ensures that at least one of them is provided.
+ */
 data class OptionItem(
     val title: String,
-    val icon: androidx.compose.ui.graphics.vector.ImageVector
-)
+    val iconVector: ImageVector? = null,
+    @DrawableRes val iconDrawableRes: Int? = null
+) {
+    init {
+        require(iconVector != null || iconDrawableRes != null) {
+            "Either iconVector or iconDrawableRes must be provided."
+        }
+    }
+}
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -42,15 +56,20 @@ fun MoreOptionsScreen(
 ) {
     var showFeedback by remember { mutableStateOf(false) }
 
+    // Updated list of options using the new OptionItem class.
+    // Replace R.drawable.your_icon with your actual drawable resource IDs.
     val options = listOf(
-        OptionItem("Share", Icons.Filled.Share),
-        OptionItem("Category", Icons.Filled.Settings),
-        OptionItem("Notifications", Icons.Filled.Notifications),
-        OptionItem("Smart settings", Icons.Filled.Settings),
-        OptionItem("Feedback", Icons.Filled.Warning),
-        OptionItem("BackupRestoreScreen", Icons.Filled.Warning),
-        OptionItem("cam", Icons.Filled.Warning),
-        OptionItem("assist", Icons.Filled.Warning)
+        OptionItem("Backup", iconDrawableRes = R.drawable.backup),
+        OptionItem("Category", iconVector = Icons.Filled.Settings),
+        OptionItem("Notifications", iconVector = Icons.Filled.Notifications),
+
+        OptionItem("Assistant", iconDrawableRes = R.drawable.voice_selection),
+        OptionItem("Scan Bill", iconDrawableRes = R.drawable.document_scanner),
+        OptionItem("Smart settings", iconDrawableRes = R.drawable.smart_settings),
+
+        OptionItem("Feedback", iconDrawableRes = R.drawable.feedback),
+        OptionItem("FAQ", iconDrawableRes = R.drawable.faq),
+        OptionItem("Share", iconVector = Icons.Filled.Share),
     )
 
     Box(
@@ -84,10 +103,10 @@ fun MoreOptionsScreen(
                             "Category" -> navController.navigate(Routes.ManageCategoriesScreen.route)
                             "Notifications" -> navController.navigate(Routes.NotificationSettingsScreen.route)
                             "Smart settings" -> navController.navigate(Routes.SmartSettings.route)
-                            "BackupRestoreScreen" -> navController.navigate(Routes.BackupRestoreScreen.route)
+                            "Backup" -> navController.navigate(Routes.BackupRestoreScreen.route)
                             "Feedback" -> showFeedback = true
-                            "cam" -> navController.navigate(Routes.ReceiptScanScreen.route)
-                            "assist" -> navController.navigate(Routes.VoiceAssistantSettingsScreen.route)
+                            "Scan Bill" -> navController.navigate(Routes.ReceiptScanScreen.route)
+                            "Assistant" -> navController.navigate(Routes.VoiceAssistantSettingsScreen.route)
                         }
                     })
                 }
@@ -100,6 +119,10 @@ fun MoreOptionsScreen(
     }
 }
 
+/**
+ * Updated OptionCard to conditionally display an Icon from either
+ * an ImageVector or a painterResource (drawable ID).
+ */
 @Composable
 fun OptionCard(item: OptionItem, onClick: () -> Unit) {
     Card(
@@ -115,11 +138,21 @@ fun OptionCard(item: OptionItem, onClick: () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Icon(
-                imageVector = item.icon,
-                contentDescription = item.title,
-                modifier = Modifier.size(32.dp)
-            )
+            // Conditionally render the icon based on what is provided
+            item.iconVector?.let {
+                Icon(
+                    imageVector = it,
+                    contentDescription = item.title,
+                    modifier = Modifier.size(32.dp)
+                )
+            }
+            item.iconDrawableRes?.let {
+                Icon(
+                    painter = painterResource(id = it),
+                    contentDescription = item.title,
+                    modifier = Modifier.size(32.dp)
+                )
+            }
             Spacer(modifier = Modifier.height(6.dp))
             Text(text = item.title, style = MaterialTheme.typography.bodyMedium)
         }
@@ -173,7 +206,7 @@ private fun shareAppLink(context: android.content.Context) {
         type = "text/plain"
         putExtra(
             android.content.Intent.EXTRA_TEXT,
-            "Try SpendWiz! It automatically tracks transactions, so you can easily see where your money goes. Check it out here: https://play.google.com/store/apps/details?id=com.abhi.expencetracker&pcampaignid=web_share"
+            "Try SpendWiz! It automatically tracks transactions, so you can easily see where your money goes. Check it out here: https://play.google.com/store/apps/details?id=com.spendwiz.app&pcampaignid=web_share"
         )
     }
     context.startActivity(Intent.createChooser(shareIntent, "Invite your friends via"))

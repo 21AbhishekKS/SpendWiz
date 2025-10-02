@@ -4,6 +4,7 @@ import android.net.Uri
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -11,8 +12,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -22,6 +23,7 @@ import com.google.android.gms.common.api.Scope
 import com.google.api.services.drive.DriveScopes
 import com.spendwiz.app.BackUp.BackupRestoreState
 import com.spendwiz.app.BackUp.BackupRestoreViewModel
+import com.spendwiz.app.R
 import com.spendwiz.app.ViewModels.AddScreenViewModel
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -46,6 +48,8 @@ fun BackupRestoreScreen(
     var showRestoreDialog by remember { mutableStateOf<(() -> Unit)?>(null) }
     var importedCount by remember { mutableStateOf<Int?>(null) }
     var isImporting by remember { mutableStateOf(false) }
+
+    val myStableButtonColor = colorResource(id = R.color.button_color)
 
     val authResultLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
@@ -79,13 +83,9 @@ fun BackupRestoreScreen(
         }
     }
 
-    Scaffold(
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
-    ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
                 .padding(20.dp),
             horizontalAlignment = Alignment.Start,
             verticalArrangement = Arrangement.Top
@@ -133,7 +133,8 @@ fun BackupRestoreScreen(
                         authResultLauncher.launch(googleSignInClient.signInIntent)
                     },
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(8.dp) // less rounded
+                    shape = RoundedCornerShape(8.dp), // less rounded
+                    colors = ButtonDefaults.buttonColors(containerColor = myStableButtonColor)
                 ) {
                     Text("Sign in with Google")
                 }
@@ -142,7 +143,6 @@ fun BackupRestoreScreen(
                 Text(googleUser?.email ?: "", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Spacer(Modifier.height(12.dp))
 
-                // Backup + Restore in row
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
@@ -151,7 +151,9 @@ fun BackupRestoreScreen(
                         onClick = { showRestoreDialog = { viewModel.backupToDrive() } },
                         modifier = Modifier.weight(1f),
                         enabled = state !is BackupRestoreState.InProgress,
-                        shape = RoundedCornerShape(8.dp)
+                        shape = RoundedCornerShape(8.dp),
+                        // --- THE FIX: Apply the stable color here as well ---
+                        colors = ButtonDefaults.buttonColors(containerColor = myStableButtonColor)
                     ) {
                         Text("Backup")
                     }
@@ -159,7 +161,10 @@ fun BackupRestoreScreen(
                         onClick = { showRestoreDialog = { viewModel.restoreFromDrive() } },
                         modifier = Modifier.weight(1f),
                         enabled = state !is BackupRestoreState.InProgress,
-                        shape = RoundedCornerShape(8.dp)
+                        shape = RoundedCornerShape(8.dp),
+                        // --- THE FIX: For OutlinedButton, set the border and content color ---
+                        border = BorderStroke(1.dp, myStableButtonColor),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = myStableButtonColor)
                     ) {
                         Text("Restore")
                     }
@@ -168,7 +173,7 @@ fun BackupRestoreScreen(
 
             if (state is BackupRestoreState.InProgress) {
                 Spacer(Modifier.height(12.dp))
-                CircularProgressIndicator(modifier = Modifier.size(28.dp))
+                CircularProgressIndicator(modifier = Modifier.size(28.dp), color = myStableButtonColor)
                 Text("Processing… Please wait.", fontSize = 13.sp)
             }
 
@@ -194,7 +199,8 @@ fun BackupRestoreScreen(
                     onClick = { createDocumentLauncher.launch(suggestedFileName) },
                     modifier = Modifier.weight(1f),
                     enabled = state !is BackupRestoreState.InProgress,
-                    shape = RoundedCornerShape(8.dp)
+                    shape = RoundedCornerShape(8.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = myStableButtonColor)
                 ) {
                     Text("Backup")
                 }
@@ -202,7 +208,10 @@ fun BackupRestoreScreen(
                     onClick = { openDocumentLauncher.launch(arrayOf("application/json")) },
                     modifier = Modifier.weight(1f),
                     enabled = state !is BackupRestoreState.InProgress,
-                    shape = RoundedCornerShape(8.dp)
+                    shape = RoundedCornerShape(8.dp),
+                    // --- THE FIX: Apply the stable color to the border and text ---
+                    border = BorderStroke(1.dp, myStableButtonColor),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = myStableButtonColor)
                 ) {
                     Text("Restore")
                 }
@@ -235,13 +244,14 @@ fun BackupRestoreScreen(
                     }
                 },
                 enabled = !isImporting,
-                shape = RoundedCornerShape(8.dp)
+                shape = RoundedCornerShape(8.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = myStableButtonColor)
             ) {
                 Text("Import from SMS")
             }
             when {
                 isImporting -> {
-                    CircularProgressIndicator(modifier = Modifier.size(28.dp))
+                    CircularProgressIndicator(modifier = Modifier.size(28.dp), color = myStableButtonColor)
                     Text("Importing SMS…", fontSize = 13.sp)
                 }
                 importedCount != null -> {
@@ -256,7 +266,6 @@ fun BackupRestoreScreen(
             Divider(modifier = Modifier.padding(vertical = 20.dp))
 
         }
-    }
 
     // Restore Confirmation Dialog
     if (showRestoreDialog != null) {
@@ -269,7 +278,8 @@ fun BackupRestoreScreen(
                     onClick = {
                         showRestoreDialog?.invoke()
                         showRestoreDialog = null
-                    }
+                    },
+                    colors = ButtonDefaults.textButtonColors(contentColor = myStableButtonColor)
                 ) { Text("Yes, Continue") }
             },
             dismissButton = {
@@ -290,7 +300,9 @@ fun BackupRestoreScreen(
                     onClick = {
                         viewModel.signOut(context)
                         showLogoutDialog = false
-                    }
+                    },
+                    // --- Optional: Apply color to dialog buttons too ---
+                    colors = ButtonDefaults.textButtonColors(contentColor = myStableButtonColor)
                 ) { Text("Yes, Sign Out") }
             },
             dismissButton = {

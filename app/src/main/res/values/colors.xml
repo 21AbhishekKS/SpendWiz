@@ -14,4 +14,9 @@
     <color name="income">#FF4CAF50</color>   <!-- Green -->
     <color name="expense">#FFF44336</color>  <!-- Red -->
     <color name="transfer">#FF3F51B5</color> <!-- Blue -->
+
+    <!-- Transaction colors -->
+    <color name="button_color">#0055bb</color> <!-- Blue -->
+
+
 </resources>
