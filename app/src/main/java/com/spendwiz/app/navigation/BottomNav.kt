@@ -117,9 +117,6 @@ fun BottomNav(
             composable(Routes.ManageCategoriesScreen.route) {
                 ManageCategoriesScreen(categoryViewModel)
             }
-            composable(Routes.SmartSettings.route) {
-                SmartSettings(preferencesManager = PreferencesManager(context))
-            }
             composable(Routes.BackupRestoreScreen.route) {
                 BackupRestoreScreen(addScreenViewModel = moneyViewModel)
             }

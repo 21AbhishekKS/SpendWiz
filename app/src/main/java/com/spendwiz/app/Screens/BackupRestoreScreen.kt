@@ -21,6 +21,7 @@ import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.Scope
 import com.google.api.services.drive.DriveScopes
+import com.spendwiz.app.AppStyle.AppColors.customButtonColors
 import com.spendwiz.app.BackUp.BackupRestoreState
 import com.spendwiz.app.BackUp.BackupRestoreViewModel
 import com.spendwiz.app.R
@@ -109,9 +110,10 @@ fun BackupRestoreScreen(
                 )
                 if (googleUser != null) {
                     TextButton(
+                        colors = customButtonColors(),
                         onClick = { showLogoutDialog = true }
                     ) {
-                        Text("Sign Out" , color = colorResource(id = R.color.button_text_color),)
+                        Text("Sign Out")
                     }
                 }
             }
@@ -134,9 +136,9 @@ fun BackupRestoreScreen(
                     },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(8.dp), // less rounded
-                    colors = ButtonDefaults.buttonColors(containerColor = myStableButtonColor)
+                    colors = customButtonColors()
                 ) {
-                    Text("Sign in with Google", color = colorResource(id = R.color.button_text_color))
+                    Text("Sign in with Google")
                 }
             } else {
                 Text("Signed in as: ${googleUser?.displayName}", fontWeight = FontWeight.Bold)
@@ -153,10 +155,9 @@ fun BackupRestoreScreen(
                         enabled = state !is BackupRestoreState.InProgress,
                         shape = RoundedCornerShape(8.dp),
                         // --- THE FIX: Apply the stable color here as well ---
-                        colors = ButtonDefaults.buttonColors(containerColor = myStableButtonColor)
+                        colors = customButtonColors()
                     ) {
-                        Text("Backup",
-                            color =colorResource(id = R.color.button_text_color))
+                        Text("Backup")
                     }
                     OutlinedButton(
                         onClick = { showRestoreDialog = { viewModel.restoreFromDrive() } },
@@ -201,9 +202,9 @@ fun BackupRestoreScreen(
                     modifier = Modifier.weight(1f),
                     enabled = state !is BackupRestoreState.InProgress,
                     shape = RoundedCornerShape(8.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = myStableButtonColor)
+                    colors = customButtonColors()
                 ) {
-                    Text("Backup", color = colorResource(id = R.color.button_text_color))
+                    Text("Backup")
                 }
                 OutlinedButton(
                     onClick = { openDocumentLauncher.launch(arrayOf("application/json")) },

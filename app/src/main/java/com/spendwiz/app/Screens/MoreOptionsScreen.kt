@@ -68,8 +68,6 @@ fun MoreOptionsScreen(
 
         OptionItem("Assistant", iconDrawableRes = R.drawable.voice_selection),
         OptionItem("Scan Bill", iconDrawableRes = R.drawable.document_scanner),
-        OptionItem("Smart settings", iconDrawableRes = R.drawable.smart_settings),
-
         OptionItem("Feedback", iconDrawableRes = R.drawable.feedback),
         OptionItem("FAQ", iconDrawableRes = R.drawable.faq),
         OptionItem("Share", iconVector = Icons.Filled.Share),

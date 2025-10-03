@@ -94,14 +94,19 @@ class VoiceAssistantService : Service() {
         }
 
         floatingView.setContent {
-            FloatingVoiceButton(isListening = isListening.value) {
-                if (!isListening.value) {
-                    startListening()
-                } else {
-                    stopListening()
+            FloatingVoiceButton(
+                isListening = isListening.value,
+                onClick = {
+                    if (!isListening.value) startListening() else stopListening()
+                },
+                onDrag = { dx, dy ->
+                    params.x += dx.toInt()
+                    params.y += dy.toInt()
+                    windowManager.updateViewLayout(floatingView, params)
                 }
-            }
+            )
         }
+
 
         // Add touch listener for dragging
         floatingView.setOnTouchListener { _, event ->
