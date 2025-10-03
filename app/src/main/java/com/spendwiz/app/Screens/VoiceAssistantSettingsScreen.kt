@@ -188,10 +188,8 @@ fun VoiceCommandNoticeCard() {
     val commands = listOf(
         "Add 150 expense for lunch",
         "Add 50000 income for salary",
-        "Add 700 expense for fuel in transportation category",
         "Delete last transaction",
         "Update last transaction amount to 250",
-        "Change category of last expense to utilities",
         "Delete all transactions from today",
         "What is my total expense today",
         "What's my income for today",

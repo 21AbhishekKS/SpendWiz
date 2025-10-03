@@ -144,6 +144,12 @@ fun Annual(viewModel: AddScreenViewModel, navController: NavController) {
                         ),
                         spaceBetweenBars = 0.dp,
                         spaceBetweenGroups = 8.dp,
+                        descriptionStyle = TextStyle(
+                            color = MaterialTheme.colorScheme.onBackground, // Automatically adapts to dark/light
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Normal,
+                            lineHeight = 16.sp
+                        )
                     )
                 }
 

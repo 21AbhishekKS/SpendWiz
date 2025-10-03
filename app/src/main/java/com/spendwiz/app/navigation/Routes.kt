@@ -16,7 +16,7 @@ sealed class Routes( val route : String) {
     object InsightsScreen : Routes("Insights")
     object BackupRestoreScreen : Routes("BackupRestoreScreen")
     object More : Routes("More")
-    object SpentScreen : Routes("History")
+    object SpentScreen : Routes("Annual")
     object AddScreen : Routes("Add")
     object UpdateScreen : Routes("Update") {
         fun createRoute(id: Int, description: String, amount: Double, type: String): String {

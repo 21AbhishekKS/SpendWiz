@@ -188,8 +188,8 @@ fun MyBottomBar(navController1: NavHostController) {
 
     val items = listOf(
         BottomNavigationItem(Routes.HomeScreen.route, Icons.Filled.Home, Icons.Outlined.Home, false, null),
-        BottomNavigationItem(Routes.SpentScreen.route, Icons.Filled.Info, Icons.Outlined.Info, false, null),
         BottomNavigationItem(Routes.InsightsScreen.route, Icons.Filled.DateRange, Icons.Outlined.DateRange, false, null),
+        BottomNavigationItem(Routes.SpentScreen.route, Icons.Filled.Info, Icons.Outlined.Info, false, null),
         BottomNavigationItem(Routes.More.route, Icons.Filled.MoreVert, Icons.Outlined.MoreVert, false, null),
     )
 
