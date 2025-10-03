@@ -114,6 +114,9 @@ fun BottomNav(
             composable(Routes.More.route) {
                 MoreOptionsScreen(moneyViewModel, navController1)
             }
+            composable(Routes.FaqScreen.route) {
+                FaqScreen()
+            }
             composable(Routes.ManageCategoriesScreen.route) {
                 ManageCategoriesScreen(categoryViewModel)
             }

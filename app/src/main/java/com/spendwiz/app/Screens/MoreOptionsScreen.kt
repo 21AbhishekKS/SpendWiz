@@ -64,7 +64,7 @@ fun MoreOptionsScreen(
     val options = listOf(
         OptionItem("Backup", iconDrawableRes = R.drawable.baseline_backup_24),
         OptionItem("Category", iconVector = Icons.Filled.Settings),
-        OptionItem("Notifications", iconVector = Icons.Filled.Notifications),
+        OptionItem("Notifications",  iconDrawableRes = R.drawable.notification),
 
         OptionItem("Assistant", iconDrawableRes = R.drawable.assistant),
         OptionItem("Scan Bill", iconDrawableRes = R.drawable.document_scanner),
@@ -103,7 +103,7 @@ fun MoreOptionsScreen(
                             "Share" -> shareAppLink(navController.context)
                             "Category" -> navController.navigate(Routes.ManageCategoriesScreen.route)
                             "Notifications" -> navController.navigate(Routes.NotificationSettingsScreen.route)
-                            "Smart settings" -> navController.navigate(Routes.SmartSettings.route)
+                            "FAQ" -> navController.navigate(Routes.FaqScreen.route)
                             "Backup" -> navController.navigate(Routes.BackupRestoreScreen.route)
                             "Feedback" -> showFeedback = true
                             "Scan Bill" -> navController.navigate(Routes.ReceiptScanScreen.route)
