@@ -1,4 +1,4 @@
-package com.spendwiz.app.voiceAssistant
+package com.spendwiz.app.voiceAssistant.ExternalAssistant
 
 import com.spendwiz.app.Database.money.TransactionType
 

@@ -1,4 +1,4 @@
-package com.spendwiz.app.voiceAssistant
+package com.spendwiz.app.voiceAssistant.ExternalAssistant
 
 import com.spendwiz.app.Database.money.TransactionType
 import java.util.Locale
@@ -81,7 +81,14 @@ object VoiceCommandParser {
             val category = it.groupValues[4].trim()
             val date = it.groupValues.getOrNull(5)?.trim()?.ifEmpty { null }
             val time = it.groupValues.getOrNull(6)?.trim()?.ifEmpty { null }
-            return ParsedCommand.AddTransaction(amount, type ?: TransactionType.EXPENSE, description, category, date, time)
+            return ParsedCommand.AddTransaction(
+                amount,
+                type ?: TransactionType.EXPENSE,
+                description,
+                category,
+                date,
+                time
+            )
         }
 
         // 2️⃣ Add Transaction — Simple
@@ -89,13 +96,20 @@ object VoiceCommandParser {
             val amount = it.groupValues[1].toDouble()
             val type = parseType(it.groupValues[2])
             val description = it.groupValues[3].trim()
-            return ParsedCommand.AddTransaction(amount, type ?: TransactionType.EXPENSE, description)
+            return ParsedCommand.AddTransaction(
+                amount,
+                type ?: TransactionType.EXPENSE,
+                description
+            )
         }
 
         // 🧽 Delete / Edit
         deleteLastRegex.find(text)?.let { return ParsedCommand.DeleteLastTransaction }
         updateLastAmountRegex.find(text)?.let { return ParsedCommand.UpdateLastTransactionAmount(it.groupValues[1].toDouble()) }
-        changeLastCategoryRegex.find(text)?.let { return ParsedCommand.UpdateLastTransactionCategory(it.groupValues[1].trim()) }
+        changeLastCategoryRegex.find(text)?.let { return ParsedCommand.UpdateLastTransactionCategory(
+            it.groupValues[1].trim()
+        )
+        }
         renameLastRegex.find(text)?.let { return ParsedCommand.RenameLastTransaction(it.groupValues[2].trim()) }
         moveLastCategoryRegex.find(text)?.let { return ParsedCommand.MoveLastTransactionCategory(it.groupValues[1].trim()) }
         deleteTodayRegex.find(text)?.let { return ParsedCommand.DeleteTodayTransactions }

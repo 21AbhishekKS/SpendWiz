@@ -17,6 +17,11 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
+// <<< START: MODIFICATION - Import lifecycle dependencies
+import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+// <<< END: MODIFICATION
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -25,20 +30,15 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.*
 import androidx.navigation.navArgument
 import com.spendwiz.app.Database.money.TransactionType
-import com.spendwiz.app.Notifications.PreferencesManager
 import com.spendwiz.app.Screens.*
 import com.spendwiz.app.ViewModels.AddScreenViewModel
 import com.spendwiz.app.ViewModels.CategoryViewModel
 import com.spendwiz.app.helper.BottomNavigationItem
-import com.spendwiz.app.ui.theme.BluePrimary
-import com.spendwiz.app.ui.theme.BluePrimaryDark
-import com.spendwiz.app.ui.theme.BluePrimaryLight
-import com.spendwiz.app.ui.theme.BottomBarBorderDark
-import com.spendwiz.app.ui.theme.BottomBarBorderLight
-import com.spendwiz.app.ui.theme.BottomIconSelectedDark
-import com.spendwiz.app.ui.theme.BottomIconSelectedLight
-import com.spendwiz.app.ui.theme.BottomLabelSelectedDark
-import com.spendwiz.app.ui.theme.BottomLabelSelectedLight
+import com.spendwiz.app.ui.theme.*
+import com.spendwiz.app.voiceAssistant.InternalAssistant.InAppVoiceAssistantFab
+import com.spendwiz.app.Notifications.PreferencesManager as NotificationPrefsManager
+import com.spendwiz.app.Screens.PreferencesManager as VoicePrefsManager
+
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -46,22 +46,44 @@ fun BottomNav(
     navController: NavController,
     moneyViewModel: AddScreenViewModel,
     categoryViewModel: CategoryViewModel,
-    prefs: PreferencesManager,
+    prefs: NotificationPrefsManager,
     onDailyToggle: (Boolean, Int, Int) -> Unit,
     onTransactionToggle: (Boolean) -> Unit
 ) {
     val context = LocalContext.current
     val navController1 = rememberNavController()
 
+    val voicePrefs = remember { VoicePrefsManager(context) }
+    var showInAppFab by remember { mutableStateOf(voicePrefs.isInAppAssistantEnabled()) }
+
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                showInAppFab = voicePrefs.isInAppAssistantEnabled()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
+
     Scaffold(
         bottomBar = { MyBottomBar(navController1 = navController1) },
-        contentWindowInsets = WindowInsets.safeDrawing // handles gesture vs 3-button insets
+        contentWindowInsets = WindowInsets.safeDrawing,
+        floatingActionButton = {
+            if (showInAppFab) {
+                InAppVoiceAssistantFab()
+            }
+        }
     ) { innerPadding ->
         NavHost(
             navController = navController1,
             startDestination = Routes.HomeScreen.route,
             modifier = Modifier.padding(innerPadding)
         ) {
+            // ... (Your NavHost destinations remain unchanged)
             composable(route = Routes.HomeScreen.route) {
                 HomeScreen(moneyViewModel, navController1)
             }
@@ -70,7 +92,7 @@ fun BottomNav(
             }
             composable("NotificationSettingsScreen") {
                 NotificationSettingsScreen(
-                    prefs = PreferencesManager(context),
+                    prefs = NotificationPrefsManager(context), // Use the correct prefs manager
                     onDailyToggle = onDailyToggle,
                     onTransactionToggle = onTransactionToggle
                 )
@@ -175,9 +197,6 @@ fun BottomNav(
                     subCategory = subCategory
                 )
             }
-
-
-
         }
     }
 }
@@ -283,6 +302,4 @@ fun MyBottomBar(navController1: NavHostController) {
             }
         }
     }
-
 }
-

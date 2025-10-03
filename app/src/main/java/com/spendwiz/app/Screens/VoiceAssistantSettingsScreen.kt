@@ -19,15 +19,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.spendwiz.app.AppStyle.AppColors.customButtonColors
 import com.spendwiz.app.AppStyle.AppColors.customCardColors
 import com.spendwiz.app.AppStyle.AppColors.customSwitchColors
-import com.spendwiz.app.R
-import com.spendwiz.app.voiceAssistant.VoiceAssistantService
+import com.spendwiz.app.voiceAssistant.ExternalAssistant.VoiceAssistantService
 
 // This class remains unchanged as it handles data logic, not UI.
 class PreferencesManager(context: Context) {
@@ -35,8 +33,8 @@ class PreferencesManager(context: Context) {
 
     companion object {
         const val KEY_SERVICE_ENABLED = "key_service_enabled"
+        const val KEY_IN_APP_ASSISTANT_ENABLED = "key_in_app_assistant_enabled"
     }
-
     fun setServiceEnabled(enabled: Boolean) {
         sharedPreferences.edit().putBoolean(KEY_SERVICE_ENABLED, enabled).apply()
     }
@@ -44,113 +42,177 @@ class PreferencesManager(context: Context) {
     fun isServiceEnabled(): Boolean {
         return sharedPreferences.getBoolean(KEY_SERVICE_ENABLED, false)
     }
+
+    fun setInAppAssistantEnabled(enabled: Boolean) {
+        sharedPreferences.edit().putBoolean(KEY_IN_APP_ASSISTANT_ENABLED, enabled).apply()
+    }
+
+    fun isInAppAssistantEnabled(): Boolean {
+        return sharedPreferences.getBoolean(KEY_IN_APP_ASSISTANT_ENABLED, false)
+    }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun VoiceAssistantSettingsScreen() {
     val context = LocalContext.current
     val prefsManager = remember { PreferencesManager(context) }
-    var isServiceEnabled by remember { mutableStateOf(prefsManager.isServiceEnabled()) }
 
-    // Launcher to request audio permission.
-    val audioPermissionLauncher = rememberLauncherForActivityResult(
+    // State for the external (overlay) assistant
+    var isServiceEnabled by remember { mutableStateOf(prefsManager.isServiceEnabled()) }
+    // State for the new in-app assistant
+    var isInAppAssistantEnabled by remember { mutableStateOf(prefsManager.isInAppAssistantEnabled()) }
+
+    // Launcher for the external assistant's audio permission
+    val externalAudioPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { isGranted ->
         if (isGranted) {
             startVoiceService(context)
         } else {
-            Toast.makeText(context, "Audio permission is required to use the voice assistant.", Toast.LENGTH_LONG).show()
-            // Revert the switch state if permission is denied.
+            Toast.makeText(context, "Audio permission is required for the external assistant.", Toast.LENGTH_LONG).show()
             isServiceEnabled = false
             prefsManager.setServiceEnabled(false)
         }
     }
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(24.dp)
-        ) {
-            Row(Modifier.fillMaxWidth()) {
-                Text(
-                    "Voice Assistant",
-                    style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold)
-                )
-            }
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = customCardColors()
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 20.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "Enable Voice Assistant",
-                            // M3 Typography: Replaced h6 with titleLarge
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "Allow Spendwiz mini to appear over other apps to take voice commands.",
-                            // M3 Typography: Replaced body2 with bodyMedium
-                            style = MaterialTheme.typography.bodyMedium,
-                            // M3 Color Scheme: Replaced onSurface with onSurfaceVariant for secondary text
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    Switch(
-                        colors = customSwitchColors(),
-                        checked = isServiceEnabled,
-                        onCheckedChange = { isChecked ->
-                            isServiceEnabled = isChecked
-                            prefsManager.setServiceEnabled(isChecked)
 
-                            if (isChecked) {
-                                checkPermissionsAndStartService(context) {
-                                    audioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
-                                }
-                            } else {
-                                stopVoiceService(context)
-                            }
-                        }
-                    )
-                }
-            }
+    // Launcher for the new in-app assistant's audio permission
+    val inAppAudioPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (!isGranted) {
+            Toast.makeText(context, "Audio permission is required for the in-app assistant.", Toast.LENGTH_LONG).show()
+            isInAppAssistantEnabled = false
+            prefsManager.setInAppAssistantEnabled(false)
+        }
+        // If granted, we don't need to do anything extra, the switch is already on.
+    }
 
-            // Button to open Text-to-Speech settings.
-            Button(
-                colors = customButtonColors(),
-                onClick = {
-                    val intent = Intent("com.android.settings.TTS_SETTINGS").apply {
-                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    }
-                    try {
-                        context.startActivity(intent)
-                    } catch (e: Exception) {
-                        Toast.makeText(context, "Could not open Text-to-Speech settings.", Toast.LENGTH_SHORT).show()
-                    }
-                },
-                shape = RoundedCornerShape(12.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp)
-            ) {
-                Text("Download Offline Voice Package")
-            }
-
-            // Display a card with example voice commands.
-            VoiceCommandNoticeCard()
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(16.dp) // Adjusted spacing
+    ) {
+        Row(Modifier.fillMaxWidth()) {
+            Text(
+                "Voice Assistant",
+                style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold)
+            )
         }
 
+        // Card for External (Overlay) Assistant
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = customCardColors()
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 20.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "External Assistant",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "Allow Spendwiz mini to appear over other apps. Requires overlay permission.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Switch(
+                    colors = customSwitchColors(),
+                    checked = isServiceEnabled,
+                    onCheckedChange = { isChecked ->
+                        isServiceEnabled = isChecked
+                        prefsManager.setServiceEnabled(isChecked)
+
+                        if (isChecked) {
+                            checkPermissionsAndStartService(context) {
+                                externalAudioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                            }
+                        } else {
+                            stopVoiceService(context)
+                        }
+                    }
+                )
+            }
+        }
+
+        // --- NEW CARD FOR IN-APP ASSISTANT ---
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = customCardColors()
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 20.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "In-App Assistant",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "Enable a voice button inside the app. Works only when the app is open.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Switch(
+                    colors = customSwitchColors(),
+                    checked = isInAppAssistantEnabled,
+                    onCheckedChange = { isChecked ->
+                        isInAppAssistantEnabled = isChecked
+                        prefsManager.setInAppAssistantEnabled(isChecked)
+
+                        if (isChecked) {
+                            // Only requests audio permission, no overlay check.
+                            inAppAudioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                        }
+                        // No service to start or stop for the in-app version.
+                    }
+                )
+            }
+        }
+
+
+        // Button to open Text-to-Speech settings.
+        Button(
+            colors = customButtonColors(),
+            onClick = {
+                val intent = Intent("com.android.settings.TTS_SETTINGS").apply {
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                try {
+                    context.startActivity(intent)
+                } catch (e: Exception) {
+                    Toast.makeText(context, "Could not open Text-to-Speech settings.", Toast.LENGTH_SHORT).show()
+                }
+            },
+            shape = RoundedCornerShape(12.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(50.dp)
+        ) {
+            Text("Download Offline Voice Package")
+        }
+
+        // Display a card with example voice commands.
+        VoiceCommandNoticeCard()
+    }
 }
 
 // Helper function to check "Draw over other apps" permission before requesting audio.
@@ -162,7 +224,6 @@ private fun checkPermissionsAndStartService(context: Context, requestAudioPermis
             Uri.parse("package:${context.packageName}")
         )
         context.startActivity(intent)
-        // Note: You might need to handle the result of this action to update the switch state.
         return
     }
     requestAudioPermission()
@@ -197,42 +258,31 @@ fun VoiceCommandNoticeCard() {
         "What is my biggest expense this month"
     )
 
-    // Using Card instead of Surface for better semantics in M3.
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        // M3 Color Scheme: Using surfaceVariant for a distinct but harmonious background.
         colors = customCardColors(),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
                 text = "Quick Voice Commands",
-                // M3 Typography: Replaced h6 with titleMedium
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                // M3 Color Scheme: onSurfaceVariant is suitable for titles on a surfaceVariant background.
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.fillMaxWidth(),
                 textAlign = TextAlign.Center
             )
-
-            // HorizontalDivider is the new M3 component for Divider.
             HorizontalDivider(
-                // M3 Color Scheme: outline is the standard color for dividers.
                 color = MaterialTheme.colorScheme.outline,
                 thickness = 1.dp,
                 modifier = Modifier.padding(vertical = 12.dp)
             )
-
-            // Using Column with Arrangement.spacedBy for cleaner spacing.
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 commands.forEach { command ->
                     Text(
                         text = "• $command",
-                        // M3 Typography: Replaced custom font size with bodyMedium
                         style = MaterialTheme.typography.bodyMedium,
-                        // M3 Color Scheme: onSurfaceVariant for body text.
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -241,3 +291,4 @@ fun VoiceCommandNoticeCard() {
         }
     }
 }
+
