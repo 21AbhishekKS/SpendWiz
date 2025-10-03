@@ -69,6 +69,10 @@ object VoiceCommandParser {
     private val backupRegex = "(?i)backup\\s+my\\s+data\\s+now".toRegex()
     private val importSMSRegex = "(?i)import\\s+transactions\\s+from\\s+sms".toRegex()
 
+    // --- Navigation ---
+    private val navigateToScreenRegex =
+        "(?i)(?:go to|navigate to|open|show me the?)\\s+(home|insights|annual|spent|more|add)\\s*(?:screen|page|view)?".toRegex()
+
 
     fun parse(command: String): ParsedCommand {
         val text = command.trim()
@@ -103,6 +107,13 @@ object VoiceCommandParser {
             )
         }
 
+        // Navigation (Updated logic)
+        navigateToScreenRegex.find(text)?.let {
+            val screenName = it.groupValues[1].lowercase(Locale.getDefault())
+            mapScreenNameToRoute(screenName)?.let { route ->
+                return ParsedCommand.NavigateToScreen(route)
+            }
+        }
         // 🧽 Delete / Edit
         deleteLastRegex.find(text)?.let { return ParsedCommand.DeleteLastTransaction }
         updateLastAmountRegex.find(text)?.let { return ParsedCommand.UpdateLastTransactionAmount(it.groupValues[1].toDouble()) }
@@ -146,13 +157,10 @@ object VoiceCommandParser {
 
         fastestGrowingRegex.find(text)?.let { return ParsedCommand.QueryFastestGrowingCategory }
 
-        // 🧭 Navigation
-        openAddExpenseRegex.find(text)?.let { return ParsedCommand.OpenAddExpenseScreen }
-        switchInsightsRegex.find(text)?.let { return ParsedCommand.SwitchToInsightsView }
-
         // 💾 Backup / Import
         backupRegex.find(text)?.let { return ParsedCommand.BackupData }
         importSMSRegex.find(text)?.let { return ParsedCommand.ImportFromSMS }
+
 
         return ParsedCommand.Unrecognized
     }
@@ -162,6 +170,16 @@ object VoiceCommandParser {
         return when (typeString.lowercase(Locale.getDefault())) {
             "expense", "spending" -> TransactionType.EXPENSE
             "income" -> TransactionType.INCOME
+            else -> null
+        }
+    }
+    private fun mapScreenNameToRoute(screenName: String): String? {
+        return when (screenName) {
+            "home" -> "Home"
+            "insights" -> "Insights"
+            "annual", "spent" -> "Annual"
+            "more" -> "More"
+            "add" -> "Add"
             else -> null
         }
     }

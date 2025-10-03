@@ -27,7 +27,6 @@ import com.spendwiz.app.AppStyle.AppColors.customCardColors
 import com.spendwiz.app.AppStyle.AppColors.customSwitchColors
 import com.spendwiz.app.voiceAssistant.ExternalAssistant.VoiceAssistantService
 
-// This class remains unchanged as it handles data logic, not UI.
 class PreferencesManager(context: Context) {
     private val sharedPreferences: SharedPreferences = context.getSharedPreferences("voice_assistant_prefs", Context.MODE_PRIVATE)
 
@@ -35,6 +34,7 @@ class PreferencesManager(context: Context) {
         const val KEY_SERVICE_ENABLED = "key_service_enabled"
         const val KEY_IN_APP_ASSISTANT_ENABLED = "key_in_app_assistant_enabled"
     }
+
     fun setServiceEnabled(enabled: Boolean) {
         sharedPreferences.edit().putBoolean(KEY_SERVICE_ENABLED, enabled).apply()
     }
@@ -53,16 +53,14 @@ class PreferencesManager(context: Context) {
 }
 
 @Composable
-fun VoiceAssistantSettingsScreen() {
+fun VoiceAssistantSettingsScreen(
+    isServiceEnabled: Boolean,
+    isInAppAssistantEnabled: Boolean,
+    onServiceToggle: (Boolean) -> Unit,
+    onInAppAssistantToggle: (Boolean) -> Unit
+) {
     val context = LocalContext.current
-    val prefsManager = remember { PreferencesManager(context) }
 
-    // State for the external (overlay) assistant
-    var isServiceEnabled by remember { mutableStateOf(prefsManager.isServiceEnabled()) }
-    // State for the new in-app assistant
-    var isInAppAssistantEnabled by remember { mutableStateOf(prefsManager.isInAppAssistantEnabled()) }
-
-    // Launcher for the external assistant's audio permission
     val externalAudioPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { isGranted ->
@@ -70,21 +68,17 @@ fun VoiceAssistantSettingsScreen() {
             startVoiceService(context)
         } else {
             Toast.makeText(context, "Audio permission is required for the external assistant.", Toast.LENGTH_LONG).show()
-            isServiceEnabled = false
-            prefsManager.setServiceEnabled(false)
+            onServiceToggle(false)
         }
     }
 
-    // Launcher for the new in-app assistant's audio permission
     val inAppAudioPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { isGranted ->
         if (!isGranted) {
             Toast.makeText(context, "Audio permission is required for the in-app assistant.", Toast.LENGTH_LONG).show()
-            isInAppAssistantEnabled = false
-            prefsManager.setInAppAssistantEnabled(false)
+            onInAppAssistantToggle(false)
         }
-        // If granted, we don't need to do anything extra, the switch is already on.
     }
 
     Column(
@@ -93,7 +87,7 @@ fun VoiceAssistantSettingsScreen() {
             .verticalScroll(rememberScrollState())
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(16.dp) // Adjusted spacing
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Row(Modifier.fillMaxWidth()) {
             Text(
@@ -102,7 +96,6 @@ fun VoiceAssistantSettingsScreen() {
             )
         }
 
-        // Card for External (Overlay) Assistant
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = customCardColors()
@@ -131,9 +124,7 @@ fun VoiceAssistantSettingsScreen() {
                     colors = customSwitchColors(),
                     checked = isServiceEnabled,
                     onCheckedChange = { isChecked ->
-                        isServiceEnabled = isChecked
-                        prefsManager.setServiceEnabled(isChecked)
-
+                        onServiceToggle(isChecked)
                         if (isChecked) {
                             checkPermissionsAndStartService(context) {
                                 externalAudioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
@@ -146,7 +137,6 @@ fun VoiceAssistantSettingsScreen() {
             }
         }
 
-        // --- NEW CARD FOR IN-APP ASSISTANT ---
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = customCardColors()
@@ -175,21 +165,15 @@ fun VoiceAssistantSettingsScreen() {
                     colors = customSwitchColors(),
                     checked = isInAppAssistantEnabled,
                     onCheckedChange = { isChecked ->
-                        isInAppAssistantEnabled = isChecked
-                        prefsManager.setInAppAssistantEnabled(isChecked)
-
+                        onInAppAssistantToggle(isChecked)
                         if (isChecked) {
-                            // Only requests audio permission, no overlay check.
                             inAppAudioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
                         }
-                        // No service to start or stop for the in-app version.
                     }
                 )
             }
         }
 
-
-        // Button to open Text-to-Speech settings.
         Button(
             colors = customButtonColors(),
             onClick = {
@@ -210,12 +194,10 @@ fun VoiceAssistantSettingsScreen() {
             Text("Download Offline Voice Package")
         }
 
-        // Display a card with example voice commands.
         VoiceCommandNoticeCard()
     }
 }
 
-// Helper function to check "Draw over other apps" permission before requesting audio.
 private fun checkPermissionsAndStartService(context: Context, requestAudioPermission: () -> Unit) {
     if (!Settings.canDrawOverlays(context)) {
         Toast.makeText(context, "Please grant 'Draw over other apps' permission.", Toast.LENGTH_LONG).show()
@@ -229,7 +211,6 @@ private fun checkPermissionsAndStartService(context: Context, requestAudioPermis
     requestAudioPermission()
 }
 
-// Helper function to start the VoiceAssistantService.
 private fun startVoiceService(context: Context) {
     val intent = Intent(context, VoiceAssistantService::class.java)
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -239,7 +220,6 @@ private fun startVoiceService(context: Context) {
     }
 }
 
-// Helper function to stop the VoiceAssistantService.
 private fun stopVoiceService(context: Context) {
     context.stopService(Intent(context, VoiceAssistantService::class.java))
 }
@@ -291,4 +271,3 @@ fun VoiceCommandNoticeCard() {
         }
     }
 }
-

@@ -17,13 +17,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
-// <<< START: MODIFICATION - Import lifecycle dependencies
-import androidx.compose.ui.platform.LocalLifecycleOwner
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
-// <<< END: MODIFICATION
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -43,7 +37,7 @@ import com.spendwiz.app.Screens.PreferencesManager as VoicePrefsManager
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun BottomNav(
-    navController: NavController,
+    navController: NavHostController,
     moneyViewModel: AddScreenViewModel,
     categoryViewModel: CategoryViewModel,
     prefs: NotificationPrefsManager,
@@ -51,26 +45,29 @@ fun BottomNav(
     onTransactionToggle: (Boolean) -> Unit
 ) {
     val context = LocalContext.current
-    val navController1 = rememberNavController()
 
     val voicePrefs = remember { VoicePrefsManager(context) }
     var showInAppFab by remember { mutableStateOf(voicePrefs.isInAppAssistantEnabled()) }
+    var isServiceEnabled by remember { mutableStateOf(voicePrefs.isServiceEnabled()) }
 
-    val lifecycleOwner = LocalLifecycleOwner.current
-    DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) {
-                showInAppFab = voicePrefs.isInAppAssistantEnabled()
-            }
-        }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose {
-            lifecycleOwner.lifecycle.removeObserver(observer)
-        }
+    val onInAppAssistantToggle: (Boolean) -> Unit = { isEnabled ->
+        showInAppFab = isEnabled
+        voicePrefs.setInAppAssistantEnabled(isEnabled)
+    }
+
+    val onServiceToggle: (Boolean) -> Unit = { isEnabled ->
+        isServiceEnabled = isEnabled
+        voicePrefs.setServiceEnabled(isEnabled)
+    }
+
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    LaunchedEffect(navBackStackEntry) {
+        showInAppFab = voicePrefs.isInAppAssistantEnabled()
+        isServiceEnabled = voicePrefs.isServiceEnabled()
     }
 
     Scaffold(
-        bottomBar = { MyBottomBar(navController1 = navController1) },
+        bottomBar = { MyBottomBar(navController = navController) },
         contentWindowInsets = WindowInsets.safeDrawing,
         floatingActionButton = {
             if (showInAppFab) {
@@ -79,20 +76,19 @@ fun BottomNav(
         }
     ) { innerPadding ->
         NavHost(
-            navController = navController1,
+            navController = navController,
             startDestination = Routes.HomeScreen.route,
             modifier = Modifier.padding(innerPadding)
         ) {
-            // ... (Your NavHost destinations remain unchanged)
             composable(route = Routes.HomeScreen.route) {
-                HomeScreen(moneyViewModel, navController1)
+                HomeScreen(moneyViewModel, navController)
             }
             composable(Routes.AddScreen.route) {
-                AddScreen(moneyViewModel, categoryViewModel, navController1)
+                AddScreen(moneyViewModel, categoryViewModel, navController)
             }
             composable("NotificationSettingsScreen") {
                 NotificationSettingsScreen(
-                    prefs = NotificationPrefsManager(context), // Use the correct prefs manager
+                    prefs = NotificationPrefsManager(context),
                     onDailyToggle = onDailyToggle,
                     onTransactionToggle = onTransactionToggle
                 )
@@ -115,7 +111,7 @@ fun BottomNav(
                 UpdateScreen(
                     viewModel = moneyViewModel,
                     categoryViewModel = categoryViewModel,
-                    navController = navController1,
+                    navController = navController,
                     description = backStackEntry.arguments?.getString("description") ?: "",
                     amount = backStackEntry.arguments?.getFloat("amount")?.toDouble() ?: 0.0,
                     id = backStackEntry.arguments?.getInt("id") ?: 0,
@@ -128,13 +124,13 @@ fun BottomNav(
                 )
             }
             composable(Routes.InsightsScreen.route) {
-                InsightsScreen(moneyViewModel, categoryViewModel, navController1)
+                InsightsScreen(moneyViewModel, categoryViewModel, navController)
             }
             composable(Routes.SpentScreen.route) {
-                Annual(moneyViewModel , navController1)
+                Annual(moneyViewModel , navController)
             }
             composable(Routes.More.route) {
-                MoreOptionsScreen(moneyViewModel, navController1)
+                MoreOptionsScreen(moneyViewModel, navController)
             }
             composable(Routes.FaqScreen.route) {
                 FaqScreen()
@@ -149,7 +145,12 @@ fun BottomNav(
                 ReceiptScanScreen(viewModel = moneyViewModel , navController)
             }
             composable(Routes.VoiceAssistantSettingsScreen.route) {
-                VoiceAssistantSettingsScreen()
+                VoiceAssistantSettingsScreen(
+                    isServiceEnabled = isServiceEnabled,
+                    isInAppAssistantEnabled = showInAppFab,
+                    onServiceToggle = onServiceToggle,
+                    onInAppAssistantToggle = onInAppAssistantToggle
+                )
             }
             composable(
                 route = Routes.IncomeDetailsScreen.route,
@@ -162,7 +163,6 @@ fun BottomNav(
                     vm = moneyViewModel
                 )
             }
-
             composable(
                 route = Routes.ExpenseDetailsScreen.route,
                 arguments = listOf(navArgument("year") { type = NavType.StringType })
@@ -174,7 +174,6 @@ fun BottomNav(
                     vm = moneyViewModel
                 )
             }
-
             composable(
                 route = "${Routes.BulkUpdateScreen.route}/{description}/{category}/{subCategory}",
                 arguments = listOf(
@@ -190,8 +189,8 @@ fun BottomNav(
                 val subCategory = backStackEntry.arguments?.getString("subCategory").takeIf { it?.isNotEmpty() == true }
 
                 BulkUpdateScreen(
-                    viewModel = moneyViewModel, // or pass your AddScreenViewModel
-                    navController = navController1,
+                    viewModel = moneyViewModel,
+                    navController = navController,
                     description = description,
                     category = category,
                     subCategory = subCategory
@@ -203,8 +202,8 @@ fun BottomNav(
 
 
 @Composable
-fun MyBottomBar(navController1: NavHostController) {
-    val backStackEntry by navController1.currentBackStackEntryAsState()
+fun MyBottomBar(navController: NavHostController) {
+    val backStackEntry by navController.currentBackStackEntryAsState()
     val darkTheme = isSystemInDarkTheme()
     val colorScheme = MaterialTheme.colorScheme
 
@@ -215,13 +214,10 @@ fun MyBottomBar(navController1: NavHostController) {
         BottomNavigationItem(Routes.More.route, Icons.Filled.MoreVert, Icons.Outlined.MoreVert, false, null),
     )
 
-    // Theme-aware colors
     val indicatorColor = if (darkTheme) BluePrimaryDark else BluePrimaryLight
     val fabColor = if (darkTheme) BluePrimaryDark else BluePrimaryLight
-
     val selectedIconColor = if (darkTheme) BottomIconSelectedDark else BottomIconSelectedLight
     val unselectedIconColor = colorScheme.onBackground
-
     val selectedLabelColor = if (darkTheme) BottomLabelSelectedDark else BottomLabelSelectedLight
     val unselectedLabelColor = colorScheme.onSurface
 
@@ -238,9 +234,8 @@ fun MyBottomBar(navController1: NavHostController) {
                 )
         ) {
             items.forEachIndexed { index, item ->
-                // Insert spacer in the center (before the middle item)
                 if (index == items.size / 2) {
-                    Spacer(modifier = Modifier.weight(1f)) // leave space for FAB
+                    Spacer(modifier = Modifier.weight(1f))
                 }
 
                 val selected = item.title == backStackEntry?.destination?.route
@@ -250,8 +245,8 @@ fun MyBottomBar(navController1: NavHostController) {
                     ),
                     selected = selected,
                     onClick = {
-                        navController1.navigate(item.title) {
-                            popUpTo(navController1.graph.findStartDestination().id) { saveState = true }
+                        navController.navigate(item.title) {
+                            popUpTo(navController.graph.findStartDestination().id) { saveState = true }
                             launchSingleTop = true
                         }
                     },
@@ -272,7 +267,6 @@ fun MyBottomBar(navController1: NavHostController) {
             }
         }
 
-        // FAB in center
         Column(
             modifier = Modifier
                 .align(Alignment.TopCenter)
@@ -281,8 +275,8 @@ fun MyBottomBar(navController1: NavHostController) {
         ) {
             FloatingActionButton(
                 onClick = {
-                    navController1.navigate(Routes.AddScreen.route) {
-                        popUpTo(navController1.graph.findStartDestination().id) { saveState = true }
+                    navController.navigate(Routes.AddScreen.route) {
+                        popUpTo(navController.graph.findStartDestination().id) { saveState = true }
                         launchSingleTop = true
                     }
                 },

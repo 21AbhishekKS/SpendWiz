@@ -37,8 +37,8 @@ sealed class ParsedCommand {
     object QueryFastestGrowingCategory : ParsedCommand()
 
     // ✅ Navigation commands
-    object OpenAddExpenseScreen : ParsedCommand()
-    object SwitchToInsightsView : ParsedCommand()
+    data class NavigateToScreen(val route: String) : ParsedCommand()
+
 
     // ✅ Backup & Import
     object BackupData : ParsedCommand()

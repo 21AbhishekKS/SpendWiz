@@ -52,6 +52,15 @@ object VoiceCommandHandler {
                 }
             }
 
+            is ParsedCommand.NavigateToScreen -> {
+                val intent = Intent(context, MainActivity::class.java).apply {
+                    putExtra("NAVIGATE_TO", parsedResult.route)
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                }
+                context.startActivity(intent)
+                Toast.makeText(context, "Navigating to ${parsedResult.route}", Toast.LENGTH_SHORT).show()
+            }
+
             is ParsedCommand.DeleteLastTransaction -> {
                 commandScope.launch {
                     val lastTransaction = moneyDao.getLastTransaction()
@@ -132,14 +141,6 @@ object VoiceCommandHandler {
                         Toast.makeText(context, message, Toast.LENGTH_LONG).show()
                     }
                 }
-            }
-
-            is ParsedCommand.OpenAddExpenseScreen -> {
-                val intent = Intent(context, MainActivity::class.java).apply {
-                    putExtra("NAVIGATE_TO", "ADD_EXPENSE")
-                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-                }
-                context.startActivity(intent)
             }
 
             is ParsedCommand.ImportFromSMS -> {
