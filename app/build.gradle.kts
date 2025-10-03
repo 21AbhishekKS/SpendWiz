@@ -148,5 +148,12 @@ dependencies {
 
 // For Coil to display images from a URI
     implementation("io.coil-kt:coil-compose:2.5.0")
+
+    // For SQLCipher Database Encryption
+    implementation ("net.zetetic:android-database-sqlcipher:4.5.4")
+    implementation ("androidx.sqlite:sqlite-ktx:2.4.0")
+
+    // For Securely Storing the Encryption Key
+    implementation ("androidx.security:security-crypto:1.1.0-alpha06")
 }
 

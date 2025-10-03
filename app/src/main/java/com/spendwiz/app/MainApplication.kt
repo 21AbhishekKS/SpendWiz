@@ -8,21 +8,14 @@ import com.spendwiz.app.Database.money.MoneyDatabase
 
 class MainApplication : Application() {
 
-    companion object{
-        lateinit var moneyDatabase : MoneyDatabase
+    // A companion object holds properties that are static to the class.
+    companion object {
+        lateinit var moneyDatabase: MoneyDatabase
+            private set // 'private set' means it can only be assigned a value within this file.
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate() {
-
-
         super.onCreate()
-        moneyDatabase = Room.databaseBuilder(
-            applicationContext,
-            MoneyDatabase::class.java,
-            MoneyDatabase.NAME
-        ).build()
-
-
+        moneyDatabase = MoneyDatabase.getDatabase(this)
     }
 }
