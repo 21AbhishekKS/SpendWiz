@@ -62,11 +62,11 @@ fun MoreOptionsScreen(
     // Updated list of options using the new OptionItem class.
     // Replace R.drawable.your_icon with your actual drawable resource IDs.
     val options = listOf(
-        OptionItem("Backup", iconDrawableRes = R.drawable.backup),
+        OptionItem("Backup", iconDrawableRes = R.drawable.baseline_backup_24),
         OptionItem("Category", iconVector = Icons.Filled.Settings),
         OptionItem("Notifications", iconVector = Icons.Filled.Notifications),
 
-        OptionItem("Assistant", iconDrawableRes = R.drawable.voice_selection),
+        OptionItem("Assistant", iconDrawableRes = R.drawable.assistant),
         OptionItem("Scan Bill", iconDrawableRes = R.drawable.document_scanner),
         OptionItem("Feedback", iconDrawableRes = R.drawable.feedback),
         OptionItem("FAQ", iconDrawableRes = R.drawable.faq),

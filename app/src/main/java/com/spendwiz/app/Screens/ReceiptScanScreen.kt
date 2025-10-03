@@ -20,10 +20,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import androidx.navigation.NavController
+import coil.Coil
 import coil.compose.rememberAsyncImagePainter
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
@@ -31,15 +33,17 @@ import com.google.accompanist.permissions.rememberPermissionState
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
+import com.spendwiz.app.AppStyle.AppColors.customButtonColors
 import com.spendwiz.app.Database.money.Money
 import com.spendwiz.app.Database.money.TransactionType
+import com.spendwiz.app.R
 import com.spendwiz.app.ViewModels.AddScreenViewModel
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.regex.Pattern
 
-// ✅ Updated ParsedReceiptData with time field
+// Updated ParsedReceiptData with time field
 data class ParsedReceiptData(
     val merchant: String?,
     val date: String?,
@@ -101,18 +105,22 @@ fun ReceiptScanScreen(
                     if (cameraPermissionState.status.isGranted) takePictureLauncher.launch(tempImageUri)
                     else cameraPermissionState.launchPermissionRequest()
                 },
-                modifier = Modifier.fillMaxWidth().height(50.dp)
+                modifier = Modifier.fillMaxWidth().height(50.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = customButtonColors()
             ) {
-                Icon(Icons.Default.AddCircle, contentDescription = "Camera", modifier = Modifier.padding(end = 8.dp))
-                Text("Open Camera")
+                Icon(painter = painterResource(R.drawable.camera) , "Open Camera")
+                Text("Open Camera", Modifier.padding(5.dp),)
             }
             Spacer(modifier = Modifier.height(16.dp))
             Button(
                 onClick = { pickImageLauncher.launch("image/*") },
-                modifier = Modifier.fillMaxWidth().height(50.dp)
+                modifier = Modifier.fillMaxWidth().height(50.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = customButtonColors()
             ) {
-                Icon(Icons.Default.AddCircle, contentDescription = "Gallery", modifier = Modifier.padding(end = 8.dp))
-                Text("Pick from Gallery")
+               Icon(painter = painterResource(R.drawable.gallery) , "Pick from Gallery")
+                Text("Pick from Gallery" , Modifier.padding(5.dp),)
             }
         } else {
             Card(
@@ -136,8 +144,11 @@ fun ReceiptScanScreen(
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
                     Button(
-                        onClick = { imageUri = null },
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
+                        onClick = { imageUri = null
+                            Coil.imageLoader(context).memoryCache?.clear()
+                        },
+                        shape = RoundedCornerShape(12.dp),
+                        colors = customButtonColors(),
                         modifier = Modifier.weight(1f)
                     ) { Text("Clear") }
                     Spacer(modifier = Modifier.width(16.dp))
@@ -150,6 +161,8 @@ fun ReceiptScanScreen(
                                 showMissingDataDialog = true
                             }
                         },
+                        shape = RoundedCornerShape(12.dp),
+                        colors = customButtonColors(),
                         modifier = Modifier.weight(1f)
                     ) { Text("Scan & Save") }
                 }
