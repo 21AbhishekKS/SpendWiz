@@ -109,17 +109,18 @@ fun VoiceAssistantSettingsScreen(
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "External Assistant",
+                        text = "Turn on Turbo",
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "Allow Spendwiz mini to appear over other apps. Requires overlay permission.",
+                        text = "Spendwiz Turbo is a voice assistant that works even if the app is closed.",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
+                Spacer(modifier = Modifier.width(12.dp))
                 Switch(
                     colors = customSwitchColors(),
                     checked = isServiceEnabled,
@@ -137,6 +138,7 @@ fun VoiceAssistantSettingsScreen(
             }
         }
 
+
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = customCardColors()
@@ -150,17 +152,18 @@ fun VoiceAssistantSettingsScreen(
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "In-App Assistant",
+                        text = "Turn on Nano",
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "Enable a voice button inside the app. Works only when the app is open.",
+                        text = "Spendwiz Nano is a voice assistant that works only within the app.",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
+                Spacer(modifier = Modifier.width(12.dp))
                 Switch(
                     colors = customSwitchColors(),
                     checked = isInAppAssistantEnabled,
@@ -173,6 +176,7 @@ fun VoiceAssistantSettingsScreen(
                 )
             }
         }
+
 
         Button(
             colors = customButtonColors(),

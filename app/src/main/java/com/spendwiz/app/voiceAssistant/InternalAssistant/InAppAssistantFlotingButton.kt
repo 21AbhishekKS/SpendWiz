@@ -8,19 +8,23 @@ import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import android.util.Log
 import android.widget.Toast
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -36,30 +40,29 @@ import kotlin.math.roundToInt
 fun InAppVoiceAssistantFab() {
     val context = LocalContext.current
 
-    // State to hold the button's offset (position)
     var offsetX by remember { mutableStateOf(0f) }
     var offsetY by remember { mutableStateOf(0f) }
-
-    // State to track if the assistant is currently listening
     var isListening by remember { mutableStateOf(false) }
 
-    // Setup the SpeechRecognizer and its listener
+    // --- Voice Recognizer Setup (No changes needed here) ---
     val speechRecognizer = remember {
         SpeechRecognizer.createSpeechRecognizer(context).apply {
             setRecognitionListener(object : RecognitionListener {
                 override fun onReadyForSpeech(params: Bundle?) { isListening = true }
-                override fun onBeginningOfSpeech() { /* Mic is active */ }
-                override fun onEndOfSpeech() { isListening = false }
+                override fun onBeginningOfSpeech() {}
                 override fun onRmsChanged(rmsdB: Float) {}
                 override fun onBufferReceived(buffer: ByteArray?) {}
+                override fun onPartialResults(partialResults: Bundle?) {}
+                override fun onEvent(eventType: Int, params: Bundle?) {}
+                override fun onEndOfSpeech() { isListening = false }
 
                 override fun onError(error: Int) {
                     isListening = false
                     Log.e("VoiceAssistant", "Error: $error")
                     val errorMessage = when (error) {
-                        SpeechRecognizer.ERROR_NO_MATCH -> "I didn't catch that. Please try again."
-                        SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS -> "Please grant audio recording permission."
-                        else -> "An error occurred. Please try again."
+                        SpeechRecognizer.ERROR_NO_MATCH -> "I didn't catch that. Try again."
+                        SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS -> "Audio permission needed."
+                        else -> "An error occurred."
                     }
                     Toast.makeText(context, errorMessage, Toast.LENGTH_SHORT).show()
                 }
@@ -72,9 +75,6 @@ fun InAppVoiceAssistantFab() {
                         }
                     }
                 }
-
-                override fun onPartialResults(partialResults: Bundle?) {}
-                override fun onEvent(eventType: Int, params: Bundle?) {}
             })
         }
     }
@@ -92,41 +92,64 @@ fun InAppVoiceAssistantFab() {
         }
     }
 
-    // Box to contain the FAB and handle dragging
+    // ✨ --- UI Animation States --- ✨
+    val glowScale by animateFloatAsState(
+        targetValue = if (isListening) 1.6f else 0f,
+        animationSpec = tween(durationMillis = 500),
+        label = "glowScale"
+    )
+
+    val glowAlpha by animateFloatAsState(
+        targetValue = if (isListening) 0.3f else 0f,
+        animationSpec = tween(durationMillis = 400),
+        label = "glowAlpha"
+    )
+
+    // --- Main Composable Layout ---
     Box(
         modifier = Modifier
             .offset { IntOffset(offsetX.roundToInt(), offsetY.roundToInt()) }
+            // Note: Click and drag are now combined into one pointerInput for cleaner code
             .pointerInput(Unit) {
-                detectDragGestures { change, dragAmount ->
+                detectDragGestures(
+                    onDragEnd = { /* Can add logic here if needed */ }
+                ) { change, dragAmount ->
                     change.consume()
                     offsetX += dragAmount.x
                     offsetY += dragAmount.y
                 }
             }
     ) {
-        FloatingActionButton(
-            onClick = {
-                if (!isListening) {
-                    speechRecognizer.startListening(recognizerIntent)
-                } else {
-                    speechRecognizer.stopListening()
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier
+                .size(70.dp) // Make the touch area slightly larger for the glow
+                .drawBehind {
+                    scale(scale = glowScale) {
+                        drawCircle(
+                            color = Color.Cyan, // Glow color
+                            alpha = glowAlpha
+                        )
+                    }
                 }
-            },
-            modifier = Modifier.size(64.dp),
-            shape = CircleShape,
-            containerColor = Color.Transparent,
-            // Set elevation to 0dp to remove the shadow and make the background truly transparent
-            elevation = FloatingActionButtonDefaults.elevation(
-                defaultElevation = 0.dp,
-                pressedElevation = 0.dp
-            )
+                .pointerInput(Unit) {
+                    detectTapGestures(
+                        onTap = {
+                            if (!isListening) {
+                                speechRecognizer.startListening(recognizerIntent)
+                            } else {
+                                speechRecognizer.stopListening()
+                            }
+                        }
+                    )
+                }
         ) {
             Image(
-                painter = painterResource(id = R.drawable.splash),
-                contentDescription = "Voice Assistant",
+                painter = painterResource(id = R.drawable.nano2),
+                contentDescription = "Nano Voice Assistant",
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
-                    .fillMaxSize()
+                    .size(64.dp) // The size of the visible button
                     .clip(CircleShape)
             )
         }

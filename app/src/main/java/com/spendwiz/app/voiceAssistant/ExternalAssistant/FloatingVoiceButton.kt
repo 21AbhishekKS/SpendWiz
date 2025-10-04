@@ -21,9 +21,9 @@ fun FloatingVoiceButton(
 ) {
     Image(
         painter = painterResource(
-            id = R.drawable.splash
+            id = R.drawable.nano
         ),
-        contentDescription = "Voice Assistant",
+        contentDescription = "turbo Voice Assistant",
         modifier = Modifier
             .size(60.dp)
             .clip(RoundedCornerShape(50.dp))
