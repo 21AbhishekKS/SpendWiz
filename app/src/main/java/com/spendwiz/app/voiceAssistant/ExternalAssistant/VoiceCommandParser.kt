@@ -1,6 +1,7 @@
 package com.spendwiz.app.voiceAssistant.ExternalAssistant
 
 import com.spendwiz.app.Database.money.TransactionType
+import com.spendwiz.app.navigation.Routes
 import java.util.Locale
 
 object VoiceCommandParser {
@@ -58,21 +59,18 @@ object VoiceCommandParser {
     private val fastestGrowingRegex =
         "(?i)which\\s+category\\s+is\\s+growing\\s+fastest".toRegex()
 
-    // --- Navigation ---
-    private val openAddExpenseRegex =
-        "(?i)open\\s+(add|new)\\s+expense\\s+screen".toRegex()
-
-    private val switchInsightsRegex =
-        "(?i)switch\\s+to\\s+insights\\s+view".toRegex()
-
     // --- Backup / Import ---
     private val backupRegex = "(?i)backup\\s+my\\s+data\\s+now".toRegex()
     private val importSMSRegex = "(?i)import\\s+transactions\\s+from\\s+sms".toRegex()
 
     // --- Navigation ---
-    private val navigateToScreenRegex =
-        "(?i)(?:go to|navigate to|open|show me the?)\\s+(home|insights|annual|spent|more|add)\\s*(?:screen|page|view)?".toRegex()
-
+    private val navigateToScreenRegex = (
+            "(?i)(?:go to|open|show|navigate to|show me the?)\\s+" +
+                    "(home|dashboard|add|new transaction|insights|analysis|annual|yearly|spent|" + // Core screens
+                    "more|options|notification settings|notifications|voice settings|assistant|" + // Settings screens
+                    "categories|manage categories|backup|restore|smart settings|scan|receipt|faq|help)" + // Other screens
+                    "\\s*(?:screen|page|view)?"
+            ).toRegex()
 
     fun parse(command: String): ParsedCommand {
         val text = command.trim()
@@ -107,10 +105,10 @@ object VoiceCommandParser {
             )
         }
 
-        // Navigation (Updated logic)
+        // Navigation
         navigateToScreenRegex.find(text)?.let {
             val screenName = it.groupValues[1].lowercase(Locale.getDefault())
-            mapScreenNameToRoute(screenName)?.let { route ->
+            mapKeywordToRoute(screenName)?.let { route ->
                 return ParsedCommand.NavigateToScreen(route)
             }
         }
@@ -173,13 +171,20 @@ object VoiceCommandParser {
             else -> null
         }
     }
-    private fun mapScreenNameToRoute(screenName: String): String? {
-        return when (screenName) {
-            "home" -> "Home"
-            "insights" -> "Insights"
-            "annual", "spent" -> "Annual"
-            "more" -> "More"
-            "add" -> "Add"
+    private fun mapKeywordToRoute(keyword: String): String? {
+        return when (keyword) {
+            "home", "dashboard" -> Routes.HomeScreen.route
+            "add", "new transaction" -> Routes.AddScreen.route
+            "insights", "analysis" -> Routes.InsightsScreen.route
+            "annual", "yearly", "spent" -> Routes.AnnualScreen.route
+            "more", "options" -> Routes.More.route
+            "notification settings", "notifications" -> Routes.NotificationSettingsScreen.route
+            "voice settings", "assistant" -> Routes.VoiceAssistantSettingsScreen.route
+            "categories", "manage categories" -> Routes.ManageCategoriesScreen.route
+            "backup", "restore" -> Routes.BackupRestoreScreen.route
+            "smart settings" -> Routes.SmartSettings.route
+            "scan", "receipt" -> Routes.ReceiptScanScreen.route
+            "faq", "help" -> Routes.FaqScreen.route
             else -> null
         }
     }

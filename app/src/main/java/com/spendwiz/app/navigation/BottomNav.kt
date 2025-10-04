@@ -1,5 +1,6 @@
 package com.spendwiz.app.navigation
 
+import android.app.Activity
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.border
@@ -60,6 +61,11 @@ fun BottomNav(
         voicePrefs.setServiceEnabled(isEnabled)
     }
 
+    //Dynamic start destination for navigation through voice command
+    val startDestination = remember {
+        val intentRoute = (context as? Activity)?.intent?.getStringExtra("NAVIGATE_TO")
+        intentRoute ?: Routes.HomeScreen.route
+    }
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     LaunchedEffect(navBackStackEntry) {
         showInAppFab = voicePrefs.isInAppAssistantEnabled()
@@ -77,7 +83,7 @@ fun BottomNav(
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = Routes.HomeScreen.route,
+            startDestination = startDestination,
             modifier = Modifier.padding(innerPadding)
         ) {
             composable(route = Routes.HomeScreen.route) {
@@ -126,7 +132,7 @@ fun BottomNav(
             composable(Routes.InsightsScreen.route) {
                 InsightsScreen(moneyViewModel, categoryViewModel, navController)
             }
-            composable(Routes.SpentScreen.route) {
+            composable(Routes.AnnualScreen.route) {
                 Annual(moneyViewModel , navController)
             }
             composable(Routes.More.route) {
@@ -210,7 +216,7 @@ fun MyBottomBar(navController: NavHostController) {
     val items = listOf(
         BottomNavigationItem(Routes.HomeScreen.route, Icons.Filled.Home, Icons.Outlined.Home, false, null),
         BottomNavigationItem(Routes.InsightsScreen.route, Icons.Filled.DateRange, Icons.Outlined.DateRange, false, null),
-        BottomNavigationItem(Routes.SpentScreen.route, Icons.Filled.Info, Icons.Outlined.Info, false, null),
+        BottomNavigationItem(Routes.AnnualScreen.route, Icons.Filled.Info, Icons.Outlined.Info, false, null),
         BottomNavigationItem(Routes.More.route, Icons.Filled.MoreVert, Icons.Outlined.MoreVert, false, null),
     )
 
