@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddCircle
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -22,6 +23,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import androidx.navigation.NavController
@@ -34,6 +36,7 @@ import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import com.spendwiz.app.AppStyle.AppColors.customButtonColors
+import com.spendwiz.app.AppStyle.AppColors.customCardColors
 import com.spendwiz.app.Database.money.Money
 import com.spendwiz.app.Database.money.TransactionType
 import com.spendwiz.app.R
@@ -91,9 +94,13 @@ fun ReceiptScanScreen(
             .fillMaxSize()
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
     ) {
         if (imageUri == null) {
+
+            BillScannerStillInBetaCard()
+
+            Column(Modifier.padding(top = 20.dp),
+                verticalArrangement = Arrangement.Top) {
             Text(
                 "Scan a Receipt",
                 style = MaterialTheme.typography.headlineMedium,
@@ -121,6 +128,8 @@ fun ReceiptScanScreen(
             ) {
                Icon(painter = painterResource(R.drawable.gallery) , "Pick from Gallery")
                 Text("Pick from Gallery" , Modifier.padding(5.dp),)
+            }
+
             }
         } else {
             Card(
@@ -369,4 +378,34 @@ fun TimePickerDialog(onTimeSelected: (String) -> Unit, onDismiss: () -> Unit) {
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
         text = { TimePicker(state = state) }
     )
+}
+
+
+@Composable
+fun BillScannerStillInBetaCard() {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = customCardColors()
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Info,
+                contentDescription = "Information",
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Text(
+                text = "Our new Bill Scanning feature is currently in its beta phase. This means you may encounter some inaccuracies in the scanned data. We are continuously working on improving this feature and appreciate your patience." ,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Justify
+            )
+        }
+    }
 }

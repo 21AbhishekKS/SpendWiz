@@ -16,6 +16,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -101,6 +103,7 @@ fun VoiceAssistantSettingsScreen(
             permissionManager.incrementMicrophoneDenialCount()
             Toast.makeText(context, "Microphone permission is required.", Toast.LENGTH_SHORT).show()
         }
+        // Ensure switches are off if permission is denied during the request.
         onServiceToggle(false)
         onInAppAssistantToggle(false)
     }
@@ -118,19 +121,19 @@ fun VoiceAssistantSettingsScreen(
         )
     }
 
-    // --- FIX START ---
-    // Converted from a lambda variable to a nested function to allow 'return'.
-    fun handleToggleAction(onFeatureEnable: (Boolean) -> Unit, action: () -> Unit) {
-        val isPermissionGranted = ContextCompat.checkSelfPermission(
+    // This helper function ensures the microphone permission is granted before executing an action.
+    // It does NOT modify the UI state itself, which was the source of the original bug.
+    fun ensureMicrophonePermission(onGranted: () -> Unit) {
+        val isMicPermissionGranted = ContextCompat.checkSelfPermission(
             context, Manifest.permission.RECORD_AUDIO
         ) == PackageManager.PERMISSION_GRANTED
 
-        if (isPermissionGranted) {
-            onFeatureEnable(true)
-            action()
-            return // This is now a valid return from the function.
+        if (isMicPermissionGranted) {
+            onGranted() // Permission is already granted, so we can proceed.
+            return
         }
 
+        // Logic for requesting microphone permission if it's not already granted.
         val denialCount = permissionManager.getMicrophoneDenialCount()
         val shouldShowRationale = ActivityCompat.shouldShowRequestPermissionRationale(
             activity, Manifest.permission.RECORD_AUDIO
@@ -142,7 +145,6 @@ fun VoiceAssistantSettingsScreen(
             permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
         }
     }
-    // --- FIX END ---
 
     Column(
         modifier = Modifier
@@ -189,8 +191,10 @@ fun VoiceAssistantSettingsScreen(
                     checked = isInAppAssistantEnabled,
                     onCheckedChange = { isChecked ->
                         if (isChecked) {
-                            handleToggleAction(onInAppAssistantToggle) {
-                                // No extra action needed after permission is confirmed
+                            // First, check for microphone permission.
+                            ensureMicrophonePermission {
+                                // Only update the state *after* permission is confirmed.
+                                onInAppAssistantToggle(true)
                             }
                         } else {
                             onInAppAssistantToggle(false)
@@ -230,8 +234,14 @@ fun VoiceAssistantSettingsScreen(
                     checked = isServiceEnabled,
                     onCheckedChange = { isChecked ->
                         if (isChecked) {
-                            handleToggleAction(onServiceToggle) {
+                            // 1. Check for microphone permission.
+                            ensureMicrophonePermission {
+                                // 2. This lambda only runs if mic permission is granted.
+                                //    Now, check for the overlay permission.
                                 checkPermissionsAndStartService(context) {
+                                    // 3. This lambda only runs if overlay permission is also granted.
+                                    //    Now, it's safe to update the state and start the service.
+                                    onServiceToggle(true)
                                     startVoiceService(context)
                                 }
                             }
@@ -264,6 +274,8 @@ fun VoiceAssistantSettingsScreen(
             Text("Download Offline Voice Package")
         }
 
+        AssistantDragNoticeCard()
+
         VoiceCommandNoticeCard()
     }
 }
@@ -295,8 +307,10 @@ private fun checkPermissionsAndStartService(context: Context, onPermissionsGrant
             Uri.parse("package:${context.packageName}")
         )
         context.startActivity(intent)
+        // Do not call onPermissionsGranted() if permission is missing.
         return
     }
+    // Only call this when the permission is confirmed.
     onPermissionsGranted()
 }
 
@@ -324,7 +338,8 @@ fun VoiceCommandNoticeCard() {
         "What is my total expense today",
         "What's my income for today",
         "Show my summary for this month",
-        "What is my biggest expense this month"
+        "What is my biggest expense this month",
+        "Go to Home. (Instead of 'Home', you can use other screen name)",
     )
 
     Card(
@@ -357,6 +372,34 @@ fun VoiceCommandNoticeCard() {
                     )
                 }
             }
+        }
+    }
+}
+
+@Composable
+fun AssistantDragNoticeCard() {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = customCardColors()
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Info,
+                contentDescription = "Information",
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Text(
+                text = "You can long press and drag the assistant to adjust its position on the screen.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }
