@@ -1,6 +1,15 @@
 package com.spendwiz.app.Screens
 
+import android.Manifest // <-- ADDED
+import android.app.Activity // <-- ADDED
 import android.app.TimePickerDialog
+import android.content.Intent // <-- ADDED
+import android.content.pm.PackageManager // <-- ADDED
+import android.net.Uri // <-- ADDED
+import android.os.Build // <-- ADDED
+import android.provider.Settings // <-- ADDED
+import androidx.activity.compose.rememberLauncherForActivityResult // <-- ADDED
+import androidx.activity.result.contract.ActivityResultContracts // <-- ADDED
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
@@ -17,8 +26,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.core.app.ActivityCompat // <-- ADDED
+import androidx.core.content.ContextCompat // <-- ADDED
 import com.spendwiz.app.AppStyle.AppColors.customSwitchColors
-import com.spendwiz.app.R // Assuming R class is in this package
+import com.spendwiz.app.R
 import com.spendwiz.app.Notifications.PreferencesManager
 import kotlinx.coroutines.launch
 
@@ -36,11 +47,33 @@ fun NotificationSettingsScreen(
     val dailyMinute by prefs.dailyMinuteFlow.collectAsState(initial = 5)
     val transactionEnabled by prefs.transactionNotificationFlow.collectAsState(initial = false)
 
-    // Use the specified color for UI emphasis.
-    val buttonColor = colorResource(id = R.color.button_color)
+    // --- ADDED: State for permission dialog and deferred action ---
+    var showPermissionSettingsDialog by remember { mutableStateOf(false) }
+    var pendingPermissionAction by remember { mutableStateOf<(() -> Unit)?>(null) }
 
-    // Define custom colors for the Switch using the button color for the 'on' state.
+    val buttonColor = colorResource(id = R.color.button_color)
     val customSwitchColors = customSwitchColors()
+
+    // --- ADDED: Launcher for Notification Permission Request ---
+    val activity = LocalContext.current as Activity
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+        if (isGranted) {
+            // Permission was granted, so execute the action that was waiting.
+            pendingPermissionAction?.invoke()
+        } else {
+            // Permission was denied. Check if it was denied permanently.
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                !ActivityCompat.shouldShowRequestPermissionRationale(activity, Manifest.permission.POST_NOTIFICATIONS)) {
+                // User has permanently denied the permission. Show the settings dialog.
+                showPermissionSettingsDialog = true
+            }
+        }
+        // Clean up the pending action
+        pendingPermissionAction = null
+    }
+
 
     Column(
         modifier = Modifier
@@ -73,13 +106,31 @@ fun NotificationSettingsScreen(
             }
             Switch(
                 checked = dailyEnabled,
+                // --- MODIFIED: onCheckedChange with permission logic ---
                 onCheckedChange = { enabled ->
-                    scope.launch {
-                        prefs.setDailyNotification(enabled)
-                        onDailyToggle(enabled, dailyHour, dailyMinute)
+                    // Add the explicit type here
+                    val action: () -> Unit = {
+                        scope.launch {
+                            prefs.setDailyNotification(enabled)
+                            onDailyToggle(enabled, dailyHour, dailyMinute)
+                        }
                     }
-                },
-                colors = customSwitchColors // Apply custom colors here
+                    if (enabled) { // Only check permission when turning the switch ON
+                        // ... rest of the logic is correct
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                            if (ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
+                                action()
+                            } else {
+                                pendingPermissionAction = action
+                                notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                            }
+                        } else {
+                            action()
+                        }
+                    } else {
+                        action()
+                    }
+                },                colors = customSwitchColors
             )
         }
 
@@ -145,14 +196,61 @@ fun NotificationSettingsScreen(
             }
             Switch(
                 checked = transactionEnabled,
+                // --- MODIFIED: onCheckedChange with permission logic ---
                 onCheckedChange = { enabled ->
-                    scope.launch {
-                        prefs.setTransactionNotification(enabled)
-                        onTransactionToggle(enabled)
+                    // Also add the explicit type here
+                    val action: () -> Unit = {
+                        scope.launch {
+                            prefs.setTransactionNotification(enabled)
+                            onTransactionToggle(enabled)
+                        }
+                    }
+                    if (enabled) { // Only check permission when turning the switch ON
+                        // ... rest of the logic is correct
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                            if (ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
+                                action()
+                            } else {
+                                pendingPermissionAction = action
+                                notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                            }
+                        } else {
+                            action()
+                        }
+                    } else {
+                        action()
                     }
                 },
                 colors = customSwitchColors
             )
         }
+    }
+
+    // --- ADDED: Dialog for permanently denied permission ---
+    if (showPermissionSettingsDialog) {
+        AlertDialog(
+            onDismissRequest = { showPermissionSettingsDialog = false },
+            title = { Text("Permission Required") },
+            text = { Text("Notifications are disabled for this app. To receive reminders and alerts, please enable notification permissions in the app settings.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showPermissionSettingsDialog = false
+                        // Create an Intent to open the app's settings screen
+                        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                        val uri = Uri.fromParts("package", context.packageName, null)
+                        intent.data = uri
+                        context.startActivity(intent)
+                    }
+                ) {
+                    Text("Go to Settings")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showPermissionSettingsDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
 }
