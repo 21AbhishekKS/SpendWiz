@@ -66,7 +66,7 @@ fun Annual(viewModel: AddScreenViewModel, navController: NavController) {
     var isLoading by remember { mutableStateOf(true) }
     LaunchedEffect(selectedYear) {
         isLoading = true
-        kotlinx.coroutines.delay(1000) // wait exactly 1 sec
+        kotlinx.coroutines.delay(800)
         isLoading = false
     }
 

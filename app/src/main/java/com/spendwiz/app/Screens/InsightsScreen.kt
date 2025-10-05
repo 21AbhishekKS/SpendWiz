@@ -5,6 +5,7 @@ import android.os.Build
 import android.view.View
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -47,6 +48,7 @@ import java.nio.charset.StandardCharsets
 import java.time.LocalDate
 import com.spendwiz.app.ViewModels.CategoryViewModel
 import com.spendwiz.app.utils.ExpenseDonutChartBySubCategory
+import kotlinx.coroutines.delay
 import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
@@ -54,12 +56,20 @@ import java.util.*
 @Composable
 fun InsightsScreen(
     viewModel: AddScreenViewModel = viewModel(),
-    categoryViewModel : CategoryViewModel,
+    categoryViewModel: CategoryViewModel,
     navController1: NavHostController
 ) {
+    var isLoading by remember { mutableStateOf(true) }
+
     val today = remember { LocalDate.now() }
     var selectedYear by rememberSaveable { mutableStateOf(today.year) }
     var selectedMonthIndex by rememberSaveable { mutableStateOf(today.monthValue - 1) }
+
+    LaunchedEffect(selectedMonthIndex, selectedYear) {
+        isLoading = true
+        delay(600)
+        isLoading = false
+    }
 
     val listOfMonth = listOf(
         "January", "February", "March", "April", "May", "June",
@@ -91,6 +101,7 @@ fun InsightsScreen(
         }
     }
 
+    // Data observation and processing are done here, before the UI conditional
     val moneyListLive = viewModel.moneyDao
         .getTransactionsByMonthAndYear(selectedMonthInNum, selectedYear.toString())
         .observeAsState(initial = emptyList())
@@ -120,16 +131,14 @@ fun InsightsScreen(
         }
     }
     val (monthlySpent, monthlyReceived) = monthlyTotals
-
-    val pagerState = rememberPagerState(initialPage = 0, pageCount = { 3 })
     val scope = rememberCoroutineScope()
+
     Column(
         modifier = Modifier
             .fillMaxSize()
-            // 🔥 Changed: Use theme background color
             .background(MaterialTheme.colorScheme.background)
     ) {
-
+        // Top bar is always visible
         CustomTopBar(
             selectedMonth = selectedMonth,
             selectedYear = selectedYear,
@@ -145,168 +154,114 @@ fun InsightsScreen(
             }
         )
 
-        // 🔥 Changed: Use theme-aware divider color
         Divider(color = MaterialTheme.colorScheme.outlineVariant)
 
-        // Show Pager only if there is some data (income or expense > 0)
-        if (monthlyReceived != 0.0 || monthlySpent != 0.0) {
+        if (isLoading) {
             Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = 220.dp, max = 280.dp)
-                    .padding(horizontal = 10.dp)
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
             ) {
-                val pages = buildList {
-                    if (monthlyReceived != 0.0 && monthlySpent != 0.0) {
-                        add("Pie")
-                    }
-                    add("ByMonth")
-                    add("BySubCategory")
-                }
-
-                val pagerState = rememberPagerState(initialPage = 0, pageCount = { pages.size })
-
-                HorizontalPager(
-                    state = pagerState,
-                    modifier = Modifier.fillMaxSize()
-                ) { page ->
-                    when (pages[page]) {
-                        "Pie" -> PieChart(
-                            spent = monthlySpent,
-                            earned = monthlyReceived,
-                            modifier = Modifier.fillMaxSize()
-                        )
-                        "ByMonth" -> ExpenseDonutChartByMonth(
-                            viewModel = viewModel,
-                            month = selectedMonthInNum,
-                            year = selectedYear.toString(),
-                            modifier = Modifier.fillMaxSize()
-                        )
-                        "BySubCategory" -> ExpenseDonutChartBySubCategory(
-                            viewModel = viewModel,
-                            month = selectedMonthInNum,
-                            year = selectedYear.toString(),
-                            modifier = Modifier.fillMaxSize()
-                        )
-                    }
-                }
-
-                if (pagerState.currentPage > 0) {
-                    IconButton(
-                        onClick = { scope.launch { pagerState.animateScrollToPage(pagerState.currentPage - 1) } },
-                        modifier = Modifier
-                            .align(Alignment.BottomStart)
-                            .padding(8.dp)
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.right_arrow),
-                            contentDescription = "Previous Chart",
-                            modifier = Modifier
-                                .size(28.dp)
-                                .rotate(180f)
-                        )
-                    }
-                }
-
-                if (pagerState.currentPage < pagerState.pageCount - 1) {
-                    IconButton(
-                        onClick = { scope.launch { pagerState.animateScrollToPage(pagerState.currentPage + 1) } },
-                        modifier = Modifier
-                            .align(Alignment.BottomEnd)
-                            .padding(8.dp)
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.right_arrow),
-                            contentDescription = "Next Chart",
-                            modifier = Modifier.size(28.dp)
-                        )
-                    }
-                }
-            }
-        }
-
-        when {
-            moneyListLive.value.isEmpty() && monthlySpent == 0.0 && monthlyReceived == 0.0 -> {
                 BlueCircularLoader(Modifier)
             }
-
-            moneyList.isEmpty() -> {
+        } else {
+            if (moneyList.isEmpty()) {
+                // Empty State UI
                 Column(
                     modifier = Modifier.fillMaxSize(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text(
-                        "No transactions found",
-                        modifier = Modifier
-                            // 🔥 Changed: Use theme-aware container color
-                            .background(MaterialTheme.colorScheme.secondaryContainer)
-                            .fillMaxWidth()
-                            .padding(horizontal = 20.dp, vertical = 8.dp),
-                        // 🔥 Changed: Use theme-aware text color for the container
-                        color = MaterialTheme.colorScheme.onSecondaryContainer
-                    )
-
+                    Image(painter = painterResource(R.drawable.no_transaction), "", modifier = Modifier.size(50.dp))
+                    Spacer(Modifier.height(20.dp))
+                    Text(text = "No transactions this month!", color = MaterialTheme.colorScheme.onBackground)
                 }
-            }
+            } else {
+                // Data State UI (Pager and List)
+                Column(modifier = Modifier.fillMaxSize()) {
+                    // Pager is still shown conditionally based on totals
+                    if (monthlyReceived != 0.0 || monthlySpent != 0.0) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(min = 220.dp, max = 280.dp)
+                                .padding(horizontal = 10.dp)
+                        ) {
+                            val pages = buildList {
+                                if (monthlyReceived != 0.0 && monthlySpent != 0.0) add("Pie")
+                                add("ByMonth")
+                                add("BySubCategory")
+                            }
+                            val pagerState = rememberPagerState(initialPage = 0, pageCount = { pages.size })
 
-            else -> {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(bottom = 16.dp)
-                ) {
-                    groupedByDate.forEach { (date, itemsForDate) ->
-                        item(key = "header_$date") {
-                            Text(
-                                text = date,
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                // 🔥 Changed: Use theme-aware text color
-                                color = MaterialTheme.colorScheme.onBackground,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    // 🔥 Removed unnecessary background to inherit from LazyColumn
-                                    .padding(horizontal = 16.dp, vertical = 10.dp)
-                            )
-                        }
-                        items(
-                            items = itemsForDate,
-                            key = { it.id }
-                        ) { item ->
-                            val itemId: String = (item.id.toString())
-
-                            MoneyItemWithLongPress(
-                                item = item,
-                                selected = selectedItems.contains(itemId),
-                                onClick = {
-                                    if (selectedItems.isEmpty()) {
-                                        navController1.navigate(
-                                            Routes.UpdateScreen.route +
-                                                    "?description=${enc(item.description)}" +
-                                                    "&amount=${item.amount}" +
-                                                    "&id=${item.id}" +
-                                                    "&type=${enc(item.type.toString())}" +
-                                                    "&category=${enc(item.category ?: "")}" +
-                                                    "&subCategory=${enc(item.subCategory ?: "")}" +
-                                                    "&date=${enc(item.date ?: "")}" +
-                                                    "&time=${item.time}"
-                                        )
-                                    } else {
-                                        if (selectedItems.contains(itemId)) {
-                                            selectedItems.remove(itemId)
-                                        } else {
-                                            selectedItems.add(itemId)
-                                        }
-                                    }
-                                },
-                                onLongClick = {
-                                    if (selectedItems.contains(itemId)) {
-                                        selectedItems.remove(itemId)
-                                    } else {
-                                        selectedItems.add(itemId)
-                                    }
+                            HorizontalPager(
+                                state = pagerState,
+                                modifier = Modifier.fillMaxSize()
+                            ) { page ->
+                                when (pages[page]) {
+                                    "Pie" -> PieChart(spent = monthlySpent, earned = monthlyReceived, modifier = Modifier.fillMaxSize())
+                                    "ByMonth" -> ExpenseDonutChartByMonth(viewModel = viewModel, month = selectedMonthInNum, year = selectedYear.toString(), modifier = Modifier.fillMaxSize())
+                                    "BySubCategory" -> ExpenseDonutChartBySubCategory(viewModel = viewModel, month = selectedMonthInNum, year = selectedYear.toString(), modifier = Modifier.fillMaxSize())
                                 }
-                            )
+                            }
+
+                            if (pagerState.currentPage > 0) {
+                                IconButton(onClick = { scope.launch { pagerState.animateScrollToPage(pagerState.currentPage - 1) } }, modifier = Modifier.align(Alignment.BottomStart).padding(8.dp)) {
+                                    Icon(painter = painterResource(id = R.drawable.right_arrow), contentDescription = "Previous Chart", modifier = Modifier.size(28.dp).rotate(180f))
+                                }
+                            }
+
+                            if (pagerState.currentPage < pagerState.pageCount - 1) {
+                                IconButton(onClick = { scope.launch { pagerState.animateScrollToPage(pagerState.currentPage + 1) } }, modifier = Modifier.align(Alignment.BottomEnd).padding(8.dp)) {
+                                    Icon(painter = painterResource(id = R.drawable.right_arrow), contentDescription = "Next Chart", modifier = Modifier.size(28.dp))
+                                }
+                            }
+                        }
+                    }
+
+                    // Transaction List
+                    LazyColumn(
+                        modifier = Modifier.weight(1f), // Use weight to fill available space
+                        contentPadding = PaddingValues(bottom = 16.dp)
+                    ) {
+                        groupedByDate.forEach { (date, itemsForDate) ->
+                            item(key = "header_$date") {
+                                Text(
+                                    text = date,
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.onBackground,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 16.dp, vertical = 10.dp)
+                                )
+                            }
+                            items(items = itemsForDate, key = { it.id }) { item ->
+                                val itemId: String = (item.id.toString())
+                                MoneyItemWithLongPress(
+                                    item = item,
+                                    selected = selectedItems.contains(itemId),
+                                    onClick = {
+                                        if (selectedItems.isEmpty()) {
+                                            navController1.navigate(
+                                                Routes.UpdateScreen.route +
+                                                        "?description=${enc(item.description)}" +
+                                                        "&amount=${item.amount}" +
+                                                        "&id=${item.id}" +
+                                                        "&type=${enc(item.type.toString())}" +
+                                                        "&category=${enc(item.category ?: "")}" +
+                                                        "&subCategory=${enc(item.subCategory ?: "")}" +
+                                                        "&date=${enc(item.date ?: "")}" +
+                                                        "&time=${item.time}"
+                                            )
+                                        } else {
+                                            if (selectedItems.contains(itemId)) selectedItems.remove(itemId) else selectedItems.add(itemId)
+                                        }
+                                    },
+                                    onLongClick = {
+                                        if (selectedItems.contains(itemId)) selectedItems.remove(itemId) else selectedItems.add(itemId)
+                                    }
+                                )
+                            }
                         }
                     }
                 }
@@ -314,6 +269,7 @@ fun InsightsScreen(
         }
     }
 }
+
 
 // Helpers
 private fun enc(s: String): String =
@@ -335,7 +291,7 @@ fun CustomTopBar(
     moneyList: List<Money>,
     datePickerDialog: DatePickerDialog,
     viewModel: AddScreenViewModel,
-    categoryViewModel : CategoryViewModel,
+    categoryViewModel: CategoryViewModel,
     onMonthChange: (Int, Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -401,7 +357,6 @@ fun CustomTopBar(
                 text = "${selectedMonth.take(3)} ${year % 100}",
                 fontSize = 16.sp,
                 fontWeight = FontWeight.SemiBold,
-                // 🔥 Changed: Use theme-aware text color
                 color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier
                     .clickable { datePickerDialog.show() }
@@ -411,7 +366,6 @@ fun CustomTopBar(
             Icon(
                 Icons.Rounded.KeyboardArrowRight,
                 contentDescription = "Next",
-                // 🔥 Changed: Use theme-aware icon tint
                 tint = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier
                     .size(20.dp)
