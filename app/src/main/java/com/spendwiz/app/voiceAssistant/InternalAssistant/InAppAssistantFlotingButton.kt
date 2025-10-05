@@ -14,7 +14,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -94,7 +93,8 @@ fun InAppVoiceAssistantFab() {
 
     // ✨ --- UI Animation States --- ✨
     val glowScale by animateFloatAsState(
-        targetValue = if (isListening) 1.6f else 0f,
+        // ✅ Reduced target value from 1.6f to 1.2f to make the glow smaller
+        targetValue = if (isListening) 1.2f else 0f,
         animationSpec = tween(durationMillis = 500),
         label = "glowScale"
     )
@@ -109,7 +109,6 @@ fun InAppVoiceAssistantFab() {
     Box(
         modifier = Modifier
             .offset { IntOffset(offsetX.roundToInt(), offsetY.roundToInt()) }
-            // Note: Click and drag are now combined into one pointerInput for cleaner code
             .pointerInput(Unit) {
                 detectDragGestures(
                     onDragEnd = { /* Can add logic here if needed */ }
@@ -123,11 +122,13 @@ fun InAppVoiceAssistantFab() {
         Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier
-                .size(70.dp) // Make the touch area slightly larger for the glow
+                // ✅ Reduced the container size for a tighter effect
+                .size(70.dp)
+                .clip(CircleShape) // Clipped the container to ensure a round shape
                 .drawBehind {
                     scale(scale = glowScale) {
                         drawCircle(
-                            color = Color.Cyan, // Glow color
+                            color = Color(0xFF9C27B0), // Purple color
                             alpha = glowAlpha
                         )
                     }
@@ -145,11 +146,12 @@ fun InAppVoiceAssistantFab() {
                 }
         ) {
             Image(
-                painter = painterResource(id = R.drawable.nano2),
+                painter = painterResource(id = R.drawable.nano),
                 contentDescription = "Nano Voice Assistant",
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
-                    .size(64.dp) // The size of the visible button
+                    // ✅ Adjusted image size to fit the new container
+                    .size(50.dp)
                     .clip(CircleShape)
             )
         }

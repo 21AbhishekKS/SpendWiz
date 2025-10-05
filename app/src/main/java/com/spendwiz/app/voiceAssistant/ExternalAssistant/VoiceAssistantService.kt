@@ -1,9 +1,6 @@
-// Path: com/spendwiz/app/voiceAssistant/ExternalAssistant/VoiceAssistantService.kt
-
 package com.spendwiz.app.voiceAssistant.ExternalAssistant
 
 import android.annotation.SuppressLint
-import android.app.Activity
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -55,6 +52,9 @@ class VoiceAssistantService : Service() {
     private val serviceJob = SupervisorJob()
     private val serviceScope = CoroutineScope(Dispatchers.Main + serviceJob)
 
+    // ✅ Make lifecycleOwner a property to access it in onDestroy
+    private lateinit var lifecycleOwner: CustomLifecycleOwner
+
     override fun onBind(intent: Intent?): IBinder? = null
 
     @SuppressLint("ClickableViewAccessibility")
@@ -63,18 +63,21 @@ class VoiceAssistantService : Service() {
         setupForegroundService()
 
         windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
-        floatingView = ComposeView(this)
 
-        // Make the ComposeView lifecycle-aware
-        val lifecycleOwner = CustomLifecycleOwner()
-        lifecycleOwner.performRestore(null)
-        lifecycleOwner.handleLifecycleEvent(Lifecycle.Event.ON_CREATE)
-        floatingView.setViewTreeLifecycleOwner(lifecycleOwner)
-        floatingView.setViewTreeSavedStateRegistryOwner(lifecycleOwner)
-        val viewModelStoreOwner = object : ViewModelStoreOwner {
-            override val viewModelStore = ViewModelStore()
+        // Setup ComposeView and its required owners
+        floatingView = ComposeView(this).apply {
+            lifecycleOwner = CustomLifecycleOwner()
+            lifecycleOwner.performRestore(null)
+            lifecycleOwner.handleLifecycleEvent(Lifecycle.Event.ON_CREATE)
+
+            setViewTreeLifecycleOwner(lifecycleOwner)
+            setViewTreeSavedStateRegistryOwner(lifecycleOwner)
+
+            val viewModelStoreOwner = object : ViewModelStoreOwner {
+                override val viewModelStore = ViewModelStore()
+            }
+            setViewTreeViewModelStoreOwner(viewModelStoreOwner)
         }
-        floatingView.setViewTreeViewModelStoreOwner(viewModelStoreOwner)
 
         params = WindowManager.LayoutParams(
             WindowManager.LayoutParams.WRAP_CONTENT,
@@ -90,6 +93,7 @@ class VoiceAssistantService : Service() {
 
         floatingView.setContent {
             FloatingVoiceButton(
+                // Reading .value here correctly subscribes composable to state changes
                 isListening = isListening.value,
                 onClick = {
                     if (!isListening.value) startListening() else stopListening()
@@ -104,9 +108,14 @@ class VoiceAssistantService : Service() {
 
         windowManager.addView(floatingView, params)
         setupSpeechRecognizer()
+
+        // ✅ CRUCIAL FIX: Move the lifecycle to RESUMED to enable recomposition
+        lifecycleOwner.handleLifecycleEvent(Lifecycle.Event.ON_START)
+        lifecycleOwner.handleLifecycleEvent(Lifecycle.Event.ON_RESUME)
     }
 
     private fun startListening() {
+        Log.d("VoiceAssistantService", "startListening() called")
         if (!SpeechRecognizer.isRecognitionAvailable(this)) {
             Toast.makeText(this, "Speech recognition not available", Toast.LENGTH_SHORT).show()
             return
@@ -120,24 +129,29 @@ class VoiceAssistantService : Service() {
     }
 
     private fun stopListening() {
+        Log.d("VoiceAssistantService", "stopListening() called")
         speechRecognizer?.stopListening()
-        isListening.value = false
     }
 
     private fun setupSpeechRecognizer() {
         speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this)
         speechRecognizer?.setRecognitionListener(object : RecognitionListener {
             override fun onReadyForSpeech(params: Bundle?) {
+                Log.d("VoiceAssistantService", "onReadyForSpeech -> isListening = true")
                 isListening.value = true
             }
+
             override fun onBeginningOfSpeech() {}
             override fun onRmsChanged(rmsdB: Float) {}
             override fun onBufferReceived(buffer: ByteArray?) {}
+
             override fun onEndOfSpeech() {
+                Log.d("VoiceAssistantService", "onEndOfSpeech -> isListening = false")
                 isListening.value = false
             }
 
             override fun onError(error: Int) {
+                Log.d("VoiceAssistantService", "onError($error) -> isListening = false")
                 isListening.value = false
                 Log.e("VoiceAssistant", "Error: $error")
                 val errorMessage = when (error) {
@@ -155,10 +169,12 @@ class VoiceAssistantService : Service() {
                 if (!matches.isNullOrEmpty()) {
                     val command = matches[0]
                     Log.i("VoiceAssistant", "Recognized: $command")
-                    // Use the centralized handler
                     VoiceCommandHandler.processCommand(applicationContext, command)
                 }
+                // ✅ After getting results, the recognizer has stopped. Update the state.
+                isListening.value = false
             }
+
             override fun onPartialResults(partialResults: Bundle?) {}
             override fun onEvent(eventType: Int, params: Bundle?) {}
         })
@@ -190,8 +206,16 @@ class VoiceAssistantService : Service() {
             startForeground(1, notification)
         }
     }
+
     override fun onDestroy() {
         super.onDestroy()
+        // ✅ Clean up the lifecycle owner to prevent leaks
+        if (::lifecycleOwner.isInitialized) {
+            lifecycleOwner.handleLifecycleEvent(Lifecycle.Event.ON_PAUSE)
+            lifecycleOwner.handleLifecycleEvent(Lifecycle.Event.ON_STOP)
+            lifecycleOwner.handleLifecycleEvent(Lifecycle.Event.ON_DESTROY)
+        }
+
         serviceJob.cancel()
         speechRecognizer?.destroy()
         if (::windowManager.isInitialized && ::floatingView.isInitialized) {
@@ -200,7 +224,7 @@ class VoiceAssistantService : Service() {
     }
 }
 
-// A trick to provide a LifecycleOwner to the ComposeView running in a Service
+// This custom owner class is correct and needs no changes
 class CustomLifecycleOwner : SavedStateRegistryOwner {
     private val store = ViewModelStore()
     private var mLifecycleRegistry = androidx.lifecycle.LifecycleRegistry(this)
