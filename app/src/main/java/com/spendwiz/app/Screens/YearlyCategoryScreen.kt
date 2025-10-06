@@ -11,17 +11,21 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.spendwiz.app.Ads.BannerAdView
 import com.spendwiz.app.ViewModels.AddScreenViewModel
 import com.spendwiz.app.ViewModels.CategoryData
 import com.spendwiz.app.ViewModels.SubCategoryData
 import com.spendwiz.app.Database.money.TransactionType
+import com.spendwiz.app.R
 import java.text.NumberFormat
 import java.util.Locale
 
@@ -34,13 +38,22 @@ fun YearlyCategoryScreen(
     val categories = vm.getYearlyCategoryData(year, type).observeAsState(emptyList()).value
 
     // Use Surface to ensure the background color is from the theme
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background // Sets the background for the whole screen
-    ) {
+    Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
+        bottomBar = {
+            BannerAdView(
+                adUnitId = stringResource(id = R.string.ad_unit_id_yearly_inside_screen),
+            )
+        }
+    ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .padding(
+                    start = innerPadding.calculateStartPadding(LayoutDirection.Ltr),
+                    end = innerPadding.calculateEndPadding(LayoutDirection.Ltr),
+                    bottom = innerPadding.calculateBottomPadding()
+                )
                 .padding(16.dp)
         ) {
             // Heading - uses onBackground color from the theme by default

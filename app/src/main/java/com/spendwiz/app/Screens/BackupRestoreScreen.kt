@@ -18,7 +18,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat // <-- ADDED
@@ -28,6 +30,7 @@ import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.Scope
 import com.google.api.services.drive.DriveScopes
+import com.spendwiz.app.Ads.BannerAdView
 import com.spendwiz.app.AppStyle.AppColors.customButtonColors
 import com.spendwiz.app.BackUp.BackupRestoreState
 import com.spendwiz.app.BackUp.BackupRestoreViewModel
@@ -123,78 +126,145 @@ fun BackupRestoreScreen(
         }
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(20.dp),
-        horizontalAlignment = Alignment.Start,
-        verticalArrangement = Arrangement.Top
-    ) {
-        // ... (All the code for Title, Google Drive, and Local Backup remains the same) ...
-
-        // Screen Title
-        Text(
-            text = "Backup & Restore",
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(bottom = 12.dp)
-        )
-
-        // --- Google Drive Section ---
-        Row(
-            Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+    Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
+        bottomBar = {
+            BannerAdView(
+                adUnitId = stringResource(id = R.string.ad_unit_id_backup_screen),
+            )
+        }
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(
+                    start = innerPadding.calculateStartPadding(LayoutDirection.Ltr),
+                    end = innerPadding.calculateEndPadding(LayoutDirection.Ltr),
+                    bottom = innerPadding.calculateBottomPadding()
+                )
+                .padding(20.dp),
+            horizontalAlignment = Alignment.Start,
+            verticalArrangement = Arrangement.Top
         ) {
             Text(
-                text = "Google Drive Backup",
+                text = "Backup & Restore",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(bottom = 12.dp)
+            )
+
+            // --- Google Drive Section ---
+            Row(
+                Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = "Google Drive Backup",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
+                if (googleUser != null) {
+                    TextButton(
+                        colors = customButtonColors(),
+                        shape = RoundedCornerShape(12.dp),
+                        onClick = { showLogoutDialog = true }
+                    ) {
+                        Text("Sign Out")
+                    }
+                }
+            }
+            Text(
+                text = "Sync your data securely with your Google Drive. This ensures your data is safe and accessible across devices.",
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(bottom = 12.dp)
+            )
+
+            if (googleUser == null) {
+                Button(
+                    onClick = {
+                        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                            .requestIdToken("903991082659-uauv6af5179j70ijr2sn42ufop96ibi2.apps.googleusercontent.com")
+                            .requestEmail()
+                            .requestScopes(Scope(DriveScopes.DRIVE_APPDATA))
+                            .build()
+                        val googleSignInClient = GoogleSignIn.getClient(context, gso)
+                        authResultLauncher.launch(googleSignInClient.signInIntent)
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(8.dp),
+                    colors = customButtonColors()
+                ) {
+                    Text("Sign in with Google")
+                }
+            } else {
+                Text("Signed in as: ${googleUser?.displayName}", fontWeight = FontWeight.Bold)
+                Text(
+                    googleUser?.email ?: "",
+                    fontSize = 13.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(Modifier.height(12.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Button(
+                        onClick = { showRestoreDialog = { viewModel.backupToDrive() } },
+                        modifier = Modifier.weight(1f),
+                        enabled = state !is BackupRestoreState.InProgress,
+                        shape = RoundedCornerShape(8.dp),
+                        colors = customButtonColors()
+                    ) {
+                        Text("Backup")
+                    }
+                    OutlinedButton(
+                        onClick = { showRestoreDialog = { viewModel.restoreFromDrive() } },
+                        modifier = Modifier.weight(1f),
+                        enabled = state !is BackupRestoreState.InProgress,
+                        shape = RoundedCornerShape(8.dp),
+                        border = BorderStroke(1.dp, myStableButtonColor),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = myStableButtonColor)
+                    ) {
+                        Text("Restore")
+                    }
+                }
+            }
+
+            if (state is BackupRestoreState.InProgress) {
+                Spacer(Modifier.height(12.dp))
+                CircularProgressIndicator(
+                    modifier = Modifier.size(28.dp),
+                    color = myStableButtonColor
+                )
+                Text("Processing… Please wait.", fontSize = 13.sp)
+            }
+
+            // --- Local Backup Section ---
+            Divider(modifier = Modifier.padding(vertical = 20.dp))
+
+            Text(
+                "Local Backup",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold
             )
-            if (googleUser != null) {
-                TextButton(
-                    colors = customButtonColors(),
-                    shape = RoundedCornerShape(12.dp),
-                    onClick = { showLogoutDialog = true }
-                ) {
-                    Text("Sign Out")
-                }
-            }
-        }
-        Text(
-            text = "Sync your data securely with your Google Drive. This ensures your data is safe and accessible across devices.",
-            style = MaterialTheme.typography.bodySmall,
-            modifier = Modifier.padding(bottom = 12.dp)
-        )
+            Text(
+                "Save a backup file on your device storage and restore it anytime manually.",
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(bottom = 12.dp)
+            )
 
-        if (googleUser == null) {
-            Button(
-                onClick = {
-                    val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                        .requestIdToken("903991082659-uauv6af5179j70ijr2sn42ufop96ibi2.apps.googleusercontent.com")
-                        .requestEmail()
-                        .requestScopes(Scope(DriveScopes.DRIVE_APPDATA))
-                        .build()
-                    val googleSignInClient = GoogleSignIn.getClient(context, gso)
-                    authResultLauncher.launch(googleSignInClient.signInIntent)
-                },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(8.dp),
-                colors = customButtonColors()
-            ) {
-                Text("Sign in with Google")
+            val suggestedFileName = remember {
+                val dateStr = SimpleDateFormat("yyyyMMdd", Locale.getDefault()).format(Date())
+                "spendwiz_backup_$dateStr.json"
             }
-        } else {
-            Text("Signed in as: ${googleUser?.displayName}", fontWeight = FontWeight.Bold)
-            Text(googleUser?.email ?: "", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Spacer(Modifier.height(12.dp))
-
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 Button(
-                    onClick = { showRestoreDialog = { viewModel.backupToDrive() } },
+                    onClick = { createDocumentLauncher.launch(suggestedFileName) },
                     modifier = Modifier.weight(1f),
                     enabled = state !is BackupRestoreState.InProgress,
                     shape = RoundedCornerShape(8.dp),
@@ -203,7 +273,7 @@ fun BackupRestoreScreen(
                     Text("Backup")
                 }
                 OutlinedButton(
-                    onClick = { showRestoreDialog = { viewModel.restoreFromDrive() } },
+                    onClick = { openDocumentLauncher.launch(arrayOf("application/json")) },
                     modifier = Modifier.weight(1f),
                     enabled = state !is BackupRestoreState.InProgress,
                     shape = RoundedCornerShape(8.dp),
@@ -213,118 +283,73 @@ fun BackupRestoreScreen(
                     Text("Restore")
                 }
             }
-        }
 
-        if (state is BackupRestoreState.InProgress) {
-            Spacer(Modifier.height(12.dp))
-            CircularProgressIndicator(modifier = Modifier.size(28.dp), color = myStableButtonColor)
-            Text("Processing… Please wait.", fontSize = 13.sp)
-        }
+            // --- Import from SMS ---
+            Divider(modifier = Modifier.padding(vertical = 20.dp))
 
-        // --- Local Backup Section ---
-        Divider(modifier = Modifier.padding(vertical = 20.dp))
+            Text(
+                text = "Import Transactions",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold
+            )
+            Text(
+                text = "Quickly fetch transactions from your SMS inbox.",
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(bottom = 12.dp)
+            )
 
-        Text(
-            "Local Backup",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold
-        )
-        Text(
-            "Save a backup file on your device storage and restore it anytime manually.",
-            style = MaterialTheme.typography.bodySmall,
-            modifier = Modifier.padding(bottom = 12.dp)
-        )
-
-        val suggestedFileName = remember {
-            val dateStr = SimpleDateFormat("yyyyMMdd", Locale.getDefault()).format(Date())
-            "spendwiz_backup_$dateStr.json"
-        }
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
             Button(
-                onClick = { createDocumentLauncher.launch(suggestedFileName) },
-                modifier = Modifier.weight(1f),
-                enabled = state !is BackupRestoreState.InProgress,
-                shape = RoundedCornerShape(8.dp),
-                colors = customButtonColors()
-            ) {
-                Text("Backup")
-            }
-            OutlinedButton(
-                onClick = { openDocumentLauncher.launch(arrayOf("application/json")) },
-                modifier = Modifier.weight(1f),
-                enabled = state !is BackupRestoreState.InProgress,
-                shape = RoundedCornerShape(8.dp),
-                border = BorderStroke(1.dp, myStableButtonColor),
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = myStableButtonColor)
-            ) {
-                Text("Restore")
-            }
-        }
-
-        // --- Import from SMS ---
-        Divider(modifier = Modifier.padding(vertical = 20.dp))
-
-        Text(
-            text = "Import Transactions",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold
-        )
-        Text(
-            text = "Quickly fetch transactions from your SMS inbox.",
-            style = MaterialTheme.typography.bodySmall,
-            modifier = Modifier.padding(bottom = 12.dp)
-        )
-
-        Button(
-            // --- MODIFIED: Simplified onClick logic ---
-            onClick = {
-                // Check if permission is already granted
-                if (ContextCompat.checkSelfPermission(
-                        context,
-                        Manifest.permission.READ_SMS
-                    ) == PackageManager.PERMISSION_GRANTED
-                ) {
-                    // If granted, proceed directly
-                    isImporting = true
-                    importedCount = null
-                    coroutineScope.launch {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                            val count = addScreenViewModel.insertTransactionsFromSms(context)
-                            importedCount = count
+                // --- MODIFIED: Simplified onClick logic ---
+                onClick = {
+                    // Check if permission is already granted
+                    if (ContextCompat.checkSelfPermission(
+                            context,
+                            Manifest.permission.READ_SMS
+                        ) == PackageManager.PERMISSION_GRANTED
+                    ) {
+                        // If granted, proceed directly
+                        isImporting = true
+                        importedCount = null
+                        coroutineScope.launch {
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                val count = addScreenViewModel.insertTransactionsFromSms(context)
+                                importedCount = count
+                            }
+                            isImporting = false
                         }
-                        isImporting = false
+                    } else {
+                        // If not granted, always launch the request.
+                        // The launcher's callback now handles all denial scenarios.
+                        requestSmsPermissionLauncher.launch(Manifest.permission.READ_SMS)
                     }
-                } else {
-                    // If not granted, always launch the request.
-                    // The launcher's callback now handles all denial scenarios.
-                    requestSmsPermissionLauncher.launch(Manifest.permission.READ_SMS)
+                },
+                enabled = !isImporting,
+                shape = RoundedCornerShape(8.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = myStableButtonColor)
+            ) {
+                Text("Import from SMS", color = colorResource(id = R.color.button_text_color))
+            }
+            when {
+                isImporting -> {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(28.dp),
+                        color = myStableButtonColor
+                    )
+                    Text("Importing SMS…", fontSize = 13.sp)
                 }
-            },
-            enabled = !isImporting,
-            shape = RoundedCornerShape(8.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = myStableButtonColor)
-        ) {
-            Text("Import from SMS", color = colorResource(id = R.color.button_text_color))
-        }
-        when {
-            isImporting -> {
-                CircularProgressIndicator(modifier = Modifier.size(28.dp), color = myStableButtonColor)
-                Text("Importing SMS…", fontSize = 13.sp)
-            }
-            importedCount != null -> {
-                Text(
-                    "Imported $importedCount transactions.",
-                    fontWeight = FontWeight.Medium,
-                    fontSize = 14.sp,
-                    modifier = Modifier.padding(top = 6.dp)
-                )
-            }
-        }
-        Divider(modifier = Modifier.padding(vertical = 20.dp))
 
+                importedCount != null -> {
+                    Text(
+                        "Imported $importedCount transactions.",
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 14.sp,
+                        modifier = Modifier.padding(top = 6.dp)
+                    )
+                }
+            }
+            Divider(modifier = Modifier.padding(vertical = 20.dp))
+
+        }
     }
 
     // ... (Restore and Logout confirmation dialogs remain the same) ...

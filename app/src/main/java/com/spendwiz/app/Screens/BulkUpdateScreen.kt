@@ -15,12 +15,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.spendwiz.app.Ads.BannerAdView
 import com.spendwiz.app.Database.money.Money
 import com.spendwiz.app.Database.money.TransactionType
 import com.spendwiz.app.ViewModels.AddScreenViewModel
@@ -48,66 +51,78 @@ fun BulkUpdateScreen(
         }
     }
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFFF5F5F5))
-    ) {
-        if (uncategorized.isEmpty()) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text(
-                    "No uncategorized transactions found.",
-                    style = MaterialTheme.typography.bodyLarge.copy(color = Color.Gray)
-                )
-            }
-        } else {
-            Column(modifier = Modifier.fillMaxSize()) {
-                Text(
-                    text = "Selected transactions will be updated to $category / ${subCategory ?: "General"}",
-                    fontWeight = FontWeight.Medium,
-                    fontSize = 16.sp,
-                    color = Color.Black,
-                    modifier = Modifier.padding(16.dp)
-                )
-
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(bottom = 80.dp)
+    Scaffold(
+        bottomBar = {
+            BannerAdView(
+                adUnitId = stringResource(id = R.string.ad_unit_id_bulkUpdate_screen),
+            )
+        },
+        floatingActionButton = {
+            if (uncategorized.isNotEmpty()) {
+                FloatingActionButton(
+                    onClick = {
+                        if (selectedIds.isNotEmpty()) {
+                            viewModel.bulkUpdateCategory(
+                                ids = selectedIds,
+                                newCategory = category,
+                                newSubCategory = subCategory ?: "General"
+                            )
+                        }
+                        navController.popBackStack()
+                        navController.popBackStack()
+                    },
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
                 ) {
-                    items(uncategorized) { transaction ->
-                        TransactionCard(
-                            item = transaction,
-                            isSelected = selectedIds.contains(transaction.id),
-                            onToggle = { checked ->
-                                if (checked) selectedIds.add(transaction.id)
-                                else selectedIds.remove(transaction.id)
-                            }
-                        )
-                    }
+                    Icon(Icons.Default.Done, contentDescription = "Update")
                 }
             }
         }
+    ) { innerPadding ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(
+                    start = innerPadding.calculateStartPadding(LayoutDirection.Ltr),
+                    end = innerPadding.calculateEndPadding(LayoutDirection.Ltr),
+                    bottom = innerPadding.calculateBottomPadding()
+                )
+                .background(MaterialTheme.colorScheme.background)
+        ) {
+            if (uncategorized.isEmpty()) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text(
+                        "No uncategorized transactions found.",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            } else {
+                Column(modifier = Modifier.fillMaxSize()) {
+                    Text(
+                        text = "Selected transactions will be updated to $category / ${subCategory ?: "General"}",
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 16.sp,
+                        color = MaterialTheme.colorScheme.onBackground,
+                        modifier = Modifier.padding(16.dp)
+                    )
 
-        if (uncategorized.isNotEmpty()) {
-            FloatingActionButton(
-                onClick = {
-                    if (selectedIds.isNotEmpty()) {
-                        viewModel.bulkUpdateCategory(
-                            ids = selectedIds,
-                            newCategory = category,
-                            newSubCategory = subCategory ?: "General"
-                        )
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize()
+                    ) {
+                        items(uncategorized) { transaction ->
+                            TransactionCard(
+                                item = transaction,
+                                isSelected = selectedIds.contains(transaction.id),
+                                onToggle = { checked ->
+                                    if (checked) selectedIds.add(transaction.id)
+                                    else selectedIds.remove(transaction.id)
+                                }
+                            )
+                        }
                     }
-                    navController.popBackStack()
-                    navController.popBackStack()
-                },
-                containerColor = Color(0xFF2196F3),
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(20.dp)
-            ) {
-                Icon(Icons.Default.Done, contentDescription = "Update", tint = Color.White)
+                }
             }
         }
     }
@@ -125,11 +140,11 @@ fun TransactionCard(
             .padding(horizontal = 8.dp, vertical = 4.dp)
             .clickable { onToggle(!isSelected) },
         shape = RoundedCornerShape(8.dp),
-        elevation = CardDefaults.cardElevation(2.dp)
+        elevation = CardDefaults.cardElevation(2.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Row(
             modifier = Modifier
-                .background(Color.White)
                 .padding(8.dp)
                 .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
@@ -142,7 +157,7 @@ fun TransactionCard(
             }
             Image(
                 painter = painterResource(id = iconRes),
-                contentDescription = "",
+                contentDescription = item.type.name,
                 modifier = Modifier
                     .padding(end = 8.dp)
                     .size(32.dp)
@@ -155,13 +170,13 @@ fun TransactionCard(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     fontSize = 14.sp,
-                    color = Color.Black
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         text = item.date,
                         fontSize = 12.sp,
-                        color = Color.DarkGray,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -169,7 +184,7 @@ fun TransactionCard(
                     Text(
                         text = item.bankName?.let { "($it)" } ?: "(Cash Payment)",
                         fontSize = 12.sp,
-                        color = Color.DarkGray,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -180,7 +195,7 @@ fun TransactionCard(
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         fontSize = 12.sp,
-                        color = Color.Gray
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -195,10 +210,11 @@ fun TransactionCard(
                     TransactionType.EXPENSE -> "- ${item.amount}"
                     else -> "${item.amount}"
                 }
+                // Semantic colors are kept for clarity (green for income, red for expense)
                 val amountColor = when (item.type) {
                     TransactionType.INCOME -> Color(0xFF4CAF50)
                     TransactionType.EXPENSE -> Color(0xFFF44336)
-                    else -> Color(0xFF3F51B5)
+                    else -> MaterialTheme.colorScheme.primary
                 }
                 Text(
                     text = amountText,
@@ -210,7 +226,7 @@ fun TransactionCard(
 
                 Text(
                     text = formatTimeTo12Hr(item.time),
-                    color = Color.Black,
+                    color = MaterialTheme.colorScheme.onSurface,
                     fontSize = 12.sp,
                     textAlign = TextAlign.End
                 )
@@ -220,7 +236,7 @@ fun TransactionCard(
             Checkbox(
                 checked = isSelected,
                 onCheckedChange = { onToggle(it) },
-                colors = CheckboxDefaults.colors(checkedColor = Color(0xFF2196F3))
+                colors = CheckboxDefaults.colors(checkedColor = MaterialTheme.colorScheme.primary)
             )
         }
     }

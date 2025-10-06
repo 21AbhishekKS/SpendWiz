@@ -19,8 +19,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import com.spendwiz.app.Ads.BannerAdView
 import com.spendwiz.app.AppStyle.AppColors.customCardColors
 import com.spendwiz.app.Database.money.Category
 import com.spendwiz.app.R
@@ -44,160 +47,179 @@ fun ManageCategoriesScreen(viewModel: CategoryViewModel) {
     // Custom Color
     val buttonColor = colorResource(id = R.color.button_color)
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        // Header with Reset button
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "Manage Categories",
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold
+
+    Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
+        bottomBar = {
+            BannerAdView(
+                adUnitId = stringResource(id = R.string.ad_unit_id_category_screen),
             )
-            IconButton(onClick = { showResetDialog = true }) {
-                Icon(Icons.Default.Refresh, contentDescription = "Reset Categories")
-            }
         }
-
-        Spacer(Modifier.height(16.dp))
-
-        // Dropdown for transaction type
-        DropdownMenuBox(
-            label = "Transaction Type",
-            items = listOf("Income", "Expense", "Transfer"),
-            selected = selectedType,
-            onItemSelected = { selectedType = it }
-        )
-
-        Spacer(Modifier.height(16.dp))
-
-        // Categories list
-        LazyColumn(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(
+                    start = innerPadding.calculateStartPadding(LayoutDirection.Ltr),
+                    end = innerPadding.calculateEndPadding(LayoutDirection.Ltr),
+                    bottom = innerPadding.calculateBottomPadding()
+                )
+                .padding(16.dp)
         ) {
-            items(categories, key = { it.id }) { category ->
-                var expanded by remember { mutableStateOf(false) }
+            // Header with Reset button
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Manage Categories",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                IconButton(onClick = { showResetDialog = true }) {
+                    Icon(Icons.Default.Refresh, contentDescription = "Reset Categories")
+                }
+            }
 
-                Card(
-                    shape = MaterialTheme.shapes.large,
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = customCardColors()
-                ) {
-                    Column {
-                        // Category header
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { expanded = !expanded }
-                                .padding(16.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(
-                                    if (expanded) Icons.Default.KeyboardArrowDown else Icons.Default.KeyboardArrowRight,
-                                    contentDescription = if (expanded) "Collapse" else "Expand"
-                                )
-                                Spacer(Modifier.width(8.dp))
-                                Text(
-                                    category.name,
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.SemiBold
-                                )
-                            }
-                            IconButton(
-                                onClick = {
-                                    deleteAction = { viewModel.deleteCategory(category) }
-                                    showDeleteDialog = true
-                                }
-                            ) {
-                                Icon(
-                                    Icons.Default.Delete,
-                                    contentDescription = "Delete Category",
-                                    tint = MaterialTheme.colorScheme.error
-                                )
-                            }
-                        }
+            Spacer(Modifier.height(16.dp))
 
-                        // Expanded view with subcategory chips
-                        if (expanded) {
-                            val subcategories by viewModel.getSubCategories(category.id).collectAsState(emptyList())
+            // Dropdown for transaction type
+            DropdownMenuBox(
+                label = "Transaction Type",
+                items = listOf("Income", "Expense", "Transfer"),
+                selected = selectedType,
+                onItemSelected = { selectedType = it }
+            )
 
-                            FlowRow(
+            Spacer(Modifier.height(16.dp))
+
+            // Categories list
+            LazyColumn(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                items(categories, key = { it.id }) { category ->
+                    var expanded by remember { mutableStateOf(false) }
+
+                    Card(
+                        shape = MaterialTheme.shapes.large,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = customCardColors()
+                    ) {
+                        Column {
+                            // Category header
+                            Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 12.dp),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    .clickable { expanded = !expanded }
+                                    .padding(16.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                subcategories.forEach { sub ->
-                                    SubCategoryChip(
-                                        text = sub.name,
-                                        onDelete = {
-                                            deleteAction = { viewModel.deleteSubCategory(sub) }
-                                            showDeleteDialog = true
-                                        }
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        if (expanded) Icons.Default.KeyboardArrowDown else Icons.Default.KeyboardArrowRight,
+                                        contentDescription = if (expanded) "Collapse" else "Expand"
+                                    )
+                                    Spacer(Modifier.width(8.dp))
+                                    Text(
+                                        category.name,
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.SemiBold
                                     )
                                 }
-
-                                // Add new subcategory button
                                 IconButton(
                                     onClick = {
-                                        categoryForNewSub = category
-                                        showAddSubCategoryDialog = true
-                                    },
-                                    modifier = Modifier.size(32.dp)
+                                        deleteAction = { viewModel.deleteCategory(category) }
+                                        showDeleteDialog = true
+                                    }
                                 ) {
                                     Icon(
-                                        Icons.Default.Add,
-                                        contentDescription = "Add Subcategory"
+                                        Icons.Default.Delete,
+                                        contentDescription = "Delete Category",
+                                        tint = MaterialTheme.colorScheme.error
                                     )
+                                }
+                            }
+
+                            // Expanded view with subcategory chips
+                            if (expanded) {
+                                val subcategories by viewModel.getSubCategories(category.id)
+                                    .collectAsState(emptyList())
+
+                                FlowRow(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(
+                                            start = 16.dp,
+                                            end = 16.dp,
+                                            top = 12.dp,
+                                            bottom = 12.dp
+                                        ),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                ) {
+                                    subcategories.forEach { sub ->
+                                        SubCategoryChip(
+                                            text = sub.name,
+                                            onDelete = {
+                                                deleteAction = { viewModel.deleteSubCategory(sub) }
+                                                showDeleteDialog = true
+                                            }
+                                        )
+                                    }
+
+                                    // Add new subcategory button
+                                    IconButton(
+                                        onClick = {
+                                            categoryForNewSub = category
+                                            showAddSubCategoryDialog = true
+                                        },
+                                        modifier = Modifier.size(32.dp)
+                                    ) {
+                                        Icon(
+                                            Icons.Default.Add,
+                                            contentDescription = "Add Subcategory"
+                                        )
+                                    }
                                 }
                             }
                         }
                     }
                 }
             }
-        }
 
-        // Add category field
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            OutlinedTextField(
-                value = newCategoryName,
-                onValueChange = { newCategoryName = it },
-                label = { Text("New Category Name") },
-                modifier = Modifier.weight(1f),
-                singleLine = true
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Button(
-                onClick = {
-                    if (newCategoryName.isNotBlank()) {
-                        viewModel.addCategory(selectedType, newCategoryName)
-                        newCategoryName = ""
-                    }
-                },
-                modifier = Modifier.height(56.dp),
-                shape = MaterialTheme.shapes.medium,
-                colors = ButtonDefaults.buttonColors(containerColor = buttonColor)
+            // Add category field
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 16.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(Icons.Default.Add, contentDescription = "Add Category")
+                OutlinedTextField(
+                    value = newCategoryName,
+                    onValueChange = { newCategoryName = it },
+                    label = { Text("New Category Name") },
+                    modifier = Modifier.weight(1f),
+                    singleLine = true
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Button(
+                    onClick = {
+                        if (newCategoryName.isNotBlank()) {
+                            viewModel.addCategory(selectedType, newCategoryName)
+                            newCategoryName = ""
+                        }
+                    },
+                    modifier = Modifier.height(56.dp),
+                    shape = MaterialTheme.shapes.medium,
+                    colors = ButtonDefaults.buttonColors(containerColor = buttonColor)
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = "Add Category")
+                }
             }
         }
     }
-
-    // --- Dialogs ---
 
     // Delete confirmation dialog
     if (showDeleteDialog) {

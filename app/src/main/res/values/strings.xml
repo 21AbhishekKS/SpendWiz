@@ -1,14 +1,21 @@
 <resources>
     <string name="app_name">Spendwiz</string>
+
+    <!-- AdMob test ids-->
     <string name="ad_unit_id_banner_test">ca-app-pub-3940256099942544/6300978111</string>
-    <string name="ad_unit_id_home_screen">ca-app-pub-XXXXXXXXXXXXXXXX/YYYYYYYYYY</string>
-    <string name="ad_unit_id_add_screen">ca-app-pub-XXXXXXXXXXXXXXXX/YYYYYYYYYY</string>
-    <string name="ad_unit_id_update_screen">ca-app-pub-XXXXXXXXXXXXXXXX/YYYYYYYYYY</string>
-    <string name="ad_unit_id_yearly_earning_screen">ca-app-pub-XXXXXXXXXXXXXXXX/YYYYYYYYYY</string>
-    <string name="ad_unit_id_yearly_spent_screen">ca-app-pub-XXXXXXXXXXXXXXXX/YYYYYYYYYY</string>
-    <string name="ad_unit_id_backup_screen">ca-app-pub-XXXXXXXXXXXXXXXX/YYYYYYYYYY</string>
-    <string name="ad_unit_id_category_screen">ca-app-pub-XXXXXXXXXXXXXXXX/YYYYYYYYYY</string>
-    <string name="ad_unit_id_notification_settings_screen">ca-app-pub-XXXXXXXXXXXXXXXX/YYYYYYYYYY</string>
-    <string name="ad_unit_id_assistant_screen">ca-app-pub-XXXXXXXXXXXXXXXX/YYYYYYYYYY</string>
-    <string name="ad_unit_id_faq_screen">ca-app-pub-XXXXXXXXXXXXXXXX/YYYYYYYYYY</string>
+
+    <!-- AdMob banner ids for production-->
+    <string name="ad_unit_id_home_screen">ca-app-pub-3940256099942544/6300978111</string>
+    <string name="ad_unit_id_add_screen">ca-app-pub-3940256099942544/6300978111</string>
+    <string name="ad_unit_id_update_screen">ca-app-pub-3940256099942544/6300978111</string>
+    <string name="ad_unit_id_yearly_inside_screen">ca-app-pub-3940256099942544/6300978111</string>
+    <string name="ad_unit_id_backup_screen">ca-app-pub-3940256099942544/6300978111</string>
+    <string name="ad_unit_id_bulkUpdate_screen">ca-app-pub-3940256099942544/6300978111</string>
+    <string name="ad_unit_id_category_screen">ca-app-pub-3940256099942544/6300978111</string>
+    <string name="ad_unit_id_notification_settings_screen">ca-app-pub-3940256099942544/6300978111</string>
+    <string name="ad_unit_id_assistant_screen">ca-app-pub-3940256099942544/6300978111</string>
+    <string name="ad_unit_id_faq_screen">ca-app-pub-3940256099942544/6300978111</string>
+
+
+
 </resources>

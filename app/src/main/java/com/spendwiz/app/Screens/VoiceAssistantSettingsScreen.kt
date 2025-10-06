@@ -23,14 +23,18 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import com.spendwiz.app.Ads.BannerAdView
 import com.spendwiz.app.AppStyle.AppColors.customButtonColors
 import com.spendwiz.app.AppStyle.AppColors.customCardColors
 import com.spendwiz.app.AppStyle.AppColors.customSwitchColors
+import com.spendwiz.app.R
 import com.spendwiz.app.voiceAssistant.ExternalAssistant.VoiceAssistantService
 
 class PreferencesManager(context: Context) {
@@ -146,137 +150,155 @@ fun VoiceAssistantSettingsScreen(
         }
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        Row(Modifier.fillMaxWidth()) {
-            Text(
-                "Voice Assistant",
-                style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold)
+    Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
+        bottomBar = {
+            BannerAdView(
+                adUnitId = stringResource(id = R.string.ad_unit_id_assistant_screen),
             )
         }
-
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = customCardColors()
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 20.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = "Turn on Nano",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "Spendwiz Nano is a voice assistant that works only within the app.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                Spacer(modifier = Modifier.width(12.dp))
-                Switch(
-                    colors = customSwitchColors(),
-                    checked = isInAppAssistantEnabled,
-                    onCheckedChange = { isChecked ->
-                        if (isChecked) {
-                            // First, check for microphone permission.
-                            ensureMicrophonePermission {
-                                // Only update the state *after* permission is confirmed.
-                                onInAppAssistantToggle(true)
-                            }
-                        } else {
-                            onInAppAssistantToggle(false)
-                        }
-                    }
-                )
-            }
-        }
-
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = customCardColors()
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 20.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = "Turn on Turbo",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "Spendwiz Turbo is a voice assistant that works even if the app is closed.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                Spacer(modifier = Modifier.width(12.dp))
-                Switch(
-                    colors = customSwitchColors(),
-                    checked = isServiceEnabled,
-                    onCheckedChange = { isChecked ->
-                        if (isChecked) {
-                            // 1. Check for microphone permission.
-                            ensureMicrophonePermission {
-                                // 2. This lambda only runs if mic permission is granted.
-                                //    Now, check for the overlay permission.
-                                checkPermissionsAndStartService(context) {
-                                    // 3. This lambda only runs if overlay permission is also granted.
-                                    //    Now, it's safe to update the state and start the service.
-                                    onServiceToggle(true)
-                                    startVoiceService(context)
-                                }
-                            }
-                        } else {
-                            onServiceToggle(false)
-                            stopVoiceService(context)
-                        }
-                    }
-                )
-            }
-        }
-
-        Button(
-            colors = customButtonColors(),
-            onClick = {
-                val intent = Intent("com.android.settings.TTS_SETTINGS").apply {
-                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                }
-                try {
-                    context.startActivity(intent)
-                } catch (e: Exception) {
-                    Toast.makeText(context, "Could not open Text-to-Speech settings.", Toast.LENGTH_SHORT).show()
-                }
-            },
-            shape = RoundedCornerShape(12.dp),
+    ) { innerPadding ->
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .height(50.dp)
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(
+                    start = innerPadding.calculateStartPadding(LayoutDirection.Ltr),
+                    end = innerPadding.calculateEndPadding(LayoutDirection.Ltr),
+                    bottom = innerPadding.calculateBottomPadding()
+                )
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text("Download Offline Voice Package")
+            Row(Modifier.fillMaxWidth()) {
+                Text(
+                    "Voice Assistant",
+                    style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold)
+                )
+            }
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = customCardColors()
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 20.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Turn on Nano",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "Spendwiz Nano is a voice assistant that works only within the app.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Switch(
+                        colors = customSwitchColors(),
+                        checked = isInAppAssistantEnabled,
+                        onCheckedChange = { isChecked ->
+                            if (isChecked) {
+                                // First, check for microphone permission.
+                                ensureMicrophonePermission {
+                                    // Only update the state *after* permission is confirmed.
+                                    onInAppAssistantToggle(true)
+                                }
+                            } else {
+                                onInAppAssistantToggle(false)
+                            }
+                        }
+                    )
+                }
+            }
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = customCardColors()
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 20.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Turn on Turbo",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "Spendwiz Turbo is a voice assistant that works even if the app is closed.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Switch(
+                        colors = customSwitchColors(),
+                        checked = isServiceEnabled,
+                        onCheckedChange = { isChecked ->
+                            if (isChecked) {
+                                // 1. Check for microphone permission.
+                                ensureMicrophonePermission {
+                                    // 2. This lambda only runs if mic permission is granted.
+                                    //    Now, check for the overlay permission.
+                                    checkPermissionsAndStartService(context) {
+                                        // 3. This lambda only runs if overlay permission is also granted.
+                                        //    Now, it's safe to update the state and start the service.
+                                        onServiceToggle(true)
+                                        startVoiceService(context)
+                                    }
+                                }
+                            } else {
+                                onServiceToggle(false)
+                                stopVoiceService(context)
+                            }
+                        }
+                    )
+                }
+            }
+
+            Button(
+                colors = customButtonColors(),
+                onClick = {
+                    val intent = Intent("com.android.settings.TTS_SETTINGS").apply {
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    }
+                    try {
+                        context.startActivity(intent)
+                    } catch (e: Exception) {
+                        Toast.makeText(
+                            context,
+                            "Could not open Text-to-Speech settings.",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                },
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp)
+            ) {
+                Text("Download Offline Voice Package")
+            }
+
+            AssistantDragNoticeCard()
+
+            VoiceCommandNoticeCard()
         }
-
-        AssistantDragNoticeCard()
-
-        VoiceCommandNoticeCard()
     }
 }
 
