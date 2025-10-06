@@ -155,5 +155,9 @@ dependencies {
 
     // For Securely Storing the Encryption Key
     implementation ("androidx.security:security-crypto:1.1.0-alpha06")
+
+    // AdMob
+    implementation("com.google.android.gms:play-services-ads:23.1.0")
+
 }
 

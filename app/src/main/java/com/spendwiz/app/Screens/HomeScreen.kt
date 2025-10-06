@@ -42,17 +42,21 @@ import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.*
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.spendwiz.app.Ads.BannerAdView
 import com.spendwiz.app.Database.money.CategoryExpense
+import com.spendwiz.app.R
 
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -88,33 +92,46 @@ fun HomeScreen(
         }
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        CardItemHome(
-            income = formatCurrency(totalMoneyEarned),
-            expenses = formatCurrency(totalMoneySpent)
-        )
-        Text(
-            text = "Today's Transactions",
-            style = MaterialTheme.typography.bodyLarge,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onBackground
-        )
-        Text(
-            text = "Need to update a transaction? Just click on it!",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onBackground
-        )
+    Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
+        bottomBar = {
+                BannerAdView(
+                    adUnitId = stringResource(id = R.string.ad_unit_id_home_screen),
+                )
+        }
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .padding(
+                    start = innerPadding.calculateStartPadding(LayoutDirection.Ltr),
+                    end = innerPadding.calculateEndPadding(LayoutDirection.Ltr),
+                    bottom = innerPadding.calculateBottomPadding()
+                )
+                .fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            CardItemHome(
+                income = formatCurrency(totalMoneyEarned),
+                expenses = formatCurrency(totalMoneySpent)
+            )
+            Text(
+                text = "Today's Transactions",
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+            Text(
+                text = "Need to update a transaction? Just click on it!",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onBackground
+            )
 
-        TransactionList(
-            todayMoneyList?.reversed(),
-            navController = navController1,
-            viewModel
-        )
+            TransactionList(
+                todayMoneyList?.reversed(),
+                navController = navController1,
+                viewModel
+            )
+        }
     }
 }
 
@@ -126,7 +143,7 @@ fun CardItemHome(
 ) {
     Column(
         modifier = modifier
-            .padding(15.dp)
+            .padding(12.dp)
             .fillMaxWidth()
             .wrapContentHeight()
             .clip(RoundedCornerShape(16.dp))

@@ -26,6 +26,7 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.workDataOf
+import com.google.android.gms.ads.MobileAds
 import com.spendwiz.app.Database.money.MoneyDatabase
 import com.spendwiz.app.Notifications.DailyNotificationWorker
 import com.spendwiz.app.Notifications.PreferencesManager
@@ -90,6 +91,9 @@ class MainActivity : ComponentActivity() {
         createNotificationChannels()
         // Schedule notification automatically on the app's first launch
         scheduleNotificationOnFirstLaunch()
+
+        //Ads sdk AdMob
+        MobileAds.initialize(this) {}
         setContent {
             ExpenceTrackerTheme {
                 Surface(
