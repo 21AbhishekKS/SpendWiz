@@ -158,6 +158,9 @@ dependencies {
 
     // AdMob
     implementation("com.google.android.gms:play-services-ads:23.1.0")
+    // Accompanist to help draw the ad icon
+    implementation("com.google.accompanist:accompanist-drawablepainter:0.34.0")
+
 
 }
 

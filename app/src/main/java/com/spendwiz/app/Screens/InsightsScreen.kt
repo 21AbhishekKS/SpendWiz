@@ -15,6 +15,7 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.rounded.KeyboardArrowLeft
 import androidx.compose.material.icons.rounded.KeyboardArrowRight
 import androidx.compose.material3.*
@@ -32,6 +33,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import com.spendwiz.app.Ads.AdmobNativeAd
+import com.spendwiz.app.Ads.NativeAdCard
 import com.spendwiz.app.Database.money.Money
 import com.spendwiz.app.Database.money.TransactionType
 import com.spendwiz.app.R
@@ -49,9 +52,31 @@ import java.time.LocalDate
 import com.spendwiz.app.ViewModels.CategoryViewModel
 import com.spendwiz.app.utils.ExpenseDonutChartBySubCategory
 import kotlinx.coroutines.delay
-import java.util.*
+import java.util.UUID
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
+// Define a sealed interface for all list item types
+sealed interface ListItem {
+    val key: String
+}
+
+// Represents a date header (e.g., "Today", "Yesterday")
+data class HeaderItem(val date: String) : ListItem {
+    override val key: String = "header_$date"
+}
+
+// Wraps your original transaction data class
+data class TransactionDataItem(val transaction: Money) : ListItem {
+    override val key: String = transaction.id.toString()
+}
+
+// Represents a placeholder for a native ad
+data class AdItem(val adId: String = UUID.randomUUID().toString()) : ListItem {
+    override val key: String = "ad_$adId"
+}
+
+// Define how often you want an ad to appear. E.g., 1 ad every 7 items.
+private const val AD_INTERVAL = 7
+
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun InsightsScreen(
@@ -114,6 +139,36 @@ fun InsightsScreen(
                 .toList()
                 .sortedByDescending { it.first }
         }
+
+    // Create a single list containing headers, transactions, and ads.
+    // This is recalculated only when `moneyList` changes.
+    val listWithAds = remember(moneyList) {
+        val items = mutableListOf<ListItem>()
+        var transactionCounter = 0
+
+        // Group and sort transactions by date, similar to your original logic
+        val groupedByDate = moneyList.groupBy { it.date ?: "" }
+            .toList()
+            .sortedByDescending { it.first }
+
+        groupedByDate.forEach { (date, transactionsForDate) ->
+            // 1. Add the date header
+            items.add(HeaderItem(date))
+
+            // 2. Add the transactions for that date
+            transactionsForDate.forEach { transaction ->
+                items.add(TransactionDataItem(transaction))
+                transactionCounter++
+
+                // 3. Add an ad after every AD_INTERVAL transactions
+                if (transactionCounter % AD_INTERVAL == 0) {
+                    items.add(AdItem())
+                }
+            }
+        }
+        items
+    }
+
 
     val monthlyTotals by remember(moneyList) {
         derivedStateOf {
@@ -223,44 +278,60 @@ fun InsightsScreen(
                         modifier = Modifier.weight(1f), // Use weight to fill available space
                         contentPadding = PaddingValues(bottom = 16.dp)
                     ) {
-                        groupedByDate.forEach { (date, itemsForDate) ->
-                            item(key = "header_$date") {
-                                Text(
-                                    text = date,
-                                    fontSize = 18.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = MaterialTheme.colorScheme.onBackground,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(horizontal = 16.dp, vertical = 10.dp)
-                                )
-                            }
-                            items(items = itemsForDate, key = { it.id }) { item ->
-                                val itemId: String = (item.id.toString())
-                                MoneyItemWithLongPress(
-                                    item = item,
-                                    selected = selectedItems.contains(itemId),
-                                    onClick = {
-                                        if (selectedItems.isEmpty()) {
-                                            navController1.navigate(
-                                                Routes.UpdateScreen.route +
-                                                        "?description=${enc(item.description)}" +
-                                                        "&amount=${item.amount}" +
-                                                        "&id=${item.id}" +
-                                                        "&type=${enc(item.type.toString())}" +
-                                                        "&category=${enc(item.category ?: "")}" +
-                                                        "&subCategory=${enc(item.subCategory ?: "")}" +
-                                                        "&date=${enc(item.date ?: "")}" +
-                                                        "&time=${item.time}"
-                                            )
-                                        } else {
+                        items(
+                            items = listWithAds,
+                            key = { it.key } // Use the unique key from our sealed interface
+                        ) { listItem ->
+                            when (listItem) {
+                                // Case 1: The item is a date header
+                                is HeaderItem -> {
+                                    Text(
+                                        text = listItem.date,
+                                        fontSize = 18.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = MaterialTheme.colorScheme.onBackground,
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(horizontal = 16.dp, vertical = 10.dp)
+                                    )
+                                }
+
+                                // Case 2: The item is a transaction
+                                is TransactionDataItem -> {
+                                    val item = listItem.transaction // Get the underlying transaction
+                                    val itemId: String = (item.id.toString())
+                                    MoneyItemWithLongPress(
+                                        item = item,
+                                        selected = selectedItems.contains(itemId),
+                                        onClick = {
+                                            if (selectedItems.isEmpty()) {
+                                                navController1.navigate(
+                                                    Routes.UpdateScreen.route +
+                                                            "?description=${enc(item.description)}" +
+                                                            "&amount=${item.amount}" +
+                                                            "&id=${item.id}" +
+                                                            "&type=${enc(item.type.toString())}" +
+                                                            "&category=${enc(item.category ?: "")}" +
+                                                            "&subCategory=${enc(item.subCategory ?: "")}" +
+                                                            "&date=${enc(item.date ?: "")}" +
+                                                            "&time=${item.time}"
+                                                )
+                                            } else {
+                                                if (selectedItems.contains(itemId)) selectedItems.remove(itemId) else selectedItems.add(itemId)
+                                            }
+                                        },
+                                        onLongClick = {
                                             if (selectedItems.contains(itemId)) selectedItems.remove(itemId) else selectedItems.add(itemId)
                                         }
-                                    },
-                                    onLongClick = {
-                                        if (selectedItems.contains(itemId)) selectedItems.remove(itemId) else selectedItems.add(itemId)
-                                    }
-                                )
+                                    )
+                                }
+
+                                // Case 3: The item is an Ad
+                                is AdItem -> {
+                                    // Here you would typically load a real ad from AdMob.
+                                    // For now, we use your NativeAdCard with placeholder data.
+                                    AdmobNativeAd()
+                                }
                             }
                         }
                     }
