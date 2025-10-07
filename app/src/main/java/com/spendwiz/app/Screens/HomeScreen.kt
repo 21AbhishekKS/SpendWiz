@@ -55,6 +55,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.spendwiz.app.Ads.BannerAdView
+import com.spendwiz.app.Ads.CommonNativeAd
 import com.spendwiz.app.Database.money.CategoryExpense
 import com.spendwiz.app.R
 
@@ -95,9 +96,9 @@ fun HomeScreen(
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         bottomBar = {
-                BannerAdView(
-                    adUnitId = stringResource(id = R.string.ad_unit_id_home_screen),
-                )
+            CommonNativeAd(Modifier ,
+                stringResource(id = R.string.ad_unit_id_home_screen)
+            )
         }
     ) { innerPadding ->
         Column(

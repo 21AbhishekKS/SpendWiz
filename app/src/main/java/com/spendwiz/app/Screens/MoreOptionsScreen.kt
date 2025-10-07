@@ -25,11 +25,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavHostController
+import com.spendwiz.app.Ads.CommonNativeAd
 import com.spendwiz.app.AppStyle.AppColors.customCardColors
 import com.spendwiz.app.R // Make sure to import your R file
 import com.spendwiz.app.ViewModels.AddScreenViewModel
@@ -73,50 +76,61 @@ fun MoreOptionsScreen(
         OptionItem("Share", iconVector = Icons.Filled.Share),
     )
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Top,
-            modifier = Modifier.fillMaxSize()
-        ) {
-            Text(
-                text = "More Options",
-                style = MaterialTheme.typography.headlineSmall,
-                modifier = Modifier.padding(bottom = 24.dp)
-            )
 
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(3),
-                verticalArrangement = Arrangement.spacedBy(20.dp),
-                horizontalArrangement = Arrangement.spacedBy(20.dp),
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(bottom = 16.dp)
+    Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
+        bottomBar = {
+            CommonNativeAd(Modifier ,
+                stringResource(id = R.string.ad_unit_id_more_option_screen)
+            )
+        }
+    ) { innerPadding ->
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Top,
+                modifier = Modifier.fillMaxSize()
+                    .padding(
+                        start = innerPadding.calculateStartPadding(LayoutDirection.Ltr),
+                        end = innerPadding.calculateEndPadding(LayoutDirection.Ltr),
+                        bottom = innerPadding.calculateBottomPadding()
+                    )
+                    .padding(16.dp)
             ) {
-                items(options) { item ->
-                    OptionCard(item = item, onClick = {
-                        when (item.title) {
-                            "Share" -> shareAppLink(navController.context)
-                            "Category" -> navController.navigate(Routes.ManageCategoriesScreen.route)
-                            "Notifications" -> navController.navigate(Routes.NotificationSettingsScreen.route)
-                            "FAQ" -> navController.navigate(Routes.FaqScreen.route)
-                            "Backup" -> navController.navigate(Routes.BackupRestoreScreen.route)
-                            "Feedback" -> showFeedback = true
-                            "Scan Bill" -> navController.navigate(Routes.ReceiptScanScreen.route)
-                            "Assistant" -> navController.navigate(Routes.VoiceAssistantSettingsScreen.route)
-                        }
-                    })
+                Text(
+                    text = "More Options",
+                    style = MaterialTheme.typography.headlineSmall,
+                    modifier = Modifier.padding(bottom = 24.dp)
+                )
+
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(3),
+                    verticalArrangement = Arrangement.spacedBy(20.dp),
+                    horizontalArrangement = Arrangement.spacedBy(20.dp),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(bottom = 16.dp)
+                ) {
+                    items(options) { item ->
+                        OptionCard(item = item, onClick = {
+                            when (item.title) {
+                                "Share" -> shareAppLink(navController.context)
+                                "Category" -> navController.navigate(Routes.ManageCategoriesScreen.route)
+                                "Notifications" -> navController.navigate(Routes.NotificationSettingsScreen.route)
+                                "FAQ" -> navController.navigate(Routes.FaqScreen.route)
+                                "Backup" -> navController.navigate(Routes.BackupRestoreScreen.route)
+                                "Feedback" -> showFeedback = true
+                                "Scan Bill" -> navController.navigate(Routes.ReceiptScanScreen.route)
+                                "Assistant" -> navController.navigate(Routes.VoiceAssistantSettingsScreen.route)
+                            }
+                        })
+                    }
                 }
             }
-        }
 
-        if (showFeedback) {
-            FeedbackDialog(onClose = { showFeedback = false })
-        }
+            if (showFeedback) {
+                FeedbackDialog(onClose = { showFeedback = false })
+            }
+
     }
 }
 

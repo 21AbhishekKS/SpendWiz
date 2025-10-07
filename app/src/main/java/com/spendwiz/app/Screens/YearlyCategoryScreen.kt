@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.spendwiz.app.Ads.BannerAdView
+import com.spendwiz.app.Ads.CommonNativeAd
 import com.spendwiz.app.ViewModels.AddScreenViewModel
 import com.spendwiz.app.ViewModels.CategoryData
 import com.spendwiz.app.ViewModels.SubCategoryData
@@ -41,8 +42,8 @@ fun YearlyCategoryScreen(
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         bottomBar = {
-            BannerAdView(
-                adUnitId = stringResource(id = R.string.ad_unit_id_yearly_inside_screen),
+            CommonNativeAd(Modifier ,
+                stringResource(id = R.string.ad_unit_id_yearly_inside_screen)
             )
         }
     ) { innerPadding ->

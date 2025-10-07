@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.spendwiz.app.Ads.BannerAdView
+import com.spendwiz.app.Ads.CommonNativeAd
 import com.spendwiz.app.AppStyle.AppColors.customButtonColors
 import com.spendwiz.app.AppStyle.AppColors.customCardColors
 import com.spendwiz.app.AppStyle.AppColors.customSwitchColors
@@ -153,8 +154,8 @@ fun VoiceAssistantSettingsScreen(
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         bottomBar = {
-            BannerAdView(
-                adUnitId = stringResource(id = R.string.ad_unit_id_assistant_screen),
+            CommonNativeAd(Modifier ,
+                stringResource(id = R.string.ad_unit_id_assistant_screen)
             )
         }
     ) { innerPadding ->

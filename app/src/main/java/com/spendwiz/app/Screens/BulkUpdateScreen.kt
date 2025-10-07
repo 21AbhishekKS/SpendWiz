@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.spendwiz.app.Ads.BannerAdView
+import com.spendwiz.app.Ads.CommonNativeAd
 import com.spendwiz.app.Database.money.Money
 import com.spendwiz.app.Database.money.TransactionType
 import com.spendwiz.app.ViewModels.AddScreenViewModel
@@ -53,8 +54,8 @@ fun BulkUpdateScreen(
 
     Scaffold(
         bottomBar = {
-            BannerAdView(
-                adUnitId = stringResource(id = R.string.ad_unit_id_bulkUpdate_screen),
+            CommonNativeAd(Modifier ,
+                stringResource(id = R.string.ad_unit_id_bulkUpdate_screen)
             )
         },
         floatingActionButton = {

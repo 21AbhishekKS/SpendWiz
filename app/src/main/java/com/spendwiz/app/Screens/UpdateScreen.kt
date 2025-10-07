@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.spendwiz.app.Ads.BannerAdView
+import com.spendwiz.app.Ads.CommonNativeAd
 import com.spendwiz.app.Database.money.TransactionType
 import com.spendwiz.app.ViewModels.AddScreenViewModel
 import java.text.SimpleDateFormat
@@ -236,8 +237,8 @@ fun UpdateScreen(
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
-            BannerAdView(
-                adUnitId = stringResource(id = R.string.ad_unit_id_update_screen),
+            CommonNativeAd(Modifier ,
+                stringResource(id = R.string.ad_unit_id_update_screen)
             )
         }
     ) { innerPadding ->

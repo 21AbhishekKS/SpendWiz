@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat // <-- ADDED
 import androidx.core.content.ContextCompat // <-- ADDED
 import com.spendwiz.app.Ads.BannerAdView
+import com.spendwiz.app.Ads.CommonNativeAd
 import com.spendwiz.app.AppStyle.AppColors.customSwitchColors
 import com.spendwiz.app.R
 import com.spendwiz.app.Notifications.PreferencesManager
@@ -81,8 +82,8 @@ fun NotificationSettingsScreen(
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         bottomBar = {
-            BannerAdView(
-                adUnitId = stringResource(id = R.string.ad_unit_id_notification_settings_screen),
+            CommonNativeAd(Modifier ,
+                stringResource(id = R.string.ad_unit_id_notification_settings_screen)
             )
         }
     ) { innerPadding ->

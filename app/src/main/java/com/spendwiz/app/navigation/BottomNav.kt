@@ -275,8 +275,8 @@ fun MyBottomBar(navController: NavHostController) {
 
         Column(
             modifier = Modifier
-                .align(Alignment.TopCenter)
-                .offset(y = (-28).dp),
+                .padding(top = 5.dp)
+                .align(Alignment.TopCenter),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             FloatingActionButton(

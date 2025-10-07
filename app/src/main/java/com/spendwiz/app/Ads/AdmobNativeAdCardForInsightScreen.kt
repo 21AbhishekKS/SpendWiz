@@ -24,7 +24,7 @@ import com.google.android.gms.ads.nativead.NativeAdView
 import com.spendwiz.app.R
 
 @Composable
-fun AdmobNativeAdCard() {
+fun AdmobNativeAdCardForInsightScreen() {
     val context = LocalContext.current
     var nativeAd by remember { mutableStateOf<NativeAd?>(null) }
 
