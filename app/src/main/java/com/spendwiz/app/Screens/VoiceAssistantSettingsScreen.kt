@@ -30,7 +30,6 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import com.spendwiz.app.Ads.BannerAdView
 import com.spendwiz.app.Ads.CommonNativeAd
 import com.spendwiz.app.AppStyle.AppColors.customButtonColors
 import com.spendwiz.app.AppStyle.AppColors.customCardColors

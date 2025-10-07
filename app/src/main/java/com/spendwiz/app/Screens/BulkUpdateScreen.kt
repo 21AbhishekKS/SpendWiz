@@ -23,7 +23,6 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.spendwiz.app.Ads.BannerAdView
 import com.spendwiz.app.Ads.CommonNativeAd
 import com.spendwiz.app.Database.money.Money
 import com.spendwiz.app.Database.money.TransactionType

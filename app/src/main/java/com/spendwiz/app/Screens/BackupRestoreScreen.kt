@@ -30,7 +30,6 @@ import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.Scope
 import com.google.api.services.drive.DriveScopes
-import com.spendwiz.app.Ads.BannerAdView
 import com.spendwiz.app.Ads.CommonNativeAd
 import com.spendwiz.app.AppStyle.AppColors.customButtonColors
 import com.spendwiz.app.BackUp.BackupRestoreState

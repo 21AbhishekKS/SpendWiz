@@ -34,29 +34,11 @@ import com.spendwiz.app.ViewModels.AddScreenViewModel
 import com.spendwiz.app.utils.TransactionList
 import com.spendwiz.app.Database.money.TransactionType
 import kotlin.math.roundToInt
-import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowUp
-import androidx.compose.material3.Icon
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.*
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.Density
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.spendwiz.app.Ads.BannerAdView
 import com.spendwiz.app.Ads.CommonNativeAd
-import com.spendwiz.app.Database.money.CategoryExpense
 import com.spendwiz.app.R
 
 

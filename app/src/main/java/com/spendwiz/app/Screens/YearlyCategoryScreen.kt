@@ -20,7 +20,6 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.spendwiz.app.Ads.BannerAdView
 import com.spendwiz.app.Ads.CommonNativeAd
 import com.spendwiz.app.ViewModels.AddScreenViewModel
 import com.spendwiz.app.ViewModels.CategoryData
