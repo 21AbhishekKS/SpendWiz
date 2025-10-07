@@ -33,8 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
-import com.spendwiz.app.Ads.AdmobNativeAd
-import com.spendwiz.app.Ads.NativeAdCard
+import com.spendwiz.app.Ads.AdmobNativeAdCard
 import com.spendwiz.app.Database.money.Money
 import com.spendwiz.app.Database.money.TransactionType
 import com.spendwiz.app.R
@@ -75,7 +74,7 @@ data class AdItem(val adId: String = UUID.randomUUID().toString()) : ListItem {
 }
 
 // Define how often you want an ad to appear. E.g., 1 ad every 7 items.
-private const val AD_INTERVAL = 7
+private const val AD_INTERVAL = 12
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -330,7 +329,7 @@ fun InsightsScreen(
                                 is AdItem -> {
                                     // Here you would typically load a real ad from AdMob.
                                     // For now, we use your NativeAdCard with placeholder data.
-                                    AdmobNativeAd()
+                                    AdmobNativeAdCard()
                                 }
                             }
                         }

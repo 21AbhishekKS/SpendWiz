@@ -1,43 +1,42 @@
 package com.spendwiz.app.Ads
 
 import android.util.Log
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import android.view.LayoutInflater
+import android.widget.Button
+import android.widget.ImageView
+import android.widget.TextView
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
-import com.google.accompanist.drawablepainter.rememberDrawablePainter
-import com.google.android.gms.ads.AdListener
-import com.google.android.gms.ads.AdLoader
-import com.google.android.gms.ads.AdRequest
-import com.google.android.gms.ads.LoadAdError
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
+import com.google.android.gms.ads.*
 import com.google.android.gms.ads.nativead.NativeAd
 import com.google.android.gms.ads.nativead.NativeAdOptions
-
-// Use the official test ID for native ads
-const val NATIVE_AD_TEST_ID = "ca-app-pub-3940256099942544/2247696110"
+import com.google.android.gms.ads.nativead.NativeAdView
+import com.spendwiz.app.R
 
 @Composable
-fun AdmobNativeAd() {
+fun AdmobNativeAdCard() {
     val context = LocalContext.current
     var nativeAd by remember { mutableStateOf<NativeAd?>(null) }
-    var adFailedToLoad by remember { mutableStateOf(false) }
 
-    // This effect will load the ad when the composable enters the composition
     LaunchedEffect(Unit) {
-        val adLoader = AdLoader.Builder(context, NATIVE_AD_TEST_ID)
+        val adLoader = AdLoader.Builder(context, context.getString(R.string.ad_unit_id_native_test))
             .forNativeAd { ad: NativeAd ->
-                // Ad loaded successfully, update the state
+                nativeAd?.destroy()
                 nativeAd = ad
             }
             .withAdListener(object : AdListener() {
-                override fun onAdFailedToLoad(loadAdError: LoadAdError) {
-                    // Mark as failed to prevent retries and hide the ad space
-                    adFailedToLoad = true
-                    Log.e("AdmobNativeAd", "Ad failed to load: ${loadAdError.message}")
+                override fun onAdFailedToLoad(error: LoadAdError) {
+                    Log.e("AdmobNativeAd", "❌ Failed to load native ad: ${error.message}")
                 }
             })
             .withNativeAdOptions(NativeAdOptions.Builder().build())
@@ -46,27 +45,53 @@ fun AdmobNativeAd() {
         adLoader.loadAd(AdRequest.Builder().build())
     }
 
-    // Clean up the ad when the composable is removed from the screen
     DisposableEffect(Unit) {
         onDispose {
             nativeAd?.destroy()
+            nativeAd = null
         }
     }
 
-    // If the ad is loaded, display it using your custom NativeAdCard
-    // If it's null (loading or failed), this will compose nothing, achieving your goal.
     nativeAd?.let { ad ->
-        val iconPainter = ad.icon?.drawable?.let { rememberDrawablePainter(drawable = it) }
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 10.dp, vertical = 4.dp),
+            shape = RoundedCornerShape(12.dp),
+            elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp),
+            colors = CardDefaults.cardColors(
+                containerColor =  MaterialTheme.colorScheme.surface
+            )
+        ) {
+            AndroidView(
+                factory = { ctx ->
+                    val inflater = LayoutInflater.from(ctx)
+                    val adView = inflater.inflate(R.layout.native_ad_view_for_insight_screen, null) as NativeAdView
 
-        // We only show the ad if the icon is not null
-        if (iconPainter != null) {
-            NativeAdCard(
-                headline = ad.headline ?: "Default Headline",
-                body = ad.body ?: "This is a default ad body.",
-                callToAction = ad.callToAction ?: "Learn More",
-                icon = iconPainter,
-                advertiser = ad.advertiser ?: "Advertiser"
+                    // Map views
+                    val headlineView = adView.findViewById<TextView>(R.id.ad_headline)
+                    headlineView.text = ad.headline
+                    adView.headlineView = headlineView
+
+                    val bodyView = adView.findViewById<TextView>(R.id.ad_body)
+                    bodyView.text = ad.body
+                    adView.bodyView = bodyView
+
+                    val iconView = adView.findViewById<ImageView>(R.id.ad_icon)
+                    ad.icon?.drawable?.let { iconView.setImageDrawable(it) }
+                    adView.iconView = iconView
+
+                    val ctaButton = adView.findViewById<Button>(R.id.ad_call_to_action)
+                    ctaButton.text = ad.callToAction
+                    adView.callToActionView = ctaButton
+
+                    adView.setNativeAd(ad)
+                    adView
+                },
+                update = {}
             )
         }
     }
 }
+
+

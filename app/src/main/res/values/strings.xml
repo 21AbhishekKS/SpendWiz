@@ -3,6 +3,7 @@
 
     <!-- AdMob test ids-->
     <string name="ad_unit_id_banner_test">ca-app-pub-3940256099942544/6300978111</string>
+    <string name="ad_unit_id_native_test">ca-app-pub-3940256099942544/2247696110</string>
 
     <!-- AdMob banner ids for production-->
     <string name="ad_unit_id_home_screen">ca-app-pub-3940256099942544/6300978111</string>
@@ -15,6 +16,9 @@
     <string name="ad_unit_id_notification_settings_screen">ca-app-pub-3940256099942544/6300978111</string>
     <string name="ad_unit_id_assistant_screen">ca-app-pub-3940256099942544/6300978111</string>
     <string name="ad_unit_id_faq_screen">ca-app-pub-3940256099942544/6300978111</string>
+
+
+    <string name="ad_unit_id_native_insight_screen">ca-app-pub-6662174152116703/9771601398</string>
 
 
 
