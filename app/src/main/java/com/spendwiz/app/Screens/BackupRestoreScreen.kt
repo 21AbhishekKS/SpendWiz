@@ -31,6 +31,7 @@ import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.Scope
 import com.google.api.services.drive.DriveScopes
 import com.spendwiz.app.Ads.CommonNativeAd
+import com.spendwiz.app.Ads.InterstitialAdManager
 import com.spendwiz.app.AppStyle.AppColors.customButtonColors
 import com.spendwiz.app.BackUp.BackupRestoreState
 import com.spendwiz.app.BackUp.BackupRestoreViewModel
@@ -96,6 +97,7 @@ fun BackupRestoreScreen(
                     importedCount = count
                 }
                 isImporting = false
+                InterstitialAdManager.showAd(activity){}
             }
         } else {
             // Permission denied
@@ -364,6 +366,7 @@ fun BackupRestoreScreen(
                     onClick = {
                         showRestoreDialog?.invoke()
                         showRestoreDialog = null
+                        InterstitialAdManager.showAd(activity){}
                     },
                     colors = ButtonDefaults.textButtonColors(contentColor = myStableButtonColor)
                 ) { Text("Yes, Continue") }
@@ -387,6 +390,7 @@ fun BackupRestoreScreen(
                     onClick = {
                         viewModel.signOut(context)
                         showLogoutDialog = false
+                        InterstitialAdManager.showAd(activity){}
                     },
                     colors = ButtonDefaults.textButtonColors(contentColor = myStableButtonColor)
                 ) { Text("Yes, Sign Out") }

@@ -1,5 +1,6 @@
 package com.spendwiz.app.Screens
 
+import android.app.Activity
 import android.app.DatePickerDialog
 import android.os.Build
 import android.widget.Toast
@@ -39,6 +40,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.LayoutDirection
 import com.spendwiz.app.Ads.CommonNativeAd
+import com.spendwiz.app.Ads.InterstitialAdManager
 import com.spendwiz.app.R
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
@@ -50,6 +52,7 @@ fun AddScreen(
     navController: NavController
 ) {
     val context = LocalContext.current
+    val activity = context as Activity
     val focusRequester = remember { FocusRequester() }
 
     LaunchedEffect(Unit) {
@@ -140,7 +143,10 @@ fun AddScreen(
             subCategory = selectedSubCategory.ifBlank { "General" }
         )
         Toast.makeText(context, "Transaction saved!", Toast.LENGTH_SHORT).show()
+        // Show the ad. The navigation will happen in the onAdDismissed callback.
         navController.popBackStack()
+        InterstitialAdManager.showAd(activity) {
+        }
     }
 
     Scaffold(

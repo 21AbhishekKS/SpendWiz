@@ -1,5 +1,6 @@
 package com.spendwiz.app.Screens
 
+import android.app.Activity
 import android.app.DatePickerDialog
 import android.os.Build
 import android.widget.Toast
@@ -29,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.spendwiz.app.Ads.CommonNativeAd
+import com.spendwiz.app.Ads.InterstitialAdManager
 import com.spendwiz.app.Database.money.TransactionType
 import com.spendwiz.app.ViewModels.AddScreenViewModel
 import java.text.SimpleDateFormat
@@ -59,6 +61,8 @@ fun UpdateScreen(
 ) {
     val colorScheme = MaterialTheme.colorScheme
     val context = LocalContext.current
+    val activity = context as Activity
+
     val focusRequester = remember { FocusRequester() }
 
     LaunchedEffect(Unit) { focusRequester.requestFocus() }
@@ -177,6 +181,8 @@ fun UpdateScreen(
             } else {
                 Toast.makeText(context, "Transaction updated!", Toast.LENGTH_SHORT).show()
                 navController.popBackStack()
+                InterstitialAdManager.showAd(activity) {
+                }
             }
         }
     }

@@ -1,5 +1,6 @@
 package com.spendwiz.app.Screens
 
+import android.app.Activity
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -14,6 +15,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -24,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.spendwiz.app.Ads.CommonNativeAd
+import com.spendwiz.app.Ads.InterstitialAdManager
 import com.spendwiz.app.Database.money.Money
 import com.spendwiz.app.Database.money.TransactionType
 import com.spendwiz.app.ViewModels.AddScreenViewModel
@@ -42,6 +45,9 @@ fun BulkUpdateScreen(
 ) {
     var uncategorized by remember { mutableStateOf<List<Money>>(emptyList()) }
     val selectedIds = remember { mutableStateListOf<Int>() }
+
+    val context = LocalContext.current
+    val activity = context as Activity
 
     LaunchedEffect(description) {
         viewModel.getUncategorizedByNameOnce(description) { list ->
@@ -70,6 +76,7 @@ fun BulkUpdateScreen(
                         }
                         navController.popBackStack()
                         navController.popBackStack()
+                        InterstitialAdManager.showAd(activity) {}
                     },
                     containerColor = MaterialTheme.colorScheme.primary,
                     contentColor = MaterialTheme.colorScheme.onPrimary

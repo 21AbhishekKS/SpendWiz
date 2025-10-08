@@ -27,6 +27,7 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.workDataOf
 import com.google.android.gms.ads.MobileAds
+import com.spendwiz.app.Ads.InterstitialAdManager
 import com.spendwiz.app.Database.money.MoneyDatabase
 import com.spendwiz.app.Notifications.DailyNotificationWorker
 import com.spendwiz.app.Notifications.PreferencesManager
@@ -92,8 +93,10 @@ class MainActivity : ComponentActivity() {
         // Schedule notification automatically on the app's first launch
         scheduleNotificationOnFirstLaunch()
 
-        //Ads sdk AdMob
-        MobileAds.initialize(this) {}
+        //Ads sdk AdMob - Initialize and pre-load the first ad.
+        MobileAds.initialize(this) {
+            InterstitialAdManager.loadAd(this)
+        }
         setContent {
             ExpenceTrackerTheme {
                 Surface(
