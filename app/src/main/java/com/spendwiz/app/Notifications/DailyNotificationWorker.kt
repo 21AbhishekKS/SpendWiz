@@ -7,6 +7,7 @@ import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.work.*
+import com.spendwiz.app.R
 import java.util.Calendar
 import java.util.concurrent.TimeUnit
 
@@ -71,7 +72,7 @@ class DailyNotificationWorker(
         }
 
         val notification = NotificationCompat.Builder(context, channelId)
-            .setSmallIcon(android.R.drawable.ic_popup_reminder)
+            .setSmallIcon(R.drawable.notification_icon)
             .setContentTitle("Spendwiz")
             .setContentText("Quickly add and categorize any missing transactions to complete your daily record")
             .setPriority(NotificationCompat.PRIORITY_HIGH)
