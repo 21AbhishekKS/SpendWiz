@@ -29,7 +29,7 @@ fun AdmobNativeAdCardForInsightScreen() {
     var nativeAd by remember { mutableStateOf<NativeAd?>(null) }
 
     LaunchedEffect(Unit) {
-        val adLoader = AdLoader.Builder(context, context.getString(R.string.ad_unit_id_native_test))
+        val adLoader = AdLoader.Builder(context, context.getString(R.string.ad_unit_id_native_insight_screen))
             .forNativeAd { ad: NativeAd ->
                 nativeAd?.destroy()
                 nativeAd = ad
