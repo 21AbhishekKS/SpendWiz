@@ -66,7 +66,7 @@ fun FloatingVoiceButton(
             }
     ) {
         Image(
-            painter = painterResource(id = R.drawable.turbo),
+            painter = painterResource(id = R.drawable.nano),
             contentDescription = "Voice Assistant",
             modifier = Modifier
                 .size(65.dp)

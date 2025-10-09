@@ -14,8 +14,8 @@ android {
         applicationId = "com.spendwiz.app"
         minSdk = 23
         targetSdk = 35
-        versionCode = 3
-        versionName = "1.1.2"
+        versionCode = 4
+        versionName = "1.1.3"
 
 
 
@@ -136,8 +136,7 @@ dependencies {
     implementation ("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
 
     // Add the ML Kit Text Recognition dependency
-    implementation("com.google.mlkit:text-recognition:16.0.0")
-
+    implementation("com.google.android.gms:play-services-mlkit-text-recognition:19.0.0")
 // For CameraX integration
     val cameraxVersion = "1.3.1"
     implementation("androidx.camera:camera-core:${cameraxVersion}")

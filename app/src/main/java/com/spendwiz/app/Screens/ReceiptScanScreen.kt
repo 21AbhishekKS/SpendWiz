@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.Context
 import android.net.Uri
 import android.os.Build
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -13,7 +14,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -34,6 +34,9 @@ import coil.compose.rememberAsyncImagePainter
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
+// ✅ ADDED: New imports for the unbundled model manager
+import com.google.android.gms.common.moduleinstall.ModuleInstall
+import com.google.android.gms.common.moduleinstall.ModuleInstallRequest
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
@@ -49,13 +52,19 @@ import java.text.SimpleDateFormat
 import java.util.*
 import java.util.regex.Pattern
 
-// Updated ParsedReceiptData with time field
 data class ParsedReceiptData(
     val merchant: String?,
     val date: String?,
     val total: Double?,
     val time: String? = null
 )
+
+// ✅ UPDATED: A more descriptive state than a simple boolean
+enum class ProcessingState {
+    IDLE,
+    DOWNLOADING_MODEL,
+    SCANNING_IMAGE
+}
 
 @OptIn(ExperimentalPermissionsApi::class)
 @RequiresApi(Build.VERSION_CODES.O)
@@ -66,10 +75,10 @@ fun ReceiptScanScreen(
 ) {
     val context = LocalContext.current
     var imageUri by remember { mutableStateOf<Uri?>(null) }
-    var isProcessing by remember { mutableStateOf(false) }
+    // ✅ CHANGED: Replaced 'isProcessing' with a more detailed state
+    var processingState by remember { mutableStateOf(ProcessingState.IDLE) }
     var showMissingDataDialog by remember { mutableStateOf(false) }
     var parsedData by remember { mutableStateOf<ParsedReceiptData?>(null) }
-    var forceRefresh by remember { mutableStateOf(0) } // 👈 Trick to break Coil cache
 
     fun createImageFile(): File {
         val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
@@ -95,9 +104,7 @@ fun ReceiptScanScreen(
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         bottomBar = {
-            CommonNativeAd(Modifier ,
-                stringResource(id = R.string.ad_unit_id_receipt_scan_screen)
-            )
+            CommonNativeAd(Modifier, stringResource(id = R.string.ad_unit_id_receipt_scan_screen))
         }
     ) { innerPadding ->
         Column(
@@ -112,9 +119,7 @@ fun ReceiptScanScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             if (imageUri == null) {
-
                 BillScannerStillInBetaCard()
-
                 Column(
                     Modifier.padding(top = 20.dp),
                     verticalArrangement = Arrangement.Top
@@ -137,7 +142,7 @@ fun ReceiptScanScreen(
                         colors = customButtonColors()
                     ) {
                         Icon(painter = painterResource(R.drawable.camera), "Open Camera")
-                        Text("Open Camera", Modifier.padding(5.dp),)
+                        Text("Open Camera", Modifier.padding(5.dp))
                     }
                     Spacer(modifier = Modifier.height(16.dp))
                     Button(
@@ -147,9 +152,8 @@ fun ReceiptScanScreen(
                         colors = customButtonColors()
                     ) {
                         Icon(painter = painterResource(R.drawable.gallery), "Pick from Gallery")
-                        Text("Pick from Gallery", Modifier.padding(5.dp),)
+                        Text("Pick from Gallery", Modifier.padding(5.dp))
                     }
-
                 }
             } else {
                 Card(
@@ -165,8 +169,19 @@ fun ReceiptScanScreen(
                 }
                 Spacer(modifier = Modifier.height(24.dp))
 
-                if (isProcessing) {
-                    CircularProgressIndicator()
+                // ✅ UPDATED: Show progress indicator for both downloading and scanning
+                if (processingState != ProcessingState.IDLE) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        CircularProgressIndicator()
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = if (processingState == ProcessingState.DOWNLOADING_MODEL)
+                                "Downloading recognition model..."
+                            else
+                                "Scanning receipt...",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
                 } else {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -184,12 +199,17 @@ fun ReceiptScanScreen(
                         Spacer(modifier = Modifier.width(16.dp))
                         Button(
                             onClick = {
-                                isProcessing = true
-                                processImageForText(context, imageUri!!) { text ->
-                                    parsedData = parseReceiptText(text)
-                                    isProcessing = false
-                                    showMissingDataDialog = true
-                                }
+                                // ✅ CHANGED: Call the new wrapper function
+                                downloadModelAndProcess(
+                                    context = context,
+                                    imageUri = imageUri!!,
+                                    onStateChange = { newState -> processingState = newState },
+                                    onResult = { text ->
+                                        parsedData = parseReceiptText(text)
+                                        processingState = ProcessingState.IDLE
+                                        showMissingDataDialog = true
+                                    }
+                                )
                             },
                             shape = RoundedCornerShape(12.dp),
                             colors = customButtonColors(),
@@ -213,6 +233,53 @@ fun ReceiptScanScreen(
     }
 }
 
+// This function wraps the entire download and process logic
+fun downloadModelAndProcess(
+    context: Context,
+    imageUri: Uri,
+    onStateChange: (ProcessingState) -> Unit,
+    onResult: (String) -> Unit
+) {
+    val moduleInstallClient = ModuleInstall.getClient(context)
+    val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
+    val TAG = "ReceiptScan" // Define a tag for easy filtering in Logcat
+
+    moduleInstallClient
+        .areModulesAvailable(recognizer)
+        .addOnSuccessListener {
+            if (it.areModulesAvailable()) {
+                // ✅ ADDED: Log for when the model is already present
+                Log.d(TAG, "ML Kit OCR Model is already available.")
+                onStateChange(ProcessingState.SCANNING_IMAGE)
+                processImageForText(context, imageUri, onResult)
+            } else {
+                // ✅ ADDED: Log for when a download is needed
+                Log.d(TAG, "ML Kit OCR Model not found. Starting download.")
+                onStateChange(ProcessingState.DOWNLOADING_MODEL)
+                val installRequest = ModuleInstallRequest.newBuilder().addApi(recognizer).build()
+                moduleInstallClient
+                    .installModules(installRequest)
+                    .addOnSuccessListener {
+                        // ✅ ADDED: Log for a successful download
+                        Log.d(TAG, "Model downloaded successfully.")
+                        onStateChange(ProcessingState.SCANNING_IMAGE)
+                        processImageForText(context, imageUri, onResult)
+                    }
+                    .addOnFailureListener { e ->
+                        Toast.makeText(context, "Model download failed: ${e.message}", Toast.LENGTH_LONG).show()
+                        Log.e(TAG, "Model download failed", e)
+                        onStateChange(ProcessingState.IDLE)
+                    }
+            }
+        }
+        .addOnFailureListener { e ->
+            Toast.makeText(context, "Model check failed: ${e.message}", Toast.LENGTH_LONG).show()
+            Log.e(TAG, "Model check failed", e)
+            onStateChange(ProcessingState.IDLE)
+        }
+}
+
+// This function now only contains the recognition logic and is called when the model is ready.
 fun processImageForText(context: Context, imageUri: Uri, onResult: (String) -> Unit) {
     val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
     try {
@@ -220,7 +287,7 @@ fun processImageForText(context: Context, imageUri: Uri, onResult: (String) -> U
         recognizer.process(image)
             .addOnSuccessListener { visionText -> onResult(visionText.text) }
             .addOnFailureListener { e ->
-                Toast.makeText(context, "Text recognition failed: ${e.message}", Toast.LENGTH_LONG).show()
+                Toast.makeText(context, "Check your internet connection. First-time use of this feature requires an ML model to be downloaded", Toast.LENGTH_LONG).show()
                 onResult("")
             }
     } catch (e: Exception) {
@@ -229,6 +296,9 @@ fun processImageForText(context: Context, imageUri: Uri, onResult: (String) -> U
     }
 }
 
+
+// --- Your other functions (parseReceiptText, saveTransaction, dialogs, etc.) remain unchanged ---
+// ... (rest of your file) ...
 fun parseReceiptText(text: String): ParsedReceiptData {
     val lines = text.lines().map { it.trim().replace("\\s+".toRegex(), " ") }.filter { it.isNotEmpty() }
 
