@@ -14,7 +14,7 @@ android {
         applicationId = "com.spendwiz.app"
         minSdk = 23
         targetSdk = 35
-        versionCode = 4
+        versionCode = 5
         versionName = "1.1.3"
 
 
@@ -161,6 +161,7 @@ dependencies {
     // Accompanist to help draw the ad icon
     implementation("com.google.accompanist:accompanist-drawablepainter:0.34.0")
 
-
+    //In app update (now only implemented immediate in app update)
+    implementation("com.google.android.play:app-update-ktx:2.1.0")
 }
 

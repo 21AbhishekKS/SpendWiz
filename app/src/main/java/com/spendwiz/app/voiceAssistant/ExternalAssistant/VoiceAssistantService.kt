@@ -21,6 +21,8 @@ import android.view.Gravity
 import android.view.WindowManager
 import android.widget.Toast
 import androidx.annotation.RequiresApi
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.platform.ComposeView
 import androidx.core.app.NotificationCompat
@@ -35,6 +37,7 @@ import androidx.savedstate.SavedStateRegistryOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import com.spendwiz.app.MainActivity
 import com.spendwiz.app.R
+import com.spendwiz.app.Screens.PreferencesManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -54,6 +57,19 @@ class VoiceAssistantService : Service() {
 
     // ✅ Make lifecycleOwner a property to access it in onDestroy
     private lateinit var lifecycleOwner: CustomLifecycleOwner
+
+    companion object {
+        const val ACTION_STOP_SERVICE = "ACTION_STOP_SERVICE"
+    }
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        // Check if the intent is the stop command
+        if (intent?.action == ACTION_STOP_SERVICE) {
+            stopSelf() // Stops the service
+            return START_NOT_STICKY // Don't restart the service automatically
+        }
+        return START_STICKY
+    }
+
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -193,11 +209,18 @@ class VoiceAssistantService : Service() {
         val pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent,
             PendingIntent.FLAG_IMMUTABLE)
 
+        val stopSelfIntent = Intent(this, VoiceAssistantService::class.java).apply {
+            action = ACTION_STOP_SERVICE
+        }
+        val pStopSelf = PendingIntent.getService(this, 0, stopSelfIntent,
+            PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+
         val notification: Notification = NotificationCompat.Builder(this, channelId)
-            .setContentTitle("Voice Assistant Active")
-            .setContentText("Tap the floating button to add expenses.")
+            .setContentTitle("Turbo Assistant Active")
+            .setContentText("Tap the Turbo button to give voice commands")
             .setSmallIcon(R.drawable.notification_icon)
             .setContentIntent(pendingIntent)
+            .addAction(android.R.drawable.ic_menu_close_clear_cancel, "Stop", pStopSelf)
             .build()
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -209,7 +232,10 @@ class VoiceAssistantService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
-        // ✅ Clean up the lifecycle owner to prevent leaks
+
+        val prefs = PreferencesManager(applicationContext)
+        prefs.setServiceEnabled(false)
+
         if (::lifecycleOwner.isInitialized) {
             lifecycleOwner.handleLifecycleEvent(Lifecycle.Event.ON_PAUSE)
             lifecycleOwner.handleLifecycleEvent(Lifecycle.Event.ON_STOP)

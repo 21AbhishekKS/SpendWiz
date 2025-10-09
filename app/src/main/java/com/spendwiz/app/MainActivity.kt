@@ -1,5 +1,6 @@
 package com.spendwiz.app
 
+import AppUpdateChecker
 import android.app.AlertDialog
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -103,6 +104,9 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = Color.White
                 ) {
+
+                    //Check in app updates
+                    AppUpdateChecker()
                     val navController = rememberNavController()
 
                     BottomNav(
