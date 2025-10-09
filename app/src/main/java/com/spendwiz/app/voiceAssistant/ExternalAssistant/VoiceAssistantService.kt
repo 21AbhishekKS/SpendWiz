@@ -196,7 +196,7 @@ class VoiceAssistantService : Service() {
         val notification: Notification = NotificationCompat.Builder(this, channelId)
             .setContentTitle("Voice Assistant Active")
             .setContentText("Tap the floating button to add expenses.")
-            .setSmallIcon(R.drawable.add_transation_notification)
+            .setSmallIcon(R.drawable.notification_icon)
             .setContentIntent(pendingIntent)
             .build()
 

@@ -69,7 +69,7 @@ fun FloatingVoiceButton(
             painter = painterResource(id = R.drawable.turbo),
             contentDescription = "Voice Assistant",
             modifier = Modifier
-                .size(50.dp)
+                .size(65.dp)
                 .clip(CircleShape) // This clip is still good practice
         )
     }

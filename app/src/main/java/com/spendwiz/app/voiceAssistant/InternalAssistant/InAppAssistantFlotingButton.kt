@@ -151,7 +151,7 @@ fun InAppVoiceAssistantFab() {
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
                     // ✅ Adjusted image size to fit the new container
-                    .size(50.dp)
+                    .size(65.dp)
                     .clip(CircleShape)
             )
         }
