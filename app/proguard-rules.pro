@@ -19,3 +19,31 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+# --- Rules for SpendWiz App ---
+
+# 1. Keep all data model classes used for Room and Serialization
+# This is the most important rule for your app. It protects all your @Entity classes
+# (Money, Category, SubCategory) and any other data classes in that package from being
+# obfuscated. This ensures your database and backup/restore features do not break.
+-keep class com.spendwiz.app.Database.money.** { *; }
+
+# 2. Keep the main backup data class
+# This class is marked as @Serializable and is the top-level object for your backups.
+-keep class com.spendwiz.app.BackUp.DatabaseBackup { *; }
+
+
+# Please add these rules to your existing keep rules in order to suppress warnings.
+# This is generated automatically by the Android Gradle plugin.
+-dontwarn javax.naming.InvalidNameException
+-dontwarn javax.naming.NamingException
+-dontwarn javax.naming.directory.Attribute
+-dontwarn javax.naming.directory.Attributes
+-dontwarn javax.naming.ldap.LdapName
+-dontwarn javax.naming.ldap.Rdn
+-dontwarn org.ietf.jgss.GSSContext
+-dontwarn org.ietf.jgss.GSSCredential
+-dontwarn org.ietf.jgss.GSSException
+-dontwarn org.ietf.jgss.GSSManager
+-dontwarn org.ietf.jgss.GSSName
+-dontwarn org.ietf.jgss.Oid
