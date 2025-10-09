@@ -123,12 +123,12 @@ fun InAppVoiceAssistantFab() {
             contentAlignment = Alignment.Center,
             modifier = Modifier
                 // ✅ Reduced the container size for a tighter effect
-                .size(70.dp)
+                .size(75.dp)
                 .clip(CircleShape) // Clipped the container to ensure a round shape
                 .drawBehind {
                     scale(scale = glowScale) {
                         drawCircle(
-                            color = Color(0xFF9C27B0), // Purple color
+                            color = Color(0xFF4CAF50), // Purple color
                             alpha = glowAlpha
                         )
                     }

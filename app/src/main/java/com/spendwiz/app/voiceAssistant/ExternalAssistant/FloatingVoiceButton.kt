@@ -31,7 +31,7 @@ fun FloatingVoiceButton(
     Log.d("FloatingVoiceButton", "Recomposing... isListening = $isListening")
 
     val glowScale by animateFloatAsState(
-        targetValue = if (isListening) 1.4f else 0f,
+        targetValue = if (isListening) 2f else 0f,
         animationSpec = tween(durationMillis = 500),
         label = "glowScale"
     )
@@ -50,7 +50,7 @@ fun FloatingVoiceButton(
             .drawBehind {
                 scale(scale = glowScale) {
                     drawCircle(
-                        color = Color(0xFF9C27B0), // Purple color
+                        color = Color(0xFFB22C22), // Purple color
                         alpha = glowAlpha
                     )
                 }
