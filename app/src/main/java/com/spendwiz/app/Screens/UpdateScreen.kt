@@ -45,7 +45,6 @@ import com.spendwiz.app.navigation.Routes
 import com.spendwiz.app.utils.TimePickerField
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun UpdateScreen(
     viewModel: AddScreenViewModel,

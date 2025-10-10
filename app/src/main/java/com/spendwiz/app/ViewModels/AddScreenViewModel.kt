@@ -33,28 +33,22 @@ import com.spendwiz.app.Screens.DayStatus
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.text.SimpleDateFormat
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 import java.util.*
+import org.threeten.bp.LocalDate
+import org.threeten.bp.format.DateTimeFormatter
 
 class AddScreenViewModel : ViewModel() {
 
     val moneyDao = MainApplication.moneyDatabase.getMoneyDao()
 
-    @RequiresApi(Build.VERSION_CODES.O)
     private val today = LocalDate.now()
 
-    @RequiresApi(Build.VERSION_CODES.O)
     private val customFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
 
-    @RequiresApi(Build.VERSION_CODES.O)
     private val formattedDateCustom = today.format(customFormatter)
 
-    @RequiresApi(Build.VERSION_CODES.O)
     val todayMoneyList: LiveData<List<Money>> = moneyDao.getTodayTransactionByDate(formattedDateCustom)
 
-    @RequiresApi(Build.VERSION_CODES.O)
     val currentMonthSummary: LiveData<MoneyDao.MonthlySummary?> =
         moneyDao.getMonthlyIncomeExpense(LocalDate.now().year.toString()).map { yearlySummaries ->
             val currentMonthNumber = LocalDate.now().month.value
@@ -122,7 +116,6 @@ class AddScreenViewModel : ViewModel() {
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
     fun addMoney1(
         id: Int = 0,
         amount: Double,
@@ -148,7 +141,6 @@ class AddScreenViewModel : ViewModel() {
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
     suspend fun insertTransactionsFromSms(context: Context): Int {
         if (ActivityCompat.checkSelfPermission(context, android.Manifest.permission.READ_SMS)
             != PackageManager.PERMISSION_GRANTED
@@ -180,7 +172,6 @@ class AddScreenViewModel : ViewModel() {
     }
 
 
-    @RequiresApi(Build.VERSION_CODES.O)
     fun runSmsImportOnce(context: Context) {
         val prefs = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
         val hasRunBefore = prefs.getBoolean("sms_import_done", false)
@@ -319,7 +310,6 @@ class AddScreenViewModel : ViewModel() {
     private val _dayStatusesLoading = MutableLiveData(false)
     val dayStatusesLoading: LiveData<Boolean> = _dayStatusesLoading
 
-    @RequiresApi(Build.VERSION_CODES.O)
     fun getDayStatusesForYear(year: Int): LiveData<Map<LocalDate, DayStatus>> {
         val result = MutableLiveData<Map<LocalDate, DayStatus>>()
 
@@ -348,7 +338,7 @@ class AddScreenViewModel : ViewModel() {
                 }
 
                 // Pre-size map for all days
-                val totalDays = java.time.temporal.ChronoUnit.DAYS.between(start, end).toInt() + 1
+                val totalDays = org.threeten.bp.temporal.ChronoUnit.DAYS.between(start, end).toInt() + 1
                 val m = LinkedHashMap<LocalDate, DayStatus>(totalDays)
 
                 var current = start

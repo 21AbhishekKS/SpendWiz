@@ -1,9 +1,7 @@
 package com.spendwiz.app.Screens
 
 import android.app.DatePickerDialog
-import android.os.Build
 import android.view.View
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -44,7 +42,7 @@ import com.spendwiz.app.utils.PieChart
 import kotlinx.coroutines.launch
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
-import java.time.LocalDate
+import org.threeten.bp.LocalDate
 import com.spendwiz.app.ViewModels.CategoryViewModel
 import com.spendwiz.app.utils.ExpenseDonutChartBySubCategory
 import kotlinx.coroutines.delay
@@ -73,7 +71,6 @@ data class AdItem(val adId: String = UUID.randomUUID().toString()) : ListItem {
 // Define how often you want an ad to appear. E.g., 1 ad every 7 items.
 private const val AD_INTERVAL = 12
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun InsightsScreen(
     viewModel: AddScreenViewModel = viewModel(),

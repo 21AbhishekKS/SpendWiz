@@ -67,7 +67,6 @@ enum class ProcessingState {
 }
 
 @OptIn(ExperimentalPermissionsApi::class)
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun ReceiptScanScreen(
     viewModel: AddScreenViewModel,

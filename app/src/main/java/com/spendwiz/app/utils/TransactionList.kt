@@ -33,7 +33,6 @@ import com.spendwiz.app.R
 import com.spendwiz.app.ViewModels.AddScreenViewModel
 import com.spendwiz.app.navigation.Routes
 
-@RequiresApi(Build.VERSION_CODES.N)
 @Composable
 fun TransactionList(
     moneyList: List<Money>?,

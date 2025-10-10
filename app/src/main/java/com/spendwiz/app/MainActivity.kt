@@ -63,7 +63,6 @@ class MainActivity : ComponentActivity() {
     }
 
     // Launcher for multiple permissions
-    @RequiresApi(Build.VERSION_CODES.O)
     private val permissionsLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
@@ -75,7 +74,6 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -134,7 +132,6 @@ class MainActivity : ComponentActivity() {
     }
 
     // Ask all required permissions
-    @RequiresApi(Build.VERSION_CODES.O)
     private fun requestAllPermissions() {
         val notGranted = REQUIRED_PERMISSIONS.filter {
             ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED

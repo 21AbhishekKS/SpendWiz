@@ -35,7 +35,6 @@ import com.spendwiz.app.Notifications.PreferencesManager as NotificationPrefsMan
 import com.spendwiz.app.Screens.PreferencesManager as VoicePrefsManager
 
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun BottomNav(
     navController: NavHostController,

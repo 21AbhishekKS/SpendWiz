@@ -54,7 +54,6 @@ data class OptionItem(
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun MoreOptionsScreen(
     viewModel: AddScreenViewModel,

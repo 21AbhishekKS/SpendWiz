@@ -43,7 +43,6 @@ import com.spendwiz.app.Ads.CommonNativeAd
 import com.spendwiz.app.R
 
 
-@RequiresApi(Build.VERSION_CODES.O)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun HomeScreen(

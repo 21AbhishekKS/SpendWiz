@@ -163,5 +163,9 @@ dependencies {
 
     //In app update (now only implemented immediate in app update)
     implementation("com.google.android.play:app-update-ktx:2.1.0")
+
+    //To get time and date for below 26 API to remove required O annotation
+    implementation ("com.jakewharton.threetenabp:threetenabp:1.4.6")
+
 }
 

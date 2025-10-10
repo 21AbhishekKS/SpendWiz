@@ -1,7 +1,5 @@
 package com.spendwiz.app.Screens
 
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -42,10 +40,11 @@ import com.aay.compose.barChart.BarChart
 import com.aay.compose.barChart.model.BarParameters
 import com.spendwiz.app.ViewModels.AddScreenViewModel
 import com.spendwiz.app.navigation.Routes
-import java.time.DayOfWeek
-import java.time.LocalDate
-import java.time.format.TextStyle as JTextStyle // Alias to avoid conflict
 import java.util.*
+import org.threeten.bp.DayOfWeek
+import org.threeten.bp.LocalDate
+import org.threeten.bp.format.TextStyle as JTextStyle // Alias to avoid conflict
+import org.threeten.bp.temporal.IsoFields
 
 // --- Theme-Aware Colors ---
 val incomeColor = Color(0xFF4CAF50)
@@ -53,7 +52,6 @@ val expenseColor = Color(0xFFF44336)
 val incomeColorSubtle = Color(0xFF388E3C)
 val expenseColorSubtle = Color(0xFFD32F2F)
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun Annual(viewModel: AddScreenViewModel, navController: NavController) {
     var selectedYear by remember { mutableStateOf(LocalDate.now().year.toString()) }
@@ -262,7 +260,6 @@ enum class DayStatus {
     Categorized, NotCategorized, NoTransaction, Future
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun YearlyHeatmapCanvas(
     year: Int,
@@ -287,7 +284,7 @@ fun YearlyHeatmapCanvas(
         generateSequence(start) { it.plusDays(1) }
             .takeWhile { !it.isAfter(end) }
             .toList()
-            .groupBy { it.get(java.time.temporal.IsoFields.WEEK_OF_WEEK_BASED_YEAR) }
+            .groupBy { it.get(IsoFields.WEEK_OF_WEEK_BASED_YEAR) }
             .toSortedMap()
             .values.toList()
     }
@@ -357,7 +354,7 @@ fun YearlyHeatmapCanvas(
                     val xPx = weekIndex * (squarePx + spacingPx)
 
                     Text(
-                        text = monthStart.month.getDisplayName(JTextStyle.SHORT, Locale.getDefault()),
+                        text = monthStart.month.getDisplayName(JTextStyle.SHORT, Locale.getDefault()), // <-- THIS NOW USES THE CORRECT TextStyle
                         modifier = Modifier
                             .offset(x = with(density) { xPx.toDp() }, y = 0.dp)
                             .padding(horizontal = 2.dp),

@@ -45,7 +45,6 @@ import com.spendwiz.app.Ads.InterstitialAdManager
 import com.spendwiz.app.R
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun AddScreen(
     viewModel: AddScreenViewModel,
