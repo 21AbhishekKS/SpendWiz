@@ -38,6 +38,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Scaffold
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.LayoutDirection
+import com.spendwiz.app.Ads.BannerAdView
 import com.spendwiz.app.Ads.CommonNativeAd
 import com.spendwiz.app.R
 
@@ -78,7 +79,7 @@ fun HomeScreen(
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         bottomBar = {
-            CommonNativeAd(Modifier ,
+            BannerAdView(Modifier ,
                 stringResource(id = R.string.ad_unit_id_home_screen)
             )
         }

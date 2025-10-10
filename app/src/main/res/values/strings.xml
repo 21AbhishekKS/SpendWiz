@@ -6,21 +6,24 @@
     <string name="ad_unit_id_native_test">ca-app-pub-3940256099942544/2247696110</string>
     <string name="ad_unit_id_interstitial_test">ca-app-pub-3940256099942544/1033173712</string>
 
+    <!-- AdMob Banner Ads ids for production-->
+    <string name="ad_unit_id_home_screen">ca-app-pub-3940256099942544/6300978111</string>
+    <string name="ad_unit_id_add_screen">ca-app-pub-3940256099942544/6300978111</string>
+    <string name="ad_unit_id_update_screen">ca-app-pub-3940256099942544/6300978111</string>
+    <string name="ad_unit_id_yearly_inside_screen">ca-app-pub-3940256099942544/6300978111</string>
+    <string name="ad_unit_id_bulkUpdate_screen">ca-app-pub-3940256099942544/6300978111</string>
+    <string name="ad_unit_id_category_screen">ca-app-pub-3940256099942544/6300978111</string>
+    <string name="ad_unit_id_assistant_screen">ca-app-pub-3940256099942544/6300978111</string>
+    <string name="ad_unit_id_faq_screen">ca-app-pub-3940256099942544/6300978111</string>
+
     <!-- AdMob Native Ads ids for production-->
-    <string name="ad_unit_id_home_screen">ca-app-pub-3940256099942544/2247696110</string>
-    <string name="ad_unit_id_add_screen">ca-app-pub-3940256099942544/2247696110</string>
-    <string name="ad_unit_id_update_screen">ca-app-pub-3940256099942544/2247696110</string>
-    <string name="ad_unit_id_yearly_inside_screen">ca-app-pub-3940256099942544/2247696110</string>
+
     <string name="ad_unit_id_backup_screen">ca-app-pub-3940256099942544/2247696110</string>
-    <string name="ad_unit_id_bulkUpdate_screen">ca-app-pub-3940256099942544/2247696110</string>
-    <string name="ad_unit_id_category_screen">ca-app-pub-3940256099942544/2247696110</string>
     <string name="ad_unit_id_notification_settings_screen">ca-app-pub-3940256099942544/2247696110</string>
-    <string name="ad_unit_id_assistant_screen">ca-app-pub-3940256099942544/2247696110</string>
-    <string name="ad_unit_id_faq_screen">ca-app-pub-3940256099942544/2247696110</string>
     <string name="ad_unit_id_more_option_screen">ca-app-pub-3940256099942544/2247696110</string>
     <string name="ad_unit_id_receipt_scan_screen">ca-app-pub-3940256099942544/2247696110</string>
+    <string name="ad_unit_id_native_insight_screen">ca-app-pub-3940256099942544/2247696110</string>
 
-    <!-- AdMob Native Ads ids for Insight screen list production-->
-    <string name="ad_unit_id_native_insight_screen">ca-app-pub-6662174152116703/9771601398</string>
+<!--    <string name="ad_unit_id_native_insight_screen">ca-app-pub-6662174152116703/9771601398</string>-->
 
 </resources>

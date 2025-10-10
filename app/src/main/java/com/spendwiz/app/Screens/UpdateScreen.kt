@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.spendwiz.app.Ads.BannerAdView
 import com.spendwiz.app.Ads.CommonNativeAd
 import com.spendwiz.app.Ads.InterstitialAdManager
 import com.spendwiz.app.Database.money.TransactionType
@@ -242,7 +243,7 @@ fun UpdateScreen(
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
-            CommonNativeAd(Modifier ,
+            BannerAdView(Modifier ,
                 stringResource(id = R.string.ad_unit_id_update_screen)
             )
         }

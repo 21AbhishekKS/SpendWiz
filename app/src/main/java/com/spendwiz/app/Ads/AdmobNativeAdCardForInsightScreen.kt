@@ -77,9 +77,12 @@ fun AdmobNativeAdCardForInsightScreen() {
                     bodyView.text = ad.body
                     adView.bodyView = bodyView
 
-                    val iconView = adView.findViewById<ImageView>(R.id.ad_icon)
-                    ad.icon?.drawable?.let { iconView.setImageDrawable(it) }
-                    adView.iconView = iconView
+                    val mediaView = adView.findViewById<com.google.android.gms.ads.nativead.MediaView>(R.id.ad_media)
+                    adView.mediaView = mediaView
+                    if (ad.mediaContent != null) {
+                        mediaView.mediaContent = ad.mediaContent
+                    }
+
 
                     val ctaButton = adView.findViewById<Button>(R.id.ad_call_to_action)
                     ctaButton.text = ad.callToAction

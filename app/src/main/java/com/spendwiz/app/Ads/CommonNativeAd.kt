@@ -82,7 +82,6 @@ fun CommonNativeAd(
                     // IMPORTANT: Your XML layout must contain views with these exact IDs.
                     val headlineView = adView.findViewById<TextView>(R.id.ad_headline)
                     val bodyView = adView.findViewById<TextView>(R.id.ad_body)
-                    val iconView = adView.findViewById<ImageView>(R.id.ad_icon)
                     val ctaButton = adView.findViewById<Button>(R.id.ad_call_to_action)
 
                     // Associate the ad assets with the views
@@ -92,8 +91,12 @@ fun CommonNativeAd(
                     bodyView.text = ad.body
                     adView.bodyView = bodyView
 
-                    ad.icon?.drawable?.let { iconView.setImageDrawable(it) }
-                    adView.iconView = iconView
+                    val mediaView = adView.findViewById<com.google.android.gms.ads.nativead.MediaView>(R.id.ad_media)
+                    adView.mediaView = mediaView
+                    if (ad.mediaContent != null) {
+                        mediaView.mediaContent = ad.mediaContent
+                    }
+
 
                     ctaButton.text = ad.callToAction
                     adView.callToActionView = ctaButton

@@ -39,6 +39,7 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.LayoutDirection
+import com.spendwiz.app.Ads.BannerAdView
 import com.spendwiz.app.Ads.CommonNativeAd
 import com.spendwiz.app.Ads.InterstitialAdManager
 import com.spendwiz.app.R
@@ -152,7 +153,7 @@ fun AddScreen(
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
-            CommonNativeAd(Modifier ,
+            BannerAdView(Modifier ,
                 stringResource(id = R.string.ad_unit_id_add_screen)
             )
         }
