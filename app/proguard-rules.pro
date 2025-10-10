@@ -47,3 +47,29 @@
 -dontwarn org.ietf.jgss.GSSManager
 -dontwarn org.ietf.jgss.GSSName
 -dontwarn org.ietf.jgss.Oid
+
+# --- Rules for SQLCipher Library --- ADD THIS SECTION!
+# This prevents the app from crashing when using the encrypted database
+# in a release build.
+-keep class net.sqlcipher.** { *; }
+-keep class net.sqlcipher.database.** { *; }
+
+# --- Add these rules for Google Drive and Serialization ---
+
+# Rule for Serializable classes (Good practice for backups)
+-keepclassmembers class * implements java.io.Serializable {
+    static final long serialVersionUID;
+    private static final java.io.ObjectStreamField[] serialPersistentFields;
+    !static !transient <fields>;
+    !private <fields>;
+    !private <methods>;
+    private void writeObject(java.io.ObjectOutputStream);
+    private void readObject(java.io.ObjectInputStream);
+    java.lang.Object writeReplace();
+    java.lang.Object readResolve();
+}
+
+# Rules for Google Sign-In & Drive APIs
+-keep class com.google.android.gms.common.api.** { *; }
+-keep class com.google.api.client.** { *; }
+-keep class com.google.api.services.drive.** { *; }
