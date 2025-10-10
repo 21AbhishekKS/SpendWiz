@@ -1,7 +1,9 @@
 package com.spendwiz.app.Screens
 
 import android.app.DatePickerDialog
+import android.content.res.Configuration
 import android.view.View
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -21,6 +23,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -71,6 +74,7 @@ data class AdItem(val adId: String = UUID.randomUUID().toString()) : ListItem {
 // Define how often you want an ad to appear. E.g., 1 ad every 7 items.
 private const val AD_INTERVAL = 12
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun InsightsScreen(
     viewModel: AddScreenViewModel = viewModel(),
@@ -119,41 +123,24 @@ fun InsightsScreen(
         }
     }
 
-    // Data observation and processing are done here, before the UI conditional
     val moneyListLive = viewModel.moneyDao
         .getTransactionsByMonthAndYear(selectedMonthInNum, selectedYear.toString())
         .observeAsState(initial = emptyList())
 
     val moneyList = moneyListLive.value.asReversed()
 
-    val groupedByDate: List<Pair<String, List<Money>>> =
-        remember(moneyList) {
-            moneyList.groupBy { it.date ?: "" }
-                .toList()
-                .sortedByDescending { it.first }
-        }
-
-    // Create a single list containing headers, transactions, and ads.
-    // This is recalculated only when `moneyList` changes.
     val listWithAds = remember(moneyList) {
         val items = mutableListOf<ListItem>()
         var transactionCounter = 0
-
-        // Group and sort transactions by date, similar to your original logic
         val groupedByDate = moneyList.groupBy { it.date ?: "" }
             .toList()
             .sortedByDescending { it.first }
 
         groupedByDate.forEach { (date, transactionsForDate) ->
-            // 1. Add the date header
             items.add(HeaderItem(date))
-
-            // 2. Add the transactions for that date
             transactionsForDate.forEach { transaction ->
                 items.add(TransactionDataItem(transaction))
                 transactionCounter++
-
-                // 3. Add an ad after every AD_INTERVAL transactions
                 if (transactionCounter % AD_INTERVAL == 0) {
                     items.add(AdItem())
                 }
@@ -161,7 +148,6 @@ fun InsightsScreen(
         }
         items
     }
-
 
     val monthlyTotals by remember(moneyList) {
         derivedStateOf {
@@ -180,13 +166,13 @@ fun InsightsScreen(
     }
     val (monthlySpent, monthlyReceived) = monthlyTotals
     val scope = rememberCoroutineScope()
+    val orientation = LocalConfiguration.current.orientation
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
-        // Top bar is always visible
         CustomTopBar(
             selectedMonth = selectedMonth,
             selectedYear = selectedYear,
@@ -211,123 +197,141 @@ fun InsightsScreen(
             ) {
                 BlueCircularLoader(Modifier)
             }
+        } else if (moneyList.isEmpty()) {
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Image(painter = painterResource(R.drawable.no_transaction), "", modifier = Modifier.size(50.dp))
+                Spacer(Modifier.height(20.dp))
+                Text(text = "No transactions this month!", color = MaterialTheme.colorScheme.onBackground)
+            }
         } else {
-            if (moneyList.isEmpty()) {
-                // Empty State UI
-                Column(
-                    modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Image(painter = painterResource(R.drawable.no_transaction), "", modifier = Modifier.size(50.dp))
-                    Spacer(Modifier.height(20.dp))
-                    Text(text = "No transactions this month!", color = MaterialTheme.colorScheme.onBackground)
-                }
-            } else {
-                // Data State UI (Pager and List)
-                Column(modifier = Modifier.fillMaxSize()) {
-                    // Pager is still shown conditionally based on totals
-                    if (monthlyReceived != 0.0 || monthlySpent != 0.0) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .heightIn(min = 220.dp, max = 280.dp)
-                                .padding(horizontal = 10.dp)
-                        ) {
-                            val pages = buildList {
-                                if (monthlyReceived != 0.0 && monthlySpent != 0.0) add("Pie")
-                                add("ByMonth")
-                                add("BySubCategory")
-                            }
-                            val pagerState = rememberPagerState(initialPage = 0, pageCount = { pages.size })
+            // Define UI parts as composable lambdas to reuse them
+            val chartsPager = @Composable { modifier: Modifier ->
+                if (monthlyReceived != 0.0 || monthlySpent != 0.0) {
+                    val pages = remember(monthlyReceived, monthlySpent) {
+                        buildList {
+                            if (monthlyReceived != 0.0 && monthlySpent != 0.0) add("Pie")
+                            add("ByMonth")
+                            add("BySubCategory")
+                        }
+                    }
+                    val pagerState = rememberPagerState(initialPage = 0, pageCount = { pages.size })
 
-                            HorizontalPager(
-                                state = pagerState,
-                                modifier = Modifier.fillMaxSize()
-                            ) { page ->
-                                when (pages[page]) {
-                                    "Pie" -> PieChart(spent = monthlySpent, earned = monthlyReceived, modifier = Modifier.fillMaxSize())
-                                    "ByMonth" -> ExpenseDonutChartByMonth(viewModel = viewModel, month = selectedMonthInNum, year = selectedYear.toString(), modifier = Modifier.fillMaxSize())
-                                    "BySubCategory" -> ExpenseDonutChartBySubCategory(viewModel = viewModel, month = selectedMonthInNum, year = selectedYear.toString(), modifier = Modifier.fillMaxSize())
-                                }
+                    Box(modifier = modifier) {
+                        HorizontalPager(
+                            state = pagerState,
+                            modifier = Modifier.fillMaxSize()
+                        ) { page ->
+                            when (pages[page]) {
+                                "Pie" -> PieChart(spent = monthlySpent, earned = monthlyReceived, modifier = Modifier.fillMaxSize())
+                                "ByMonth" -> ExpenseDonutChartByMonth(viewModel = viewModel, month = selectedMonthInNum, year = selectedYear.toString(), modifier = Modifier.fillMaxSize())
+                                "BySubCategory" -> ExpenseDonutChartBySubCategory(viewModel = viewModel, month = selectedMonthInNum, year = selectedYear.toString(), modifier = Modifier.fillMaxSize())
                             }
+                        }
 
-                            if (pagerState.currentPage > 0) {
-                                IconButton(onClick = { scope.launch { pagerState.animateScrollToPage(pagerState.currentPage - 1) } }, modifier = Modifier.align(Alignment.BottomStart).padding(8.dp)) {
-                                    Icon(painter = painterResource(id = R.drawable.right_arrow), contentDescription = "Previous Chart", modifier = Modifier.size(28.dp).rotate(180f))
-                                }
+                        if (pagerState.currentPage > 0) {
+                            IconButton(onClick = { scope.launch { pagerState.animateScrollToPage(pagerState.currentPage - 1) } }, modifier = Modifier.align(Alignment.CenterStart).padding(4.dp)) {
+                                Icon(painter = painterResource(id = R.drawable.right_arrow), contentDescription = "Previous Chart", modifier = Modifier.size(28.dp).rotate(180f))
                             }
+                        }
 
-                            if (pagerState.currentPage < pagerState.pageCount - 1) {
-                                IconButton(onClick = { scope.launch { pagerState.animateScrollToPage(pagerState.currentPage + 1) } }, modifier = Modifier.align(Alignment.BottomEnd).padding(8.dp)) {
-                                    Icon(painter = painterResource(id = R.drawable.right_arrow), contentDescription = "Next Chart", modifier = Modifier.size(28.dp))
-                                }
+                        if (pagerState.currentPage < pagerState.pageCount - 1) {
+                            IconButton(onClick = { scope.launch { pagerState.animateScrollToPage(pagerState.currentPage + 1) } }, modifier = Modifier.align(Alignment.CenterEnd).padding(4.dp)) {
+                                Icon(painter = painterResource(id = R.drawable.right_arrow), contentDescription = "Next Chart", modifier = Modifier.size(28.dp))
                             }
                         }
                     }
+                }
+            }
 
-                    // Transaction List
-                    LazyColumn(
-                        modifier = Modifier.weight(1f), // Use weight to fill available space
-                        contentPadding = PaddingValues(bottom = 16.dp)
-                    ) {
-                        items(
-                            items = listWithAds,
-                            key = { it.key } // Use the unique key from our sealed interface
-                        ) { listItem ->
-                            when (listItem) {
-                                // Case 1: The item is a date header
-                                is HeaderItem -> {
-                                    Text(
-                                        text = listItem.date,
-                                        fontSize = 18.sp,
-                                        fontWeight = FontWeight.SemiBold,
-                                        color = MaterialTheme.colorScheme.onBackground,
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(horizontal = 16.dp, vertical = 10.dp)
-                                    )
-                                }
-
-                                // Case 2: The item is a transaction
-                                is TransactionDataItem -> {
-                                    val item = listItem.transaction // Get the underlying transaction
-                                    val itemId: String = (item.id.toString())
-                                    MoneyItemWithLongPress(
-                                        item = item,
-                                        selected = selectedItems.contains(itemId),
-                                        onClick = {
-                                            if (selectedItems.isEmpty()) {
-                                                navController1.navigate(
-                                                    Routes.UpdateScreen.route +
-                                                            "?description=${enc(item.description)}" +
-                                                            "&amount=${item.amount}" +
-                                                            "&id=${item.id}" +
-                                                            "&type=${enc(item.type.toString())}" +
-                                                            "&category=${enc(item.category ?: "")}" +
-                                                            "&subCategory=${enc(item.subCategory ?: "")}" +
-                                                            "&date=${enc(item.date ?: "")}" +
-                                                            "&time=${item.time}"
-                                                )
-                                            } else {
-                                                if (selectedItems.contains(itemId)) selectedItems.remove(itemId) else selectedItems.add(itemId)
-                                            }
-                                        },
-                                        onLongClick = {
+            val transactionList = @Composable { modifier: Modifier ->
+                LazyColumn(
+                    modifier = modifier,
+                    contentPadding = PaddingValues(bottom = 16.dp)
+                ) {
+                    items(items = listWithAds, key = { it.key }) { listItem ->
+                        when (listItem) {
+                            is HeaderItem -> {
+                                Text(
+                                    text = listItem.date,
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.onBackground,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 16.dp, vertical = 10.dp)
+                                )
+                            }
+                            is TransactionDataItem -> {
+                                val item = listItem.transaction
+                                val itemId: String = (item.id.toString())
+                                MoneyItemWithLongPress(
+                                    item = item,
+                                    selected = selectedItems.contains(itemId),
+                                    onClick = {
+                                        if (selectedItems.isEmpty()) {
+                                            navController1.navigate(
+                                                Routes.UpdateScreen.route +
+                                                        "?description=${enc(item.description)}" +
+                                                        "&amount=${item.amount}" +
+                                                        "&id=${item.id}" +
+                                                        "&type=${enc(item.type.toString())}" +
+                                                        "&category=${enc(item.category ?: "")}" +
+                                                        "&subCategory=${enc(item.subCategory ?: "")}" +
+                                                        "&date=${enc(item.date ?: "")}" +
+                                                        "&time=${item.time}"
+                                            )
+                                        } else {
                                             if (selectedItems.contains(itemId)) selectedItems.remove(itemId) else selectedItems.add(itemId)
                                         }
-                                    )
-                                }
-
-                                // Case 3: The item is an Ad
-                                is AdItem -> {
-                                    // Here you would typically load a real ad from AdMob.
-                                    // For now, we use your NativeAdCard with placeholder data.
-                                    AdmobNativeAdCardForInsightScreen()
-                                }
+                                    },
+                                    onLongClick = {
+                                        if (selectedItems.contains(itemId)) selectedItems.remove(itemId) else selectedItems.add(itemId)
+                                    }
+                                )
+                            }
+                            is AdItem -> {
+                                AdmobNativeAdCardForInsightScreen()
                             }
                         }
                     }
+                }
+            }
+
+            // Arrange UI based on orientation
+            if (orientation == Configuration.ORIENTATION_PORTRAIT) {
+                Column(modifier = Modifier.fillMaxSize()) {
+                    chartsPager(
+                        // FIX: Removed named parameter
+                        Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 220.dp, max = 280.dp)
+                            .padding(horizontal = 10.dp)
+                    )
+                    transactionList(
+                        // FIX: Removed named parameter
+                        Modifier.weight(1f)
+                    )
+                }
+            } else {
+                Row(
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    chartsPager(
+                        // FIX: Removed named parameter
+                        Modifier
+                            .weight(0.45f)
+                            .fillMaxHeight()
+                            .padding(vertical = 10.dp)
+                    )
+                    transactionList(
+                        // FIX: Removed named parameter
+                        Modifier.weight(0.55f)
+                    )
                 }
             }
         }

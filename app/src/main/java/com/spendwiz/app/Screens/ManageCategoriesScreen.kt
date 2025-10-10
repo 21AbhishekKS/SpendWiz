@@ -1,5 +1,6 @@
 package com.spendwiz.app.Screens
 
+import android.content.res.Configuration // Import Configuration
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -18,6 +19,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration // Import LocalConfiguration
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -48,26 +50,30 @@ fun ManageCategoriesScreen(viewModel: CategoryViewModel) {
     // Custom Color
     val buttonColor = colorResource(id = R.color.button_color)
 
+    // Get screen configuration
+    val configuration = LocalConfiguration.current
+    val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         bottomBar = {
-            BannerAdView(Modifier ,
-                stringResource(id = R.string.ad_unit_id_category_screen)
-            )
+            BannerAdView(Modifier, stringResource(id = R.string.ad_unit_id_category_screen))
         }
     ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(
-                    start = innerPadding.calculateStartPadding(LayoutDirection.Ltr),
-                    end = innerPadding.calculateEndPadding(LayoutDirection.Ltr),
-                    bottom = innerPadding.calculateBottomPadding()
-                )
-                .padding(16.dp)
-        ) {
-            // Header with Reset button
+
+        // Common modifier for the content area
+        val contentModifier = Modifier
+            .fillMaxSize()
+            .padding(
+                start = innerPadding.calculateStartPadding(LayoutDirection.Ltr),
+                end = innerPadding.calculateEndPadding(LayoutDirection.Ltr),
+                bottom = innerPadding.calculateBottomPadding()
+            )
+            .padding(16.dp)
+
+        // Header composable to avoid repetition
+        val header = @Composable {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -82,22 +88,12 @@ fun ManageCategoriesScreen(viewModel: CategoryViewModel) {
                     Icon(Icons.Default.Refresh, contentDescription = "Reset Categories")
                 }
             }
+        }
 
-            Spacer(Modifier.height(16.dp))
-
-            // Dropdown for transaction type
-            DropdownMenuBox(
-                label = "Transaction Type",
-                items = listOf("Income", "Expense", "Transfer"),
-                selected = selectedType,
-                onItemSelected = { selectedType = it }
-            )
-
-            Spacer(Modifier.height(16.dp))
-
-            // Categories list
+        // Categories list composable to avoid repetition
+        val categoriesList = @Composable { modifier: Modifier ->
             LazyColumn(
-                modifier = Modifier.weight(1f),
+                modifier = modifier,
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 items(categories, key = { it.id }) { category ->
@@ -109,7 +105,6 @@ fun ManageCategoriesScreen(viewModel: CategoryViewModel) {
                         colors = customCardColors()
                     ) {
                         Column {
-                            // Category header
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -143,21 +138,13 @@ fun ManageCategoriesScreen(viewModel: CategoryViewModel) {
                                     )
                                 }
                             }
-
-                            // Expanded view with subcategory chips
                             if (expanded) {
                                 val subcategories by viewModel.getSubCategories(category.id)
                                     .collectAsState(emptyList())
-
                                 FlowRow(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(
-                                            start = 16.dp,
-                                            end = 16.dp,
-                                            top = 12.dp,
-                                            bottom = 12.dp
-                                        ),
+                                        .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 12.dp),
                                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                                 ) {
                                     subcategories.forEach { sub ->
@@ -169,8 +156,6 @@ fun ManageCategoriesScreen(viewModel: CategoryViewModel) {
                                             }
                                         )
                                     }
-
-                                    // Add new subcategory button
                                     IconButton(
                                         onClick = {
                                             categoryForNewSub = category
@@ -189,12 +174,21 @@ fun ManageCategoriesScreen(viewModel: CategoryViewModel) {
                     }
                 }
             }
+        }
 
+        // Controls composable (Dropdown and Add Field) to avoid repetition
+        val controls = @Composable { addCategoryModifier: Modifier ->
+            // Dropdown for transaction type
+            DropdownMenuBox(
+                label = "Transaction Type",
+                items = listOf("Income", "Expense", "Transfer"),
+                selected = selectedType,
+                onItemSelected = { selectedType = it }
+            )
+            Spacer(Modifier.height(16.dp))
             // Add category field
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 16.dp),
+                modifier = addCategoryModifier,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 OutlinedTextField(
@@ -220,9 +214,38 @@ fun ManageCategoriesScreen(viewModel: CategoryViewModel) {
                 }
             }
         }
+
+
+        if (isLandscape) {
+            // --- LANDSCAPE LAYOUT ---
+            Column(modifier = contentModifier) {
+                header()
+                Spacer(Modifier.height(16.dp))
+                Row(modifier = Modifier.fillMaxSize()) {
+                    // Left Side: Category List
+                    categoriesList(Modifier.weight(0.55f))
+
+                    Spacer(Modifier.width(16.dp))
+
+                    // Right Side: Controls
+                    Column(modifier = Modifier.weight(0.45f)) {
+                        controls(Modifier.fillMaxWidth())
+                    }
+                }
+            }
+        } else {
+            // --- PORTRAIT LAYOUT (Original) ---
+            Column(modifier = contentModifier) {
+                header()
+                Spacer(Modifier.height(16.dp))
+                controls(Modifier.fillMaxWidth())
+                Spacer(Modifier.height(16.dp))
+                categoriesList(Modifier.weight(1f))
+            }
+        }
     }
 
-    // Delete confirmation dialog
+    // --- DIALOGS (Remain Unchanged) ---
     if (showDeleteDialog) {
         ConfirmationDialog(
             onDismiss = { showDeleteDialog = false },
@@ -236,7 +259,6 @@ fun ManageCategoriesScreen(viewModel: CategoryViewModel) {
         )
     }
 
-    // Reset categories confirmation dialog
     if (showResetDialog) {
         ConfirmationDialog(
             onDismiss = { showResetDialog = false },
@@ -250,7 +272,6 @@ fun ManageCategoriesScreen(viewModel: CategoryViewModel) {
         )
     }
 
-    // Add new subcategory dialog
     if (showAddSubCategoryDialog) {
         var newSubName by remember { mutableStateOf("") }
         AlertDialog(
@@ -285,6 +306,8 @@ fun ManageCategoriesScreen(viewModel: CategoryViewModel) {
     }
 }
 
+
+// The rest of your file (SubCategoryChip, ConfirmationDialog, DropdownMenuBox) remains the same.
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SubCategoryChip(text: String, onDelete: () -> Unit) {
