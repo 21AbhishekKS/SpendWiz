@@ -1,15 +1,16 @@
 package com.spendwiz.app.Screens
 
-import android.Manifest // <-- ADDED
-import android.app.Activity // <-- ADDED
+import android.Manifest
+import android.app.Activity
 import android.app.TimePickerDialog
-import android.content.Intent // <-- ADDED
-import android.content.pm.PackageManager // <-- ADDED
-import android.net.Uri // <-- ADDED
-import android.os.Build // <-- ADDED
-import android.provider.Settings // <-- ADDED
-import androidx.activity.compose.rememberLauncherForActivityResult // <-- ADDED
-import androidx.activity.result.contract.ActivityResultContracts // <-- ADDED
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.content.res.Configuration
+import android.net.Uri
+import android.os.Build
+import android.provider.Settings
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
@@ -18,22 +19,26 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
-import androidx.core.app.ActivityCompat // <-- ADDED
-import androidx.core.content.ContextCompat // <-- ADDED
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import com.spendwiz.app.Ads.CommonNativeAd
 import com.spendwiz.app.AppStyle.AppColors.customSwitchColors
 import com.spendwiz.app.R
 import com.spendwiz.app.Notifications.PreferencesManager
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 @Composable
@@ -50,216 +55,114 @@ fun NotificationSettingsScreen(
     val dailyMinute by prefs.dailyMinuteFlow.collectAsState(initial = 5)
     val transactionEnabled by prefs.transactionNotificationFlow.collectAsState(initial = false)
 
-    // --- ADDED: State for permission dialog and deferred action ---
     var showPermissionSettingsDialog by remember { mutableStateOf(false) }
     var pendingPermissionAction by remember { mutableStateOf<(() -> Unit)?>(null) }
 
-    val buttonColor = colorResource(id = R.color.button_color)
-    val customSwitchColors = customSwitchColors()
-
-    // --- ADDED: Launcher for Notification Permission Request ---
     val activity = LocalContext.current as Activity
     val notificationPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { isGranted: Boolean ->
         if (isGranted) {
-            // Permission was granted, so execute the action that was waiting.
             pendingPermissionAction?.invoke()
         } else {
-            // Permission was denied. Check if it was denied permanently.
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
                 !ActivityCompat.shouldShowRequestPermissionRationale(activity, Manifest.permission.POST_NOTIFICATIONS)) {
-                // User has permanently denied the permission. Show the settings dialog.
                 showPermissionSettingsDialog = true
             }
         }
-        // Clean up the pending action
         pendingPermissionAction = null
     }
 
+    val configuration = LocalConfiguration.current // Get screen configuration
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         bottomBar = {
-            CommonNativeAd(Modifier ,
-                stringResource(id = R.string.ad_unit_id_notification_settings_screen)
-            )
+            // Only show bottom bar ad in portrait mode
+            if (configuration.orientation != Configuration.ORIENTATION_LANDSCAPE) {
+                CommonNativeAd(
+                    Modifier,
+                    stringResource(id = R.string.ad_unit_id_notification_settings_screen)
+                )
+            }
         }
     ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(
-                    start = innerPadding.calculateStartPadding(LayoutDirection.Ltr),
-                    end = innerPadding.calculateEndPadding(LayoutDirection.Ltr),
-                    bottom = innerPadding.calculateBottomPadding()
-                )
-                .padding(horizontal = 20.dp, vertical = 16.dp),
-        ) {
-            // --- Header ---
-            Text(
-                text = "Notification Settings",
-                style = MaterialTheme.typography.headlineSmall,
-                modifier = Modifier.padding(bottom = 24.dp)
-            )
-
-            // --- Daily Reminder Setting ---
+        if (configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            // --- Landscape Layout: 50% content, 50% ad ---
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding) // Apply padding from Scaffold
             ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = "Daily Reminder",
-                        style = MaterialTheme.typography.titleLarge
-                    )
-                    Text(
-                        text = "Get a summary of your daily spending.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                Switch(
-                    checked = dailyEnabled,
-                    // --- MODIFIED: onCheckedChange with permission logic ---
-                    onCheckedChange = { enabled ->
-                        // Add the explicit type here
-                        val action: () -> Unit = {
-                            scope.launch {
-                                prefs.setDailyNotification(enabled)
-                                onDailyToggle(enabled, dailyHour, dailyMinute)
-                            }
-                        }
-                        if (enabled) { // Only check permission when turning the switch ON
-                            // ... rest of the logic is correct
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                                if (ContextCompat.checkSelfPermission(
-                                        context,
-                                        Manifest.permission.POST_NOTIFICATIONS
-                                    ) == PackageManager.PERMISSION_GRANTED
-                                ) {
-                                    action()
-                                } else {
-                                    pendingPermissionAction = action
-                                    notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                                }
-                            } else {
-                                action()
-                            }
-                        } else {
-                            action()
-                        }
-                    }, colors = customSwitchColors
-                )
-            }
-
-            // --- Animated Time Picker Setting ---
-            AnimatedVisibility(
-                visible = dailyEnabled,
-                enter = fadeIn(animationSpec = tween(300)) + expandVertically(
-                    animationSpec = tween(
-                        300
-                    )
-                ),
-                exit = fadeOut(animationSpec = tween(300)) + shrinkVertically(
-                    animationSpec = tween(
-                        300
-                    )
-                )
-            ) {
-                Row(
+                // Left half: Content
+                Column(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 8.dp)
-                        .clickable {
-                            TimePickerDialog(
-                                context,
-                                { _, hour: Int, minute: Int ->
-                                    scope.launch {
-                                        prefs.setDailyNotificationTime(hour, minute)
-                                        onDailyToggle(true, hour, minute)
-                                    }
-                                },
-                                dailyHour,
-                                dailyMinute,
-                                true // 24-hour format
-                            ).show()
-                        }
-                        .padding(vertical = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
+                        .weight(1f)
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = 20.dp, vertical = 16.dp)
                 ) {
                     Text(
-                        text = "Reminder Time",
-                        style = MaterialTheme.typography.titleMedium
+                        text = "Notification Settings",
+                        style = MaterialTheme.typography.headlineSmall,
+                        modifier = Modifier.padding(bottom = 24.dp)
                     )
-                    Text(
-                        text = String.format("%02d:%02d", dailyHour, dailyMinute),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = buttonColor
+                    // We reuse PortraitLayout here because it stacks the settings vertically,
+                    // which is what we want in the left half of the landscape view.
+                    PortraitLayout(
+                        prefs, scope, dailyEnabled, dailyHour, dailyMinute, transactionEnabled,
+                        onDailyToggle, onTransactionToggle,
+                        onPermissionRequested = { action ->
+                            pendingPermissionAction = action
+                            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                        }
+                    )
+                }
+
+                // Right half: Ad
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .padding(16.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CommonNativeAd(
+                        Modifier,
+                        stringResource(id = R.string.ad_unit_id_notification_settings_screen)
                     )
                 }
             }
-
-            Divider(modifier = Modifier.padding(vertical = 16.dp))
-
-            // --- Transaction Alerts Setting ---
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+        } else {
+            // --- Portrait Layout (existing logic) ---
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(
+                        start = innerPadding.calculateStartPadding(LayoutDirection.Ltr),
+                        end = innerPadding.calculateEndPadding(LayoutDirection.Ltr),
+                        bottom = innerPadding.calculateBottomPadding()
+                    )
+                    .padding(horizontal = 20.dp, vertical = 16.dp)
+                    .verticalScroll(rememberScrollState()),
             ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = "Transaction Alerts",
-                        style = MaterialTheme.typography.titleLarge
-                    )
-                    Text(
-                        text = "Receive an alert for every new transaction.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                Switch(
-                    checked = transactionEnabled,
-                    // --- MODIFIED: onCheckedChange with permission logic ---
-                    onCheckedChange = { enabled ->
-                        // Also add the explicit type here
-                        val action: () -> Unit = {
-                            scope.launch {
-                                prefs.setTransactionNotification(enabled)
-                                onTransactionToggle(enabled)
-                            }
-                        }
-                        if (enabled) { // Only check permission when turning the switch ON
-                            // ... rest of the logic is correct
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                                if (ContextCompat.checkSelfPermission(
-                                        context,
-                                        Manifest.permission.POST_NOTIFICATIONS
-                                    ) == PackageManager.PERMISSION_GRANTED
-                                ) {
-                                    action()
-                                } else {
-                                    pendingPermissionAction = action
-                                    notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                                }
-                            } else {
-                                action()
-                            }
-                        } else {
-                            action()
-                        }
-                    },
-                    colors = customSwitchColors
+                Text(
+                    text = "Notification Settings",
+                    style = MaterialTheme.typography.headlineSmall,
+                    modifier = Modifier.padding(bottom = 24.dp)
+                )
+                PortraitLayout(
+                    prefs, scope, dailyEnabled, dailyHour, dailyMinute, transactionEnabled,
+                    onDailyToggle, onTransactionToggle,
+                    onPermissionRequested = { action ->
+                        pendingPermissionAction = action
+                        notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                    }
                 )
             }
         }
     }
 
-    // --- ADDED: Dialog for permanently denied permission ---
+    // --- Dialog for permanently denied permission (remains unchanged) ---
     if (showPermissionSettingsDialog) {
         AlertDialog(
             onDismissRequest = { showPermissionSettingsDialog = false },
@@ -269,7 +172,6 @@ fun NotificationSettingsScreen(
                 TextButton(
                     onClick = {
                         showPermissionSettingsDialog = false
-                        // Create an Intent to open the app's settings screen
                         val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
                         val uri = Uri.fromParts("package", context.packageName, null)
                         intent.data = uri
@@ -287,3 +189,178 @@ fun NotificationSettingsScreen(
         )
     }
 }
+
+// --- Portrait Layout Composable ---
+@Composable
+private fun PortraitLayout(
+    prefs: PreferencesManager,
+    scope: CoroutineScope,
+    dailyEnabled: Boolean,
+    dailyHour: Int,
+    dailyMinute: Int,
+    transactionEnabled: Boolean,
+    onDailyToggle: (Boolean, Int, Int) -> Unit,
+    onTransactionToggle: (Boolean) -> Unit,
+    onPermissionRequested: (() -> Unit) -> Unit
+) {
+    Column {
+        DailyReminderSetting(
+            prefs, scope, dailyEnabled, dailyHour, dailyMinute, onDailyToggle, onPermissionRequested
+        )
+        Divider(modifier = Modifier.padding(vertical = 16.dp))
+        TransactionAlertsSetting(
+            prefs, scope, transactionEnabled, onTransactionToggle, onPermissionRequested
+        )
+    }
+}
+
+// --- Reusable Daily Reminder Setting ---
+@Composable
+private fun DailyReminderSetting(
+    prefs: PreferencesManager,
+    scope: CoroutineScope,
+    dailyEnabled: Boolean,
+    dailyHour: Int,
+    dailyMinute: Int,
+    onDailyToggle: (Boolean, Int, Int) -> Unit,
+    onPermissionRequested: (() -> Unit) -> Unit
+) {
+    val context = LocalContext.current
+    val buttonColor = colorResource(id = R.color.button_color)
+    val customSwitchColors = customSwitchColors()
+
+    val onCheckedChangeAction: (Boolean) -> Unit = { enabled ->
+        val action: () -> Unit = {
+            scope.launch {
+                prefs.setDailyNotification(enabled)
+                onDailyToggle(enabled, dailyHour, dailyMinute)
+            }
+        }
+        if (enabled) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                if (ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
+                    action()
+                } else {
+                    onPermissionRequested(action)
+                }
+            } else {
+                action()
+            }
+        } else {
+            action()
+        }
+    }
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(text = "Daily Reminder", style = MaterialTheme.typography.titleLarge)
+            Text(
+                text = "Get a summary of your daily spending.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        Switch(
+            checked = dailyEnabled,
+            onCheckedChange = onCheckedChangeAction,
+            colors = customSwitchColors
+        )
+    }
+
+    AnimatedVisibility(
+        visible = dailyEnabled,
+        enter = fadeIn(animationSpec = tween(300)) + expandVertically(animationSpec = tween(300)),
+        exit = fadeOut(animationSpec = tween(300)) + shrinkVertically(animationSpec = tween(300))
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 8.dp)
+                .clickable {
+                    TimePickerDialog(
+                        context,
+                        { _, hour: Int, minute: Int ->
+                            scope.launch {
+                                prefs.setDailyNotificationTime(hour, minute)
+                                onDailyToggle(true, hour, minute)
+                            }
+                        },
+                        dailyHour,
+                        dailyMinute,
+                        true
+                    ).show()
+                }
+                .padding(vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(text = "Reminder Time", style = MaterialTheme.typography.titleMedium)
+            Text(
+                text = String.format("%02d:%02d", dailyHour, dailyMinute),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = buttonColor
+            )
+        }
+    }
+}
+
+// --- Reusable Transaction Alerts Setting ---
+@Composable
+private fun TransactionAlertsSetting(
+    prefs: PreferencesManager,
+    scope: CoroutineScope,
+    transactionEnabled: Boolean,
+    onTransactionToggle: (Boolean) -> Unit,
+    onPermissionRequested: (() -> Unit) -> Unit
+) {
+    val context = LocalContext.current
+    val customSwitchColors = customSwitchColors()
+
+    val onCheckedChangeAction: (Boolean) -> Unit = { enabled ->
+        val action: () -> Unit = {
+            scope.launch {
+                prefs.setTransactionNotification(enabled)
+                onTransactionToggle(enabled)
+            }
+        }
+        if (enabled) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                if (ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
+                    action()
+                } else {
+                    onPermissionRequested(action)
+                }
+            } else {
+                action()
+            }
+        } else {
+            action()
+        }
+    }
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(text = "Transaction Alerts", style = MaterialTheme.typography.titleLarge)
+            Text(
+                text = "Receive an alert for every new transaction.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        Switch(
+            checked = transactionEnabled,
+            onCheckedChange = onCheckedChangeAction,
+            colors = customSwitchColors
+        )
+    }
+}
+

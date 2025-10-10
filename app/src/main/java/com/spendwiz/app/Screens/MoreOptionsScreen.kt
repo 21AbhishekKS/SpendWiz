@@ -1,6 +1,7 @@
 package com.spendwiz.app.Screens
 
 import android.content.Intent
+import android.content.res.Configuration // Import Configuration
 import android.os.Build
 import androidx.annotation.DrawableRes
 import androidx.annotation.RequiresApi
@@ -23,6 +24,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalConfiguration // Import LocalConfiguration
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -62,12 +64,10 @@ fun MoreOptionsScreen(
     var showFeedback by remember { mutableStateOf(false) }
 
     // Updated list of options using the new OptionItem class.
-    // Replace R.drawable.your_icon with your actual drawable resource IDs.
     val options = listOf(
         OptionItem("Backup", iconDrawableRes = R.drawable.baseline_backup_24),
         OptionItem("Category", iconVector = Icons.Filled.Settings),
         OptionItem("Notifications",  iconDrawableRes = R.drawable.notification),
-
         OptionItem("Assistant", iconDrawableRes = R.drawable.assistant),
         OptionItem("Scan Bill", iconDrawableRes = R.drawable.document_scanner),
         OptionItem("Feedback", iconDrawableRes = R.drawable.feedback),
@@ -75,25 +75,34 @@ fun MoreOptionsScreen(
         OptionItem("Share", iconVector = Icons.Filled.Share),
     )
 
+    // Get screen configuration to detect orientation
+    val configuration = LocalConfiguration.current
+    val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         bottomBar = {
-            CommonNativeAd(Modifier ,
-                stringResource(id = R.string.ad_unit_id_more_option_screen)
-            )
+            // Only show the bottom bar ad in portrait mode
+            if (!isLandscape) {
+                CommonNativeAd(Modifier, stringResource(id = R.string.ad_unit_id_more_option_screen))
+            }
         }
     ) { innerPadding ->
+        val contentModifier = Modifier
+            .fillMaxSize()
+            .padding(
+                start = innerPadding.calculateStartPadding(LayoutDirection.Ltr),
+                end = innerPadding.calculateEndPadding(LayoutDirection.Ltr),
+                bottom = innerPadding.calculateBottomPadding()
+            )
+            .padding(16.dp)
+
+        // Reusable composable for the options grid
+        val optionsGrid = @Composable { modifier: Modifier ->
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Top,
-                modifier = Modifier.fillMaxSize()
-                    .padding(
-                        start = innerPadding.calculateStartPadding(LayoutDirection.Ltr),
-                        end = innerPadding.calculateEndPadding(LayoutDirection.Ltr),
-                        bottom = innerPadding.calculateBottomPadding()
-                    )
-                    .padding(16.dp)
+                modifier = modifier
             ) {
                 Text(
                     text = "More Options",
@@ -105,9 +114,6 @@ fun MoreOptionsScreen(
                     columns = GridCells.Fixed(3),
                     verticalArrangement = Arrangement.spacedBy(20.dp),
                     horizontalArrangement = Arrangement.spacedBy(20.dp),
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(bottom = 16.dp)
                 ) {
                     items(options) { item ->
                         OptionCard(item = item, onClick = {
@@ -125,14 +131,43 @@ fun MoreOptionsScreen(
                     }
                 }
             }
+        }
 
-            if (showFeedback) {
-                FeedbackDialog(onClose = { showFeedback = false })
+        if (isLandscape) {
+            // --- LANDSCAPE LAYOUT ---
+            Row(modifier = contentModifier) {
+                // First half: Options Grid
+                optionsGrid(
+                    Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                )
+
+                Spacer(modifier = Modifier.width(16.dp))
+
+                // Second half: Ad
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CommonNativeAd(Modifier, stringResource(id = R.string.ad_unit_id_more_option_screen))
+                }
             }
+        } else {
+            // --- PORTRAIT LAYOUT ---
+            optionsGrid( contentModifier)
+        }
 
+        if (showFeedback) {
+            FeedbackDialog(onClose = { showFeedback = false })
+        }
     }
 }
 
+
+// The rest of your file (OptionCard, FeedbackDialog, etc.) remains unchanged.
 /**
  * Updated OptionCard to conditionally display an Icon from either
  * an ImageVector or a painterResource (drawable ID).

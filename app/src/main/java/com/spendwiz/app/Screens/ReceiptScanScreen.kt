@@ -2,6 +2,7 @@ package com.spendwiz.app.Screens
 
 import android.Manifest
 import android.content.Context
+import android.content.res.Configuration
 import android.net.Uri
 import android.os.Build
 import android.util.Log
@@ -12,7 +13,9 @@ import androidx.activity.result.launch
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
@@ -20,6 +23,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -74,10 +78,99 @@ fun ReceiptScanScreen(
 ) {
     val context = LocalContext.current
     var imageUri by remember { mutableStateOf<Uri?>(null) }
-    // ✅ CHANGED: Replaced 'isProcessing' with a more detailed state
     var processingState by remember { mutableStateOf(ProcessingState.IDLE) }
     var showMissingDataDialog by remember { mutableStateOf(false) }
     var parsedData by remember { mutableStateOf<ParsedReceiptData?>(null) }
+
+    val configuration = LocalConfiguration.current
+
+    Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
+        bottomBar = {
+            if (configuration.orientation != Configuration.ORIENTATION_LANDSCAPE) {
+                CommonNativeAd(Modifier, stringResource(id = R.string.ad_unit_id_receipt_scan_screen))
+            }
+        }
+    ) { innerPadding ->
+        if (configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+            ) {
+                // Left half: Content
+                ReceiptScanContent(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(16.dp),
+                    imageUri = imageUri,
+                    onImageUriChange = { imageUri = it },
+                    processingState = processingState,
+                    onProcessingStateChange = { processingState = it },
+                    showMissingDataDialog = showMissingDataDialog,
+                    onShowMissingDataDialogChange = { showMissingDataDialog = it },
+                    parsedData = parsedData,
+                    onParsedDataChange = { parsedData = it },
+                    viewModel = viewModel,
+                    navController = navController
+                )
+
+                // Right half: Ad
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .padding(16.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CommonNativeAd(
+                        Modifier,
+                        stringResource(id = R.string.ad_unit_id_receipt_scan_screen)
+                    )
+                }
+            }
+        } else {
+            // Portrait Layout
+            ReceiptScanContent(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(
+                        start = innerPadding.calculateStartPadding(LayoutDirection.Ltr),
+                        end = innerPadding.calculateEndPadding(LayoutDirection.Ltr),
+                        bottom = innerPadding.calculateBottomPadding()
+                    )
+                    .padding(16.dp),
+                imageUri = imageUri,
+                onImageUriChange = { imageUri = it },
+                processingState = processingState,
+                onProcessingStateChange = { processingState = it },
+                showMissingDataDialog = showMissingDataDialog,
+                onShowMissingDataDialogChange = { showMissingDataDialog = it },
+                parsedData = parsedData,
+                onParsedDataChange = { parsedData = it },
+                viewModel = viewModel,
+                navController = navController
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalPermissionsApi::class)
+@Composable
+private fun ReceiptScanContent(
+    modifier: Modifier = Modifier,
+    imageUri: Uri?,
+    onImageUriChange: (Uri?) -> Unit,
+    processingState: ProcessingState,
+    onProcessingStateChange: (ProcessingState) -> Unit,
+    showMissingDataDialog: Boolean,
+    onShowMissingDataDialogChange: (Boolean) -> Unit,
+    parsedData: ParsedReceiptData?,
+    onParsedDataChange: (ParsedReceiptData?) -> Unit,
+    viewModel: AddScreenViewModel,
+    navController: NavController
+) {
+    val context = LocalContext.current
 
     fun createImageFile(): File {
         val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
@@ -92,145 +185,136 @@ fun ReceiptScanScreen(
 
     val takePictureLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicture()
-    ) { success -> if (success) imageUri = tempImageUri }
+    ) { success -> if (success) onImageUriChange(tempImageUri) }
 
     val pickImageLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
-    ) { uri: Uri? -> imageUri = uri }
+    ) { uri: Uri? -> onImageUriChange(uri) }
 
     val cameraPermissionState = rememberPermissionState(Manifest.permission.CAMERA)
 
-    Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
-        bottomBar = {
-            CommonNativeAd(Modifier, stringResource(id = R.string.ad_unit_id_receipt_scan_screen))
-        }
-    ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(
-                    start = innerPadding.calculateStartPadding(LayoutDirection.Ltr),
-                    end = innerPadding.calculateEndPadding(LayoutDirection.Ltr),
-                    bottom = innerPadding.calculateBottomPadding()
+    Column(
+        modifier = modifier.verticalScroll(rememberScrollState()),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        if (imageUri == null) {
+            BillScannerStillInBetaCard()
+            Column(
+                Modifier.padding(top = 20.dp),
+                verticalArrangement = Arrangement.Top
+            ) {
+                Text(
+                    "Scan a Receipt",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(bottom = 24.dp)
                 )
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            if (imageUri == null) {
-                BillScannerStillInBetaCard()
-                Column(
-                    Modifier.padding(top = 20.dp),
-                    verticalArrangement = Arrangement.Top
+                Button(
+                    onClick = {
+                        if (cameraPermissionState.status.isGranted) takePictureLauncher.launch(
+                            tempImageUri
+                        )
+                        else cameraPermissionState.launchPermissionRequest()
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = customButtonColors()
                 ) {
+                    Icon(painter = painterResource(R.drawable.camera), "Open Camera")
+                    Text("Open Camera", Modifier.padding(5.dp))
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+                Button(
+                    onClick = { pickImageLauncher.launch("image/*") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = customButtonColors()
+                ) {
+                    Icon(painter = painterResource(R.drawable.gallery), "Pick from Gallery")
+                    Text("Pick from Gallery", Modifier.padding(5.dp))
+                }
+            }
+        } else {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(1f), // Maintain aspect ratio to avoid stretching
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Image(
+                    painter = rememberAsyncImagePainter(imageUri),
+                    contentDescription = "Selected Receipt",
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+            }
+            Spacer(modifier = Modifier.height(24.dp))
+
+            if (processingState != ProcessingState.IDLE) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    CircularProgressIndicator()
+                    Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        "Scan a Receipt",
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(bottom = 24.dp)
+                        text = if (processingState == ProcessingState.DOWNLOADING_MODEL)
+                            "Downloading recognition model..."
+                        else
+                            "Scanning receipt...",
+                        style = MaterialTheme.typography.bodyMedium
                     )
-                    Button(
-                        onClick = {
-                            if (cameraPermissionState.status.isGranted) takePictureLauncher.launch(
-                                tempImageUri
-                            )
-                            else cameraPermissionState.launchPermissionRequest()
-                        },
-                        modifier = Modifier.fillMaxWidth().height(50.dp),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = customButtonColors()
-                    ) {
-                        Icon(painter = painterResource(R.drawable.camera), "Open Camera")
-                        Text("Open Camera", Modifier.padding(5.dp))
-                    }
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Button(
-                        onClick = { pickImageLauncher.launch("image/*") },
-                        modifier = Modifier.fillMaxWidth().height(50.dp),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = customButtonColors()
-                    ) {
-                        Icon(painter = painterResource(R.drawable.gallery), "Pick from Gallery")
-                        Text("Pick from Gallery", Modifier.padding(5.dp))
-                    }
                 }
             } else {
-                Card(
-                    modifier = Modifier.fillMaxWidth().weight(1f),
-                    shape = RoundedCornerShape(12.dp)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
-                    Image(
-                        painter = rememberAsyncImagePainter(imageUri),
-                        contentDescription = "Selected Receipt",
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop
-                    )
-                }
-                Spacer(modifier = Modifier.height(24.dp))
-
-                // ✅ UPDATED: Show progress indicator for both downloading and scanning
-                if (processingState != ProcessingState.IDLE) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        CircularProgressIndicator()
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = if (processingState == ProcessingState.DOWNLOADING_MODEL)
-                                "Downloading recognition model..."
-                            else
-                                "Scanning receipt...",
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                    }
-                } else {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceEvenly
-                    ) {
-                        Button(
-                            onClick = {
-                                imageUri = null
-                                Coil.imageLoader(context).memoryCache?.clear()
-                            },
-                            shape = RoundedCornerShape(12.dp),
-                            colors = customButtonColors(),
-                            modifier = Modifier.weight(1f)
-                        ) { Text("Clear") }
-                        Spacer(modifier = Modifier.width(16.dp))
-                        Button(
-                            onClick = {
-                                // ✅ CHANGED: Call the new wrapper function
-                                downloadModelAndProcess(
-                                    context = context,
-                                    imageUri = imageUri!!,
-                                    onStateChange = { newState -> processingState = newState },
-                                    onResult = { text ->
-                                        parsedData = parseReceiptText(text)
-                                        processingState = ProcessingState.IDLE
-                                        showMissingDataDialog = true
-                                    }
-                                )
-                            },
-                            shape = RoundedCornerShape(12.dp),
-                            colors = customButtonColors(),
-                            modifier = Modifier.weight(1f)
-                        ) { Text("Scan & Save") }
-                    }
+                    Button(
+                        onClick = {
+                            onImageUriChange(null)
+                            Coil.imageLoader(context).memoryCache?.clear()
+                        },
+                        shape = RoundedCornerShape(12.dp),
+                        colors = customButtonColors(),
+                        modifier = Modifier.weight(1f)
+                    ) { Text("Clear") }
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Button(
+                        onClick = {
+                            downloadModelAndProcess(
+                                context = context,
+                                imageUri = imageUri,
+                                onStateChange = onProcessingStateChange,
+                                onResult = { text ->
+                                    onParsedDataChange(parseReceiptText(text))
+                                    onProcessingStateChange(ProcessingState.IDLE)
+                                    onShowMissingDataDialogChange(true)
+                                }
+                            )
+                        },
+                        shape = RoundedCornerShape(12.dp),
+                        colors = customButtonColors(),
+                        modifier = Modifier.weight(1f)
+                    ) { Text("Scan & Save") }
                 }
             }
+        }
 
-            if (showMissingDataDialog && parsedData != null) {
-                MissingDataDialog(
-                    parsedData = parsedData!!,
-                    onDismiss = { showMissingDataDialog = false },
-                    onSave = { updatedData ->
-                        showMissingDataDialog = false
-                        saveTransaction(viewModel, updatedData, navController, context)
-                    }
-                )
-            }
+        if (showMissingDataDialog && parsedData != null) {
+            MissingDataDialog(
+                parsedData = parsedData,
+                onDismiss = { onShowMissingDataDialogChange(false) },
+                onSave = { updatedData ->
+                    onShowMissingDataDialogChange(false)
+                    saveTransaction(viewModel, updatedData, navController, context)
+                }
+            )
         }
     }
 }
+
 
 // This function wraps the entire download and process logic
 fun downloadModelAndProcess(
