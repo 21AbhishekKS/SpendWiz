@@ -1,5 +1,6 @@
 package com.spendwiz.app.Screens
 
+import android.content.res.Configuration
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -28,6 +29,7 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -60,7 +62,7 @@ fun Annual(viewModel: AddScreenViewModel, navController: NavController) {
     val yearlyData by viewModel.getYearlyData(selectedYear).observeAsState(emptyList())
     val dayStatuses by viewModel.getDayStatusesForYear(selectedYear.toInt()).observeAsState(emptyMap())
 
-    // Smooth loader for 1 second
+    // Smooth loader
     var isLoading by remember { mutableStateOf(true) }
     LaunchedEffect(selectedYear) {
         isLoading = true
@@ -86,6 +88,8 @@ fun Annual(viewModel: AddScreenViewModel, navController: NavController) {
         Pair(inc.toList(), exp.toList())
     }
 
+    val orientation = LocalConfiguration.current.orientation
+
     Box(modifier = Modifier.fillMaxSize()) {
         if (isLoading) {
             // Loader Screen
@@ -99,89 +103,135 @@ fun Annual(viewModel: AddScreenViewModel, navController: NavController) {
             }
         } else {
             // Actual UI
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(12.dp)
-                    .verticalScroll(rememberScrollState())
-            ) {
-                // Year selector
-                YearSelector(
-                    year = selectedYear.toInt(),
-                    onMonthChange = { _, newYear ->
-                        selectedYear = newYear.toString()
-                    }
-                )
+            val totalIncome = incomeList.sum()
+            val totalExpense = expenseList.sum()
 
-                // Bar chart
-                Box(
+            if (orientation == Configuration.ORIENTATION_PORTRAIT) {
+                // Portrait Layout
+                Column(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .height(350.dp)
+                        .fillMaxSize()
+                        .padding(12.dp)
+                        .verticalScroll(rememberScrollState())
                 ) {
-                    BarChart(
-                        chartParameters = listOf(
-                            BarParameters("Income", incomeList, incomeColor),
-                            BarParameters("Expense", expenseList, expenseColor)
-                        ),
-                        gridColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
-                        xAxisData = months,
-                        isShowGrid = true,
-                        animateChart = true,
-                        yAxisRange = 10,
-                        barWidth = 14.dp,
-                        xAxisStyle = TextStyle(
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.W400,
-                            color = MaterialTheme.colorScheme.onSurface
-                        ),
-                        yAxisStyle = TextStyle(
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.W400,
-                            color = MaterialTheme.colorScheme.onSurface
-                        ),
-                        spaceBetweenBars = 0.dp,
-                        spaceBetweenGroups = 8.dp,
-                        descriptionStyle = TextStyle(
-                            color = MaterialTheme.colorScheme.onBackground, // Automatically adapts to dark/light
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Normal,
-                            lineHeight = 16.sp
-                        )
+                    YearSelector(
+                        year = selectedYear.toInt(),
+                        onMonthChange = { _, newYear ->
+                            selectedYear = newYear.toString()
+                        }
+                    )
+                    AnnualBarChart(incomeList, expenseList, months, modifier = Modifier.height(350.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
+                    TotalSummaryButtons(
+                        totalIncome = totalIncome,
+                        totalExpense = totalExpense,
+                        onIncomeClick = {
+                            navController.navigate(Routes.IncomeDetailsScreen.createRoute(selectedYear))
+                        },
+                        onExpenseClick = {
+                            navController.navigate(Routes.ExpenseDetailsScreen.createRoute(selectedYear))
+                        }
+                    )
+                    MonthlySummaryTable(months, incomeList, expenseList)
+                    YearlyHeatmapCanvas(
+                        year = selectedYear.toInt(),
+                        data = dayStatuses,
+                        modifier = Modifier.padding(8.dp)
                     )
                 }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                val totalIncome = incomeList.sum()
-                val totalExpense = expenseList.sum()
-
-                // Bottom Summary Buttons
-                TotalSummaryButtons(
-                    totalIncome = totalIncome,
-                    totalExpense = totalExpense,
-                    onIncomeClick = {
-                        navController.navigate(Routes.IncomeDetailsScreen.createRoute(selectedYear))
-                    },
-                    onExpenseClick = {
-                        navController.navigate(Routes.ExpenseDetailsScreen.createRoute(selectedYear))
+            } else {
+                // Landscape Layout
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(12.dp)
+                        .verticalScroll(rememberScrollState())
+                ) {
+                    YearSelector(
+                        year = selectedYear.toInt(),
+                        onMonthChange = { _, newYear ->
+                            selectedYear = newYear.toString()
+                        }
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        // Left Column: Chart
+                        Box(modifier = Modifier.weight(0.55f)) {
+                            AnnualBarChart(incomeList, expenseList, months, modifier = Modifier.height(300.dp))
+                        }
+                        // Right Column: Summary Buttons and Table
+                        Column(modifier = Modifier.weight(0.45f)) {
+                            TotalSummaryButtons(
+                                totalIncome = totalIncome,
+                                totalExpense = totalExpense,
+                                onIncomeClick = {
+                                    navController.navigate(Routes.IncomeDetailsScreen.createRoute(selectedYear))
+                                },
+                                onExpenseClick = {
+                                    navController.navigate(Routes.ExpenseDetailsScreen.createRoute(selectedYear))
+                                }
+                            )
+                            MonthlySummaryTable(months, incomeList, expenseList)
+                        }
                     }
-                )
-                // Summary table
-                MonthlySummaryTable(months, incomeList, expenseList)
-
-                // Heatmap
-                YearlyHeatmapCanvas(
-                    year = selectedYear.toInt(),
-                    data = dayStatuses,
-                    squareSize = 14.dp,
-                    spacing = 3.dp,
-                    modifier = Modifier.padding(8.dp)
-                )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    YearlyHeatmapCanvas(
+                        year = selectedYear.toInt(),
+                        data = dayStatuses,
+                        modifier = Modifier.padding(8.dp)
+                    )
+                }
             }
         }
     }
 }
+
+@Composable
+fun AnnualBarChart(
+    incomeList: List<Double>,
+    expenseList: List<Double>,
+    months: List<String>,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier.fillMaxWidth()
+    ) {
+        BarChart(
+            chartParameters = listOf(
+                BarParameters("Income", incomeList, incomeColor),
+                BarParameters("Expense", expenseList, expenseColor)
+            ),
+            gridColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+            xAxisData = months,
+            isShowGrid = true,
+            animateChart = true,
+            yAxisRange = 10,
+            barWidth = 14.dp,
+            xAxisStyle = TextStyle(
+                fontSize = 12.sp,
+                fontWeight = FontWeight.W400,
+                color = MaterialTheme.colorScheme.onSurface
+            ),
+            yAxisStyle = TextStyle(
+                fontSize = 12.sp,
+                fontWeight = FontWeight.W400,
+                color = MaterialTheme.colorScheme.onSurface
+            ),
+            spaceBetweenBars = 0.dp,
+            spaceBetweenGroups = 8.dp,
+            descriptionStyle = TextStyle(
+                color = MaterialTheme.colorScheme.onBackground,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Normal,
+                lineHeight = 16.sp
+            )
+        )
+    }
+}
+
 
 @Composable
 fun MonthlySummaryTable(
@@ -193,7 +243,7 @@ fun MonthlySummaryTable(
         modifier = Modifier
             .fillMaxWidth()
             .wrapContentHeight()
-            .padding(12.dp),
+            .padding(vertical = 12.dp),
         verticalAlignment = Alignment.Top
     ) {
         // Fixed left column
@@ -475,7 +525,7 @@ fun TotalSummaryButtons(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+            .padding(vertical = 12.dp),
         horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         // Income Button (Green)

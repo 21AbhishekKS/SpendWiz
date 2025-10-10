@@ -1,6 +1,7 @@
 package com.spendwiz.app.Screens
 
 import android.annotation.SuppressLint
+import android.content.res.Configuration
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
@@ -36,6 +37,7 @@ import com.spendwiz.app.Database.money.TransactionType
 import kotlin.math.roundToInt
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Scaffold
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.LayoutDirection
 import com.spendwiz.app.Ads.BannerAdView
@@ -78,42 +80,90 @@ fun HomeScreen(
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         bottomBar = {
-            BannerAdView(Modifier ,
+            BannerAdView(Modifier,
                 stringResource(id = R.string.ad_unit_id_home_screen)
             )
         }
     ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .padding(
-                    start = innerPadding.calculateStartPadding(LayoutDirection.Ltr),
-                    end = innerPadding.calculateEndPadding(LayoutDirection.Ltr),
-                    bottom = innerPadding.calculateBottomPadding()
-                )
-                .fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            CardItemHome(
-                income = formatCurrency(totalMoneyEarned),
-                expenses = formatCurrency(totalMoneySpent)
+        val orientation = LocalConfiguration.current.orientation
+        val baseModifier = Modifier
+            .padding(
+                start = innerPadding.calculateStartPadding(LayoutDirection.Ltr),
+                end = innerPadding.calculateEndPadding(LayoutDirection.Ltr),
+                bottom = innerPadding.calculateBottomPadding()
             )
-            Text(
-                text = "Today's Transactions",
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onBackground
-            )
-            Text(
-                text = "Need to update a transaction? Just click on it!",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onBackground
-            )
+            .fillMaxSize()
 
-            TransactionList(
-                todayMoneyList?.reversed(),
-                navController = navController1,
-                viewModel
-            )
+        if (orientation == Configuration.ORIENTATION_PORTRAIT) {
+            // Portrait Layout
+            Column(
+                modifier = baseModifier,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                CardItemHome(
+                    income = formatCurrency(totalMoneyEarned),
+                    expenses = formatCurrency(totalMoneySpent)
+                )
+                Text(
+                    text = "Today's Transactions",
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+                Text(
+                    text = "Need to update a transaction? Just click on it!",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+                TransactionList(
+                    moneyList = todayMoneyList?.reversed(),
+                    navController = navController1,
+                    viewModel = viewModel
+                )
+            }
+        } else {
+            // Landscape Layout
+            Row(
+                modifier = baseModifier.padding(horizontal = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // Left Column for Summary Card
+                Column(
+                    modifier = Modifier
+                        .weight(0.4f)
+                        .fillMaxHeight()
+                ) {
+                    CardItemHome(
+                        income = formatCurrency(totalMoneyEarned),
+                        expenses = formatCurrency(totalMoneySpent)
+                    )
+                }
+                // Right Column for Transaction List
+                Column(
+                    modifier = Modifier
+                        .weight(0.6f)
+                        .fillMaxHeight(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "Today's Transactions",
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onBackground,
+                        modifier = Modifier.padding(top = 12.dp) // Align with card padding
+                    )
+                    Text(
+                        text = "Need to update a transaction? Just click on it!",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+                    TransactionList(
+                        moneyList = todayMoneyList?.reversed(),
+                        navController = navController1,
+                        viewModel = viewModel
+                    )
+                }
+            }
         }
     }
 }
@@ -188,6 +238,3 @@ private fun formatCurrency(amount: Double): String {
         "₹${"%.2f".format(amount)}" // Show with 2 decimal places
     }
 }
-
-
-

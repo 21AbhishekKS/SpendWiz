@@ -2,6 +2,7 @@ package com.spendwiz.app.Screens
 
 import android.app.Activity
 import android.app.DatePickerDialog
+import android.content.res.Configuration
 import android.os.Build
 import android.widget.Toast
 import androidx.annotation.RequiresApi
@@ -37,6 +38,7 @@ import com.spendwiz.app.ViewModels.CategoryViewModel
 import com.spendwiz.app.utils.TimePickerField
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.LayoutDirection
 import com.spendwiz.app.Ads.BannerAdView
@@ -149,243 +151,301 @@ fun AddScreen(
         }
     }
 
+    // UI Elements defined as composable lambdas to avoid repetition
+    val transactionTypeSelector = @Composable {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 6.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            transactionTypes.forEach { t ->
+                val selectedColor = when (t) {
+                    "Income" -> Color(0xFF4CAF50)
+                    "Expense" -> Color(0xFFF44336)
+                    else -> Color(0xFF2196F3)
+                }
+                Surface(
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(8.dp),
+                    color = colorScheme.surface,
+                    border = BorderStroke(
+                        1.dp,
+                        if (selectedType == t) selectedColor else colorScheme.outline
+                    ),
+                    onClick = {
+                        selectedType = t
+                        selectedCategory = ""
+                        selectedSubCategory = ""
+                        customCategory = ""
+                    }
+                ) {
+                    Text(
+                        text = t,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 6.dp),
+                        textAlign = TextAlign.Center,
+                        color = if (selectedType == t) selectedColor else colorScheme.onSurface
+                    )
+                }
+            }
+        }
+    }
+
+    val dateField = @Composable {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                "Date:",
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Medium,
+                modifier = Modifier.width(90.dp)
+            )
+
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .clickable {
+                        val parsedDate = try {
+                            dateFormatter.parse(currentDate)
+                        } catch (_: Exception) {
+                            null
+                        }
+                        val cal = Calendar.getInstance()
+                        if (parsedDate != null) cal.time = parsedDate
+
+                        DatePickerDialog(
+                            context,
+                            { _, year, month, dayOfMonth ->
+                                val pickedCal = Calendar.getInstance()
+                                pickedCal.set(year, month, dayOfMonth)
+                                currentDate = dateFormatter.format(pickedCal.time)
+                            },
+                            cal.get(Calendar.YEAR),
+                            cal.get(Calendar.MONTH),
+                            cal.get(Calendar.DAY_OF_MONTH)
+                        ).show()
+                    }
+            ) {
+                TextField(
+                    value = currentDate,
+                    onValueChange = {},
+                    readOnly = true,
+                    enabled = false,
+                    label = { Text("Select Date") },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = TextFieldDefaults.colors(
+                        disabledTextColor = colorScheme.onSurface,
+                        disabledIndicatorColor = colorScheme.outline,
+                        disabledLabelColor = colorScheme.outline,
+                        disabledContainerColor = Color.Transparent
+                    )
+                )
+            }
+        }
+    }
+
+    val timeField = @Composable {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                "Time:",
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Medium,
+                modifier = Modifier.width(90.dp)
+            )
+            Box(modifier = Modifier.weight(1f)) {
+                TimePickerField(
+                    selectedTime = selectedTime,
+                    onTimeSelected = { newTime -> selectedTime = newTime }
+                )
+            }
+        }
+    }
+
+    val amountField = @Composable {
+        FieldRow(
+            label = "Amount",
+            value = amount,
+            onValueChange = {
+                if (it.isEmpty() || it.matches(Regex("^[0-9]*\\.?[0-9]*$"))) {
+                    val parsed = it.toDoubleOrNull()
+                    if (parsed == null || parsed <= 99_99_999) amount = it
+                }
+            },
+            keyboardType = KeyboardType.Number,
+            borderColor = typeColor,
+            modifier = Modifier.focusRequester(focusRequester)
+        )
+    }
+
+    val noteField = @Composable {
+        FieldRow(
+            label = "Note",
+            value = description,
+            onValueChange = { description = it },
+            borderColor = typeColor
+        )
+    }
+
+    var expanded by remember { mutableStateOf(false) }
+    val categoryField = @Composable {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 4.dp),
+            verticalAlignment = Alignment.Bottom
+        ) {
+            Text(
+                "Category:",
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Medium,
+                modifier = Modifier.width(90.dp)
+            )
+            ExposedDropdownMenuBox(
+                expanded = expanded,
+                onExpandedChange = { expanded = !expanded },
+                modifier = Modifier.weight(1f)
+            ) {
+                TextField(
+                    value = selectedCategory,
+                    onValueChange = {},
+                    readOnly = true,
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
+                    modifier = Modifier.menuAnchor(),
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color.Transparent,
+                        unfocusedContainerColor = Color.Transparent,
+                        focusedIndicatorColor = typeColor,
+                        unfocusedIndicatorColor = Color.Gray,
+                        focusedTrailingIconColor = typeColor
+                    )
+                )
+                ExposedDropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false }) {
+                    categories.forEach { cat ->
+                        DropdownMenuItem(
+                            text = { Text(cat) },
+                            onClick = {
+                                selectedCategory = cat
+                                selectedSubCategory = ""
+                                customCategory = ""
+                                expanded = false
+                            }
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    val subCategoryOrCustomField = @Composable {
+        if (selectedCategory == "Others") {
+            FieldRow(
+                label = "Custom",
+                value = customCategory,
+                onValueChange = { customCategory = it })
+        } else if (selectedCategory.isNotEmpty()) {
+            FlowRow(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                subCategoryNames.forEach { sub ->
+                    FilterChip(
+                        selected = selectedSubCategory == sub,
+                        onClick = { selectedSubCategory = sub },
+                        label = { Text(sub, fontSize = 12.sp) },
+                        colors = FilterChipDefaults.filterChipColors(
+                            containerColor = colorScheme.surfaceVariant,
+                            selectedContainerColor = typeColor,
+                            labelColor = colorScheme.onSurface,
+                            selectedLabelColor = Color.White
+                        )
+                    )
+                }
+            }
+        }
+    }
+
+    val saveButton = @Composable {
+        Button(
+            onClick = { saveTransaction() },
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(containerColor = typeColor),
+            shape = RoundedCornerShape(8.dp)
+        ) {
+            Text("Save", color = Color.White, fontWeight = FontWeight.ExtraBold)
+        }
+    }
+
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
-            BannerAdView(Modifier ,
+            BannerAdView(
+                Modifier,
                 stringResource(id = R.string.ad_unit_id_add_screen)
             )
         }
     ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(colorScheme.background)
-                .padding(
-                    top = innerPadding.calculateTopPadding(),
-                    start = innerPadding.calculateStartPadding(LayoutDirection.Ltr),
-                    end = innerPadding.calculateEndPadding(LayoutDirection.Ltr),
-                    bottom = innerPadding.calculateBottomPadding()
-                )
-                .padding(12.dp)
-                .verticalScroll(rememberScrollState())
-        ) {
-            // transaction type buttons
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(bottom = 6.dp),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                transactionTypes.forEach { t ->
-                    val selectedColor = when (t) {
-                        "Income" -> Color(0xFF4CAF50)
-                        "Expense" -> Color(0xFFF44336)
-                        else -> Color(0xFF2196F3)
-                    }
-                    Surface(
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(8.dp),
-                        color = colorScheme.surface,
-                        border = BorderStroke(
-                            1.dp,
-                            if (selectedType == t) selectedColor else colorScheme.outline
-                        ),
-                        onClick = {
-                            selectedType = t
-                            selectedCategory = ""
-                            selectedSubCategory = ""
-                            customCategory = ""
-                        }
-                    ) {
-                        Text(
-                            text = t,
-                            modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
-                            textAlign = TextAlign.Center,
-                            color = if (selectedType == t) selectedColor else colorScheme.onSurface
-                        )
-                    }
-                }
-            }
 
-            // Date Row
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    "Date:",
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium,
-                    modifier = Modifier.width(90.dp)
-                )
-
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .clickable {
-                            val parsedDate = try {
-                                dateFormatter.parse(currentDate)
-                            } catch (_: Exception) {
-                                null
-                            }
-                            val cal = Calendar.getInstance()
-                            if (parsedDate != null) cal.time = parsedDate
-
-                            DatePickerDialog(
-                                context,
-                                { _, year, month, dayOfMonth ->
-                                    val pickedCal = Calendar.getInstance()
-                                    pickedCal.set(year, month, dayOfMonth)
-                                    currentDate = dateFormatter.format(pickedCal.time)
-                                },
-                                cal.get(Calendar.YEAR),
-                                cal.get(Calendar.MONTH),
-                                cal.get(Calendar.DAY_OF_MONTH)
-                            ).show()
-                        }
-                ) {
-                    TextField(
-                        value = currentDate,
-                        onValueChange = {},
-                        readOnly = true,
-                        enabled = false,
-                        label = { Text("Select Date") },
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = TextFieldDefaults.colors(
-                            disabledTextColor = colorScheme.onSurface,
-                            disabledIndicatorColor = colorScheme.outline,
-                            disabledLabelColor = colorScheme.outline,
-                            disabledContainerColor = Color.Transparent
-                        )
-                    )
-                }
-            }
-
-            // Time Row
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    "Time:",
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium,
-                    modifier = Modifier.width(90.dp)
-                )
-                Box(modifier = Modifier.weight(1f)) {
-                    TimePickerField(
-                        selectedTime = selectedTime,
-                        onTimeSelected = { newTime -> selectedTime = newTime }
-                    )
-                }
-            }
-
-            // Amount
-            FieldRow(
-                label = "Amount",
-                value = amount,
-                onValueChange = {
-                    if (it.isEmpty() || it.matches(Regex("^[0-9]*\\.?[0-9]*$"))) {
-                        val parsed = it.toDoubleOrNull()
-                        if (parsed == null || parsed <= 99_99_999) amount = it
-                    }
-                },
-                keyboardType = KeyboardType.Number,
-                borderColor = typeColor,
-                modifier = Modifier.focusRequester(focusRequester)
+        val orientation = LocalConfiguration.current.orientation
+        val baseModifier = Modifier
+            .fillMaxSize()
+            .background(colorScheme.background)
+            .padding(
+                top = innerPadding.calculateTopPadding(),
+                start = innerPadding.calculateStartPadding(LayoutDirection.Ltr),
+                end = innerPadding.calculateEndPadding(LayoutDirection.Ltr),
+                bottom = innerPadding.calculateBottomPadding()
             )
+            .padding(12.dp)
+            .verticalScroll(rememberScrollState())
 
-            // Note
-            FieldRow(
-                label = "Note",
-                value = description,
-                onValueChange = { description = it },
-                borderColor = typeColor
-            )
-
-            // Category
-            var expanded by remember { mutableStateOf(false) }
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                verticalAlignment = Alignment.Bottom
-            ) {
-                Text(
-                    "Category:",
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium,
-                    modifier = Modifier.width(90.dp)
-                )
-                ExposedDropdownMenuBox(
-                    expanded = expanded,
-                    onExpandedChange = { expanded = !expanded },
-                    modifier = Modifier.weight(1f)
+        if (orientation == Configuration.ORIENTATION_PORTRAIT) {
+            Column(modifier = baseModifier) {
+                transactionTypeSelector()
+                dateField()
+                timeField()
+                amountField()
+                noteField()
+                categoryField()
+                subCategoryOrCustomField()
+                Spacer(modifier = Modifier.height(8.dp))
+                saveButton()
+            }
+        } else {
+            // Landscape Layout
+            Column(modifier = baseModifier) {
+                transactionTypeSelector()
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    TextField(
-                        value = selectedCategory,
-                        onValueChange = {},
-                        readOnly = true,
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
-                        modifier = Modifier.menuAnchor(),
-                        colors = TextFieldDefaults.colors(
-                            focusedContainerColor = Color.Transparent,
-                            unfocusedContainerColor = Color.Transparent,
-                            focusedIndicatorColor = typeColor,
-                            unfocusedIndicatorColor = Color.Gray,
-                            focusedTrailingIconColor = typeColor
-                        )
-                    )
-                    ExposedDropdownMenu(
-                        expanded = expanded,
-                        onDismissRequest = { expanded = false }) {
-                        categories.forEach { cat ->
-                            DropdownMenuItem(
-                                text = { Text(cat) },
-                                onClick = {
-                                    selectedCategory = cat
-                                    selectedSubCategory = ""
-                                    customCategory = ""
-                                    expanded = false
-                                }
-                            )
-                        }
+                    Column(modifier = Modifier.weight(1f)) {
+                        amountField()
+                        noteField()
+                    }
+                    Column(modifier = Modifier.weight(1f)) {
+                        dateField()
+                        timeField()
                     }
                 }
-            }
-
-            if (selectedCategory == "Others") {
-                FieldRow(
-                    label = "Custom",
-                    value = customCategory,
-                    onValueChange = { customCategory = it })
-            } else if (selectedCategory.isNotEmpty()) {
-                FlowRow(
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    subCategoryNames.forEach { sub ->
-                        FilterChip(
-                            selected = selectedSubCategory == sub,
-                            onClick = { selectedSubCategory = sub },
-                            label = { Text(sub, fontSize = 12.sp) },
-                            colors = FilterChipDefaults.filterChipColors(
-                                containerColor = colorScheme.surfaceVariant,
-                                selectedContainerColor = typeColor,
-                                labelColor = colorScheme.onSurface,
-                                selectedLabelColor = Color.White
-                            )
-                        )
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Button(
-                onClick = { saveTransaction() },
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(containerColor = typeColor),
-                shape = RoundedCornerShape(8.dp)
-            ) {
-                Text("Save", color = Color.White, fontWeight = FontWeight.ExtraBold)
+                categoryField()
+                subCategoryOrCustomField()
+                Spacer(modifier = Modifier.height(8.dp))
+                saveButton()
             }
         }
     }
