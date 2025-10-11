@@ -55,6 +55,12 @@ class AddScreenViewModel : ViewModel() {
             yearlySummaries.find { summary -> summary.month.toIntOrNull() == currentMonthNumber }
         }
 
+    fun getTransactionsForYear(year: String): LiveData<List<Money>> {
+        return moneyDao.getTransactionsForYearReport(year)
+    }
+
+    //To get years in database for year picker
+    val distinctYears: LiveData<List<Int>> = moneyDao.getDistinctYears()
     
     fun updateMoney(
         id: Int,

@@ -149,6 +149,9 @@ fun BottomNav(
             composable(Routes.ReceiptScanScreen.route) {
                 ReceiptScanScreen(viewModel = moneyViewModel , navController)
             }
+            composable(Routes.Report.route) {
+                ReportScreen(addScreenViewModel = moneyViewModel )
+            }
             composable(Routes.VoiceAssistantSettingsScreen.route) {
                 VoiceAssistantSettingsScreen(
                     isServiceEnabled = isServiceEnabled,

@@ -85,6 +85,12 @@ interface MoneyDao {
     @Query("UPDATE money SET subCategory = :subCategory WHERE id = :id")
     suspend fun updateSubCategory(id: Int, subCategory: String)
 
+    @Query("SELECT * FROM money WHERE substr(date, 7, 4) = :year")
+    fun getTransactionsForYearReport(year: String): LiveData<List<Money>>
+
+    //To get years in database for year picker
+    @Query("SELECT DISTINCT CAST(SUBSTR(date, 7, 4) AS INTEGER) FROM money ORDER BY SUBSTR(date, 7, 4) DESC")
+    fun getDistinctYears(): LiveData<List<Int>>
 
     // for list of money items from insight screen
     @Query("UPDATE money SET type = :newType WHERE id IN (:ids)")

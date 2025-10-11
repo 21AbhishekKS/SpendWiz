@@ -14,6 +14,7 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Share
@@ -73,6 +74,7 @@ fun MoreOptionsScreen(
         OptionItem("Feedback", iconDrawableRes = R.drawable.feedback),
         OptionItem("FAQ", iconDrawableRes = R.drawable.faq),
         OptionItem("Share", iconVector = Icons.Filled.Share),
+        OptionItem("Report", iconVector = Icons.Filled.DateRange),
     )
 
     // Get screen configuration to detect orientation
@@ -126,6 +128,7 @@ fun MoreOptionsScreen(
                                 "Feedback" -> showFeedback = true
                                 "Scan Bill" -> navController.navigate(Routes.ReceiptScanScreen.route)
                                 "Assistant" -> navController.navigate(Routes.VoiceAssistantSettingsScreen.route)
+                                "Report" -> navController.navigate(Routes.Report.route)
                             }
                         })
                     }
